@@ -1,0 +1,61 @@
+.sidebarWrapper {
+  /* Không cần width vì đã có layout container */
+}
+
+.sidebarTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.menuList {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 32px;
+}
+
+.menuItem {
+  margin-bottom: 12px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.menuItemActive {
+  font-weight: 600;
+  color: #1877f2;
+  background: #f0f2f5;
+}
+.menuItemInactive {
+  color: #050505;
+}
+
+.newFriendsSection {
+  margin-top: 32px;
+}
+
+.newFriendsTitle {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.newFriendsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.newFriendsAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.newFriendsTime {
+  font-size: 12px;
+  color: #65676b;
+  margin-top: 4px;
+}
+.newFriendsText {
+  font-size: 15px;
+} 

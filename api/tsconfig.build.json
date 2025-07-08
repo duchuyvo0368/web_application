@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+      "rootDir": ".",                     // vì main.ts nằm ngoài, còn api nằm trong
+      "outDir": "dist",                   // xuất ra thư mục dist
+      "module": "commonjs",
+      "target": "es2017",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "baseUrl": ".",                     // để paths dùng từ thư mục gốc
+      "paths": {
+        "@/*": ["api/*"],                 // dùng alias @ cho đường dẫn trong /api
+        "module/*": ["api/module/*"],     // alias riêng cho module
+        "utils/*": ["api/utils/*"]        // alias cho utils
+      },
+      "typeRoots": ["./node_modules/@types", "api/types"]
+    },
+    "include": [
+      "main.ts",                          // file ngoài gốc
+      "api/**/*"                          // toàn bộ code trong api
+    ],
+    "exclude": ["node_modules", "dist"]
+  }
+  
