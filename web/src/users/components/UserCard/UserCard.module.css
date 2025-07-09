@@ -1,0 +1,116 @@
+.friendCard {
+  background: white;
+  padding: 1.5rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 280px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.friendCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.15);
+}
+
+.friendAvatar {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  border: 3px solid #f3f4f6;
+}
+
+.friendInfo {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.friendName {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #111827;
+  margin: 0.5rem 0;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friendMutual, .followerCount {
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  margin: 0.1rem 0;
+}
+
+.followerCount {
+  margin-bottom: 0.8rem;
+  color: #4b5563;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: auto;
+}
+
+.actionButton {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background-color: #f3f4f6;
+  color: #1f2937;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.actionButton:hover {
+  background-color: #e5e7eb;
+}
+
+.actionButton.activeButton {
+  background-color: #2dd4bf; /* Teal 400 - Lighter teal */
+  color: white;
+  border-color: #2dd4bf;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.actionButton.activeButton:hover {
+  background-color: #0d9488; /* Teal 600 */
+  border-color: #0d9488;
+}
+
+/* Ensure button text doesn't overflow */
+.buttonGroup {
+  min-width: 0;
+}
+
+.buttonGroup button {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

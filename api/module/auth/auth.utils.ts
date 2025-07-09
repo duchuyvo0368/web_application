@@ -16,7 +16,7 @@ export async function createTokenPair(payload: { userId: string; email: string }
     try {
         const accessToken = jwt.sign(payload, JWT_SECRET, {
             algorithm: 'HS256',
-            expiresIn: '15m',
+            expiresIn: '1d',
         });
 
         const refreshToken = jwt.sign(payload, JWT_SECRET, {

@@ -97,7 +97,9 @@ export class FriendsController {
         const result = await this.friendsService.getFriends(userId);
         return new SuccessResponse({
             message: 'Friend list fetched',
-            metadata: result,
+            metadata: {
+                friends: result
+            },
         });
     }
     

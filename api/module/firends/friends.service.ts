@@ -75,14 +75,32 @@ export class FriendService {
 
     // Lấy danh sách bạn bè (đã accepted)
     async getFriends(userId: string) {
-        return this.friendRelationModel.find({
+        const relations = await this.friendRelationModel.find({
             status: 'accepted',
             $or: [
                 { fromUser: userId },
                 { toUser: userId }
             ]
-        }).lean();
-         
+        })
+            .populate('fromUser', 'name avatar') 
+            .populate('toUser', 'name avatar ')   
+            .lean();
+
+        return relations.map((relation) => {
+            const from = relation.fromUser as any;
+            const to = relation.toUser as any;
+
+            const isFromCurrentUser = String(from._id) === String(userId);
+            const friend = isFromCurrentUser ? to : from;
+
+            return {
+                _id: friend._id,
+                name: friend.name,
+                avatar: friend.avatar,
+                followers: friend.followers,
+            };
+        });
     }
+    
 }
 

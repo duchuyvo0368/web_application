@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const API_CONFIG = 'http://localhost:5000/v1/api';
+const API_CONFIG = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/v1/api';
 
-export const getFriends = async ({
+export const getAllUser = async ({
     limit,
     onSuccess,
     onError,
@@ -12,7 +12,8 @@ export const getFriends = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/friends/list`, {
+        const res = await axios.get(`${API_CONFIG}/users`, {
+            params: { limit },
             withCredentials: true, 
         });
 

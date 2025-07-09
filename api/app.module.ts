@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { FriendModule } from './module/firends/friend_module';
+import { FriendModule } from './module/firends/friend.module';
 import { UserModule } from './module/user/user_module';
 import { MongooseModule } from '@nestjs/mongoose';
 import config from './module/database/config';

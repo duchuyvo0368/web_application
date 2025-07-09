@@ -27,8 +27,8 @@ export class UserService {
         return user;
     };
 
-    findById = async (id: string): Promise<any | null> => {
-        return this.userModel.findById(id).lean();
+    getUserById = async (userId: string): Promise<any | null> => {
+        return this.userModel.findById(userId).lean();
     };
 
     createUser = async (body: UserDto) => {
@@ -89,5 +89,6 @@ export class UserService {
         return await this.userModel.find();
         
     };
+    
 
 }

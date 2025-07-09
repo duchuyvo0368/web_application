@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
-import styles from './FriendCard.module.css';
+import styles from './UserCard.module.css';
 
 interface FriendCardProps {
     name: string;
@@ -15,7 +15,7 @@ const FriendCard: React.FC<FriendCardProps> = ({ name, img, mutual, followers = 
 
     const handleAddFriend = () => {
         setIsFriend(!isFriend);
-        
+        // TODO: Add API call to add friend
     };
 
     const handleFollow = () => {

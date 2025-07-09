@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import axios from 'axios';
 import LoginForm from '../components/LoginForm';
-import { isAuthenticated } from '../services/auth.service';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,18 +10,30 @@ export default function LoginPage() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      router.push(redirect?.toString() || '/');
-    } else {
-      setAuthChecked(true);
-    }
+    // ✅ Kiểm tra xem user đã đăng nhập chưa
+    const checkAuth = async () => {
+      try {
+        await axios.get('http://localhost:5000/v1/api/auth/profile', {
+            withCredentials: true,
+          });
+        if (res.data) {
+          router.replace(redirect?.toString() || '/'); // nếu đã login → redirect
+        } else {
+          setAuthChecked(true); // chưa login → hiển thị form
+        }
+      } catch (err) {
+        setAuthChecked(true); // lỗi → coi như chưa login
+      }
+    };
+
+    checkAuth();
   }, [redirect, router]);
 
   const handleLoginSuccess = () => {
     router.push(redirect?.toString() || '/');
   };
 
-  if (!authChecked) return null;
+  if (!authChecked) return null; // chỉ render khi xác thực xong
 
   return (
     <>

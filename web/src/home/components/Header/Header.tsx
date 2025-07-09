@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
+import axios from 'axios';
 
 interface UserInfo {
   id: string;
@@ -11,24 +12,23 @@ interface UserInfo {
   bio?: string;
 }
 
-const getUserInfo = (): UserInfo | null => {
-  if (typeof window === 'undefined') return null;
-  const userStr = localStorage.getItem('user');
-  if (!userStr) return null;
-  try {
-    return JSON.parse(userStr) as UserInfo;
-  } catch {
-    return null;
-  }
-};
 
 const Toolbar: React.FC = () => {
   const [user, setUser] = useState<UserInfo | null>(null);
-
+ 
   useEffect(() => {
-    setUser(getUserInfo());
-  }, []);
-
+      const fetchUser = async () => {
+        try {
+          const res = await axios.get('http://localhost:5000/v1/api/users/profile', {
+            withCredentials: true, 
+          });
+        setUser(res.data.metadata.user);
+        } catch (err) {
+          setUser(null);
+        }
+      };
+      fetchUser();
+    }, []);
   return (
     <header className={styles.toolbar}>
       <div className={styles['toolbar-container']}>

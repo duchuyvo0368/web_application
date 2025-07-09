@@ -7,11 +7,15 @@ import {
     Patch,
     Delete,
     NotFoundException,
+    UseGuards,
+    Req
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from './dto/user.dto';
 
 import { SuccessResponse, CREATED } from '../../utils/success.response';
+import { AccessTokenGuard } from '../auth/guards/access-token.guard';
+import { logger } from '../../utils/logger';
 
 @Controller('users')
 export class UserController {
@@ -59,6 +63,7 @@ export class UserController {
     @Get('')
     async getAllUsers(@Param('limit') limit: string) {
         const users = await this.userService.getAllUsers(limit);
+        logger.info(`Retrieved ${users.length} users with limit ${limit}`);
         return new SuccessResponse({
             message: 'All users retrieved successfully',
             metadata: {
@@ -67,5 +72,21 @@ export class UserController {
             },
         });
     }
+    @UseGuards(AccessTokenGuard)
+    @Get('profile')
+    async getUserById(@Req() req: Request) {
+        const userId = (req as any).user.userId;
+        const user = await this.userService.getUserById(userId);
+        logger.info(`Retrieved ${user.length} user with ID ${user}`);
+        if (!user) throw new NotFoundException('User not found');
+        return new SuccessResponse({
+            message: 'User found successfully',
+            metadata: {
+                user:user
+            },
+        });
+    }
 }
+
+
   

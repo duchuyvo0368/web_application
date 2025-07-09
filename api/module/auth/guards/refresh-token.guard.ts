@@ -23,7 +23,7 @@ export class RefreshTokenGuard implements CanActivate {
 
         const userId = req.headers[HEADER.CLIENT_ID] as string;
         let refreshToken = req.cookies?.['refreshToken'];
-        if (!userId || !refreshToken) {
+        if ( !refreshToken) {
             logger.warn('Missing refresh token or user ID');
             throw new AuthFailureError('Missing refresh token or user ID');
         }
