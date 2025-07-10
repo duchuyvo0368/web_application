@@ -8,12 +8,14 @@ import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { logger } from '../../utils/logger';
 import { UserDto } from './dto/user.dto';
+import { FriendService } from '../firends/friends.service';
 
 
 @Injectable()
 export class UserService {
     constructor(
-        @InjectModel(User.name, 'MONGODB_CONNECTION') private readonly userModel: Model<UserDocument>
+        @InjectModel(User.name, 'MONGODB_CONNECTION') private readonly userModel: Model<UserDocument>,
+        private readonly friendService: FriendService,
     ) { }
 
     findByEmail = async ({ email, select = {
@@ -85,10 +87,32 @@ export class UserService {
         return !!result;
     };
 
-    getAllUsers = async (limit:string): Promise<any|null> => {
-        return await this.userModel.find();
-        
-    };
+    async getAllUsers(userId: string, limit: string): Promise<UserDocument[]> {
+        const relatedUserIds = await this.friendService.getRelatedUserIds(userId);
+        relatedUserIds.push(userId); 
+
+        return this.userModel
+            .find({ _id: { $nin: relatedUserIds } })
+            .limit(Number(limit))
+            .lean();
+      }
+      
+
+    async updateFollowersCount(toUserId: string, increment: boolean): Promise<User | null> {
+        const update = increment
+            ? { $inc: { followersCount: 1 } }
+            : { $inc: { followersCount: -1 } };
+
+        return this.userModel.findByIdAndUpdate(toUserId, update, { new: true });
+    }
+
+    async updateFollowingCount(userId: string, increment: boolean): Promise<User | null> {
+        const update = increment
+            ? { $inc: { followingCount: 1 } }
+            : { $inc: { followingCount: -1 } };
+
+        return this.userModel.findByIdAndUpdate(userId, update, { new: true });
+      }
     
 
 }

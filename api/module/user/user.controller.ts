@@ -60,10 +60,12 @@ export class UserController {
     //     });
     // }
 
+    @UseGuards(AccessTokenGuard)
     @Get('')
-    async getAllUsers(@Param('limit') limit: string) {
-        const users = await this.userService.getAllUsers(limit);
-        logger.info(`Retrieved ${users.length} users with limit ${limit}`);
+    async getAllUsers(@Param('limit') limit: string, @Req() req: Request) {
+        const userId = (req as any).user.userId;
+        const users = await this.userService.getAllUsers(userId,limit);
+        logger.info(`Retrieved ${users} users with limit ${limit}`);
         return new SuccessResponse({
             message: 'All users retrieved successfully',
             metadata: {
@@ -86,6 +88,57 @@ export class UserController {
             },
         });
     }
+
+    @UseGuards(AccessTokenGuard)
+    @Patch('follow/:id')
+    async followUser(@Param('id') id: string, @Req() req: Request) {
+        const currentUserId = (req as any).user.userId;
+
+        if (currentUserId === id) {
+            throw new NotFoundException('You cannot follow yourself');
+        }
+
+        const updatedTarget = await this.userService.updateFollowersCount(id, true); 
+        const updatedCurrent = await this.userService.updateFollowingCount(currentUserId, true); // A
+
+        if (!updatedTarget || !updatedCurrent) {
+            throw new NotFoundException('User not found');
+        }
+
+        return new SuccessResponse({
+            message: 'Followed successfully',
+            metadata: {
+                currentUser: updatedCurrent,
+                targetUser: updatedTarget,
+            },
+        });
+    }
+
+    // @UseGuards(AccessTokenGuard)
+    // @Patch('unfollow/:id')
+    // async unfollowUser(@Param('id') id: string, @Req() req: Request) {
+    //     const currentUserId = (req as any).user.userId;
+
+    //     if (currentUserId === id) {
+    //         throw new NotFoundException('You cannot unfollow yourself');
+    //     }
+
+    //     const updatedTarget = await this.userService.updateFollowersCount(id, false); // B
+    //     const updatedCurrent = await this.userService.updateFollowingCount(currentUserId, false); // A
+
+    //     if (!updatedTarget || !updatedCurrent) {
+    //         throw new NotFoundException('User not found');
+    //     }
+
+    //     return new SuccessResponse({
+    //         message: 'Unfollowed successfully',
+    //         metadata: {
+    //             currentUser: updatedCurrent,
+    //             targetUser: updatedTarget,
+    //         },
+    //     });
+    //   }
+
 }
 
 

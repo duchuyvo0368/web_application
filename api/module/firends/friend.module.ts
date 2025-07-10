@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FriendRelation, FriendSchema } from './friend.model';
+import { FriendRelation, FriendSchema } from './entities/friend.model';
 import { FriendsController } from './friends.controller';
 import { FriendService } from './friends.service';
 import config from '../database/config';
@@ -10,6 +10,7 @@ import { AuthModule } from '../auth/module.auth';
     imports: [
         MongooseModule.forFeature(
             [
+
                 {
                     name: FriendRelation.name,
                     schema: FriendSchema,
@@ -22,6 +23,6 @@ import { AuthModule } from '../auth/module.auth';
     ],
     controllers: [FriendsController],
     providers: [FriendService],
-    exports: [MongooseModule],
+    exports: [MongooseModule, FriendService],
 })
 export class FriendModule { }

@@ -8,7 +8,7 @@ interface Friend {
     _id: string;
     name: string;
     avatar: string;
-    followers?: string;
+    followingCount?: string;
 }
 
 const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
@@ -24,7 +24,7 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
                     _id: user._id,
                     name: user.name,
                     avatar: user.avatar,
-                    followers: user.followers?.toString() || '0 followers',
+                    followingCount: user.followingCount?.toString() || '0 followers',
                 }));
 
                 setFriends(formatted);
@@ -44,9 +44,11 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
             {friends.map((friend) => (
                 <FriendCard
                     key={friend._id}
+                    id={friend._id}
                     name={friend.name}
                     img={friend.avatar}
-                    followers={friend.followers} mutual={''}                />
+                    followingCount={friend.followingCount} mutual={''}
+                />
             ))}
         </div>
     );

@@ -9,10 +9,6 @@ import * as jwt from 'jsonwebtoken';
 import { AuthFailureError } from '../../../utils/error.response';
 import { logger } from '../../../utils/logger';
 
-const HEADER = {
-    CLIENT_ID: 'x-client-id',
-    REFRESHTOKEN: 'x-rtoken-id',
-};
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default';
 
@@ -21,7 +17,7 @@ export class RefreshTokenGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean {
         const req = context.switchToHttp().getRequest<Request>();
 
-        const userId = req.headers[HEADER.CLIENT_ID] as string;
+        // const userId = req.headers[HEADER.CLIENT_ID] as string;
         let refreshToken = req.cookies?.['refreshToken'];
         if ( !refreshToken) {
             logger.warn('Missing refresh token or user ID');
@@ -37,10 +33,10 @@ export class RefreshTokenGuard implements CanActivate {
            // logger.info(`Decoded refresh token: ${JSON.stringify(decoded)}`);
             const decoded = jwt.verify(refreshToken, JWT_SECRET) as any;
            
-            if (decoded.userId !== userId) {
-                logger.warn(`Refresh token UserID mismatch: token=${decoded.userId}, header=${userId}`);
-                throw new AuthFailureError('User ID mismatch');
-            }
+            // if (decoded.userId !== userId) {
+            //     logger.warn(`Refresh token UserID mismatch: token=${decoded.userId}, header=${userId}`);
+            //     throw new AuthFailureError('User ID mismatch');
+            // }
 
             // Gắn thông tin user vào request
             (req as any).user = decoded;

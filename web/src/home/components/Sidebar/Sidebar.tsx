@@ -4,9 +4,9 @@ import Link from 'next/link';
 
 const FriendsSidebar: React.FC = () => {
 
-    
 
-    
+
+
 
     return (
         <div className={styles.sidebarWrapper}>
@@ -17,14 +17,25 @@ const FriendsSidebar: React.FC = () => {
                         All
                     </Link>
                 </li>
-    
+
                 <li className={`${styles.menuItem} ${styles.menuItemInactive}`}>
                     <Link href="/friends">
                         Friends
                     </Link>
                 </li>
 
-                <li className={`${styles.menuItem} ${styles.menuItemInactive}`}>Friend requests</li>
+
+                <li className={`${styles.menuItem} ${styles.menuItemInactive}`}>
+                    <Link href="/friend_request">
+                        Received request
+                    </Link>
+                </li>
+                <li className={`${styles.menuItem} ${styles.menuItemInactive}`}>
+                    <Link href="/request_sent">
+                        Request sent
+                    </Link>
+                </li>
+
                 <li className={`${styles.menuItem} ${styles.menuItemInactive}`}>Following</li>
             </ul>
             <div className={styles.newFriendsSection}>

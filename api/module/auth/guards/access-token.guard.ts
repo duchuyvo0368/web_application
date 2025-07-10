@@ -16,8 +16,8 @@ export class AccessTokenGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean {
         const req = context.switchToHttp().getRequest<Request>();
 
-        const token = req.cookies?.accessToken; // 👈 lấy token từ cookie
-
+        const token = req.cookies.accessToken; 
+        logger.info(`Access Token: ${token}`);
         if (!token) {
             logger.warn('Missing credentials');
             throw new AuthFailureError('Missing credentials');

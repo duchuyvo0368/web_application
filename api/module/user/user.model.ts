@@ -15,11 +15,18 @@ export class User {
     @Prop({ required: true })
     password: string;
 
-    @Prop({ type: String, default: 'https://sbcf.fr/wp-content/uploads/2018/03/sbcf-default-avatar.png' }) // Default avatar URL
+    @Prop({ type: String, default: 'https://cdn.pixabay.com/photo/2015/04/23/22/00/new-year-background-736885_1280.jpg' }) // 
     avatar?: string;
 
     @Prop({ type: String, default: null })
     bio?: string;
+
+
+    @Prop({ default: 0 })
+    followersCount: number;
+
+    @Prop({ default: 0 })
+    followingCount: number;
 }
 
 // 3. Schema factory

@@ -18,7 +18,7 @@ const HomePage: React.FC = () => {
       <main className={styles.main}>
         <Container sidebar={<Sidebar />}>
           <Banner />
-          <Header />
+                  <Header title='People you may know' />
           <UserGrid/>
         </Container>
       </main>

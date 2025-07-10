@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../../friends/pages/HomePage.module.css';
+import styles from '../../home/pages/HomePage.module.css';
 import Toolbar from '../../home/components/Header/Header';
 import Container from '../../home/components/Layout/Container';
 import Sidebar from '../../home/components/Sidebar/Sidebar';
@@ -15,7 +15,7 @@ const FriendsPage: React.FC = () => {
             <main className={styles.main}>
                 <Container sidebar={<Sidebar />}>
                     <Banner />
-                    <Header />
+                    <Header title='Friend'/>
                     <FriendGrid />
                 </Container>
             </main>
