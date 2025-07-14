@@ -89,14 +89,14 @@ export class UserService {
 
     async getAllUsers(userId: string, limit: string): Promise<UserDocument[]> {
         const relatedUserIds = await this.friendService.getRelatedUserIds(userId);
-        relatedUserIds.push(userId); 
+        relatedUserIds.push(userId);
 
         return this.userModel
             .find({ _id: { $nin: relatedUserIds } })
             .limit(Number(limit))
             .lean();
-      }
-      
+    }
+
 
     async updateFollowersCount(toUserId: string, increment: boolean): Promise<User | null> {
         const update = increment
@@ -112,7 +112,7 @@ export class UserService {
             : { $inc: { followingCount: -1 } };
 
         return this.userModel.findByIdAndUpdate(userId, update, { new: true });
-      }
-    
+    }
+
 
 }

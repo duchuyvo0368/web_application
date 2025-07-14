@@ -8,14 +8,18 @@ import {
     Delete,
     NotFoundException,
     UseGuards,
-    Req
+    Req,
+    UploadedFiles,
+    UseInterceptors,
+    UploadedFile
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDto } from './dto/user.dto';
-
 import { SuccessResponse, CREATED } from '../../utils/success.response';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { logger } from '../../utils/logger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import path from 'path';
 
 @Controller('users')
 export class UserController {
@@ -64,7 +68,7 @@ export class UserController {
     @Get('')
     async getAllUsers(@Param('limit') limit: string, @Req() req: Request) {
         const userId = (req as any).user.userId;
-        const users = await this.userService.getAllUsers(userId,limit);
+        const users = await this.userService.getAllUsers(userId, limit);
         logger.info(`Retrieved ${users} users with limit ${limit}`);
         return new SuccessResponse({
             message: 'All users retrieved successfully',
@@ -84,7 +88,7 @@ export class UserController {
         return new SuccessResponse({
             message: 'User found successfully',
             metadata: {
-                user:user
+                user: user
             },
         });
     }
@@ -98,7 +102,7 @@ export class UserController {
             throw new NotFoundException('You cannot follow yourself');
         }
 
-        const updatedTarget = await this.userService.updateFollowersCount(id, true); 
+        const updatedTarget = await this.userService.updateFollowersCount(id, true);
         const updatedCurrent = await this.userService.updateFollowingCount(currentUserId, true); // A
 
         if (!updatedTarget || !updatedCurrent) {
@@ -138,8 +142,41 @@ export class UserController {
     //         },
     //     });
     //   }
+    // @Post('upload/avatar')
+    // @UseInterceptors(
+    //     FileInterceptor('file', {
+    //         storage,
+    //         limits: {
+    //             fileSize: 3 * 1024 * 1024, // 3MB
+    //         },
+    //         fileFilter(req, file, cb) {
+    //             const allowedTypes = ['.jpeg', '.jpg', '.png', '.gif'];
+    //             const extName = path.extname(file.originalname).toLowerCase();
 
+    //             if (!allowedTypes.includes(extName)) {
+    //                 return cb(
+    //                     new Error(
+    //                         `Unsupported file type ${extName}. Only JPEG, PNG, and GIF are allowed.`,
+    //                     ),
+    //                     false,
+    //                 );
+    //             }
+    //             cb(null, true);
+    //         },
+    //         dest: 'uploads', // không cần nếu đã cấu hình `storage`
+    //     }),
+    // )
+    // uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+    //     return {
+    //         message: 'Upload thành công!',
+    //         file: {
+    //             originalname: file.originalname,
+    //             filename: file.filename,
+    //             size: file.size,
+    //             path: file.path,
+    //         },
+    //     };
+    // }
 }
 
 
-  

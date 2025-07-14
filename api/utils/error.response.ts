@@ -28,3 +28,4 @@ export class BadRequestError extends HttpException {
         super(message, HttpStatus.BAD_REQUEST);
     }
 }
+

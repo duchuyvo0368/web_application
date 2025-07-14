@@ -8,40 +8,41 @@
             "node",
             "express"
         ],
-        "declaration": false,
-        "noImplicitAny": false,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
+        "declaration": true,
+        "noImplicitAny": true,
         "sourceMap": true,
         "esModuleInterop": true,
-        "strictPropertyInitialization": false,
         "strict": false,
         "skipLibCheck": true,
         "strictNullChecks": true,
-    
         "forceConsistentCasingInFileNames": true,
         "strictBindCallApply": false,
         "noFallthroughCasesInSwitch": false,
         "baseUrl": ".",
         "paths": {
             "@/*": [
-                "api/*"
+                "/*"
             ],
             "module/*": [
-                "api/module/*"
+                "module/*"
             ],
             "utils/*": [
-                "api/utils/*"
+                "utils/*"
+            ],
+            "config/*": [
+                "config/*"
             ]
         },
         "typeRoots": [
             "./node_modules/@types",
-            "./api/types"
-        ],
-        "skipLibCheck": true
+            "./types"
+        ]
     },
     "include": [
         "main.ts",
+        "module/**/*",
         "api/**/*"
     ],
     "exclude": [

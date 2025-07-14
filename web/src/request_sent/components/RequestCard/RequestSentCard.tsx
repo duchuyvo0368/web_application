@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
 import styles from './RequestSentCard.module.css';
-import { acceptFriendRequest, cancelRequest, getRequestSent } from '../../services/request.sent.service';
+import {  cancelRequest, getRequestSent } from '../../services/request.sent.service';
 
 interface RequestSentCardProps {
     id: string;

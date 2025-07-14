@@ -1,3 +1,4 @@
+import { UploadModule } from './../upload/upload.module';
 
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -11,11 +12,7 @@ import { FriendModule } from '../firends/friend.module';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([
-            { name: User.name, schema: UserSchema },
-
-        ], 'MONGODB_CONNECTION'), AuthModule, FriendModule
-    ],
+        MongooseModule.forFeature([{ name: User.name, schema: UserSchema },], 'MONGODB_CONNECTION'), AuthModule, FriendModule],
     controllers: [UserController],
     providers: [
         UserService,

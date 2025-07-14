@@ -104,9 +104,11 @@ export class AuthController {
         const userId = (req as any).user.userId;
         const email = (req as any).user.email;
         const refreshToken = req.cookies['refreshToken'];
+        const ip = req.ip || req.connection.remoteAddress;
         logger.info(`refreshToken from request: ${refreshToken}`);
         logger.info(`email from request: ${email}`);
         logger.info(`pass from request: ${userId}`);
+        logger.info(`userId from request: ${ip}`);
         if (!refreshToken) {
             throw new BadRequestException('Refresh token is required');
         }
@@ -120,14 +122,14 @@ export class AuthController {
         // Set lại access + refresh token mới vào cookie
         res.cookie('accessToken', result.tokens.accessToken, {
             httpOnly: true,
-            secure: false,
+            //secure: false,
             sameSite: 'strict',
             maxAge: 15 * 60 * 1000, // 15 phút
         });
 
         res.cookie('refreshToken', result.tokens.refreshToken, {
             httpOnly: true,
-            secure: false,
+            //secure: false,
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
         });

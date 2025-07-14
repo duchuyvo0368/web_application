@@ -1,34 +1,54 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { FollowService } from './follow.service';
+import { Controller, Post, Body, Patch, UseGuards, Req } from '@nestjs/common';
 import { CreateFollowDto } from './dto/create-follow.dto';
-import { UpdateFollowDto } from './dto/update-follow.dto';
+import { FollowService } from './follow.service';
+import { SuccessResponse } from 'utils/success.response';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { AccessTokenGuard } from 'module/auth/guards/access-token.guard';
+import { logger } from 'utils/logger';
+
 
 @Controller('follow')
 export class FollowController {
-  constructor(private readonly followService: FollowService) {}
+    constructor(private readonly followService: FollowService) { }
 
-  @Post()
-  create(@Body() createFollowDto: CreateFollowDto) {
-    return this.followService.create(createFollowDto);
-  }
+    
+    @UseGuards(AccessTokenGuard)
+    @ApiBearerAuth()
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                followerId: { type: 'string', example: '6868fe4f4f68d069df5191e8' },
+            },
+            required: ['followerId'],
+        },
+    })
+    @Post('create')
+    async create(followerId:string, @Req() req:Request) {
+        const userId = (req as any).user.userId; // Assuming you have userId in the request
+        logger.info(`Creating follow relation from userId:${userId} to followerId:${followerId}`);
+        const createFollow = this.followService.createFollow(userId, followerId);
+        return new SuccessResponse({
+            message: 'Follow relation created successfully', 
+            metadata: {
+                follow: createFollow,
+            },
+        })
+    }
+    @UseGuards(AccessTokenGuard)
+    @Patch('unfollow')
+    async unfollow(@Body() following:string, req: Request) {
+        const userId = (req as any).user.userId;
+        const unfollow = await this.followService.unfollow(userId, following);
+        return new SuccessResponse({
+            message: 'Unfollow relation created successfully',
+            metadata: {
+                follow: unfollow,
+            },
+        });
+    }
+    // Additional endpoints can be added here for other follow-related actions
+    // For example, to get followers, following, etc.
+    
 
-  @Get()
-  findAll() {
-    return this.followService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.followService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFollowDto: UpdateFollowDto) {
-    return this.followService.update(+id, updateFollowDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.followService.remove(+id);
-  }
 }
