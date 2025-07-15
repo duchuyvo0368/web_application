@@ -10,19 +10,18 @@ export default function LoginPage() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // ✅ Kiểm tra xem user đã đăng nhập chưa
     const checkAuth = async () => {
       try {
-        await axios.get('http://localhost:5000/v1/api/auth/profile', {
+       const res= await axios.get('http://localhost:5000/v1/api/auth/profile', {
             withCredentials: true,
           });
         if (res.data) {
-          router.replace(redirect?.toString() || '/'); // nếu đã login → redirect
+          router.replace(redirect?.toString() || '/'); 
         } else {
-          setAuthChecked(true); // chưa login → hiển thị form
+          setAuthChecked(true);
         }
       } catch (err) {
-        setAuthChecked(true); // lỗi → coi như chưa login
+        setAuthChecked(true); 
       }
     };
 

@@ -8,142 +8,103 @@ import {
     Req,
     UseGuards,
     HttpCode,
+    Patch,
+    BadRequestException,
+    Query,
+    Delete,
+    DefaultValuePipe,
+    ParseIntPipe,
 } from '@nestjs/common';
 import { FriendService } from './friends.service';
 import { CREATED, SuccessResponse } from '../../utils/success.response';
 import { logger } from '../../utils/logger';
 import { BadRequestError, NotFoundError } from '../../utils/error.response';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
-import { ApiBearerAuth, ApiBody, ApiHeader, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 
 @Controller('friends')
 export class FriendsController {
     constructor(private readonly friendsService: FriendService) { }
 
-    // Gửi lời mời kết bạn
-    @ApiBearerAuth()
-    @Post('request')
+
+
+
+    // nhưng lơì mời bạn đã gửi
+    @Get('list/:type')
     @UseGuards(AccessTokenGuard)
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                toUser: { type: 'string', example: '6864a9116ea9d42e2cc9ae36' },
-            },
-            required: ['fromUser', 'toUser'],
-        },
+    @ApiBearerAuth()
+    @ApiParam({
+        name: 'type',
+        enum: ['all', 'sent', 'pending'],
+        required: true,
+        description: 'all = all accepted friends, sent = sent friend requests, pending = received pending friend requests',
     })
-    async sendRequest(@Body() body: { toUser: string }, @Req() req: Request) {
-        const { toUser } = body;
-        const userId = (req as any).user.userId;
-        logger.info(`Sending friend request from userId:${userId} to userId:${toUser}`);
-        const result = await this.friendsService.sendRequest(userId, toUser);
-        return new SuccessResponse({
-            message: 'Friend request sent successfully',
-            metadata: result,
-        });
-    }
-    // Chấp nhận lời mời kết bạn
-    @ApiBearerAuth()
-    @ApiParam({ name: 'id', description: 'id', required: true })
-    @Post('accept/:id')
-    @UseGuards(AccessTokenGuard)
-    async acceptRequest(@Param('id') id: string, @Req() req: Request) {
-        const toUser = (req as any).user.userId;
-        logger.info(`Accepting requestId:${id}`);
-        const result = await this.friendsService.acceptRequest(id, toUser);
-        return new SuccessResponse({
-            message: 'Friend request accepted',
-            metadata: result,
-        })
-
-    }
-
-    // Từ chối lời mời kết bạn
-    @ApiBearerAuth()
-    @Post('reject/:id')
-    @ApiParam({ name: 'id', description: 'Id Friends', required: true })
-    @UseGuards(AccessTokenGuard)
-    async rejectRequest(@Param('id') requestId: string) {
-        const result = await this.friendsService.rejectRequest(requestId);
-        return new SuccessResponse({
-            message: 'Friend request rejected',
-            metadata: result,
-        });
-
-    }
-
-    // Lấy danh sách yêu cầu đang chờ xác nhận
-    @ApiBearerAuth()
-    @UseGuards(AccessTokenGuard)
-    @Get('pending')
-    async getPendingRequests(@Req() req: Request) {
-        const userId = (req as any).user.userId;
-        const result = await this.friendsService.getPendingRequests(userId);
-        return new SuccessResponse({
-            message: 'Pending friend requests fetched',
-            metadata: result,
-        });
-    }
-
-
-    @ApiBearerAuth()
-    @UseGuards(AccessTokenGuard)
-    @Get('requests/sent')
-    async getRequestSent(@Req() req: Request) {
-        const userId = (req as any).user.userId;
-        const result = await this.friendsService.getRequestSent(userId);
-        return new SuccessResponse({
-            message: 'Sent friend requests fetched successfully',
-            metadata: result,
-        });
-    }
-
-    // Lấy danh sách bạn bè
-
-    @ApiBearerAuth()
-    @Get('list')
-    @UseGuards(AccessTokenGuard)
-    async getFriends(@Req() req: Request) {
-        const userId = (req as any).user.userId;
-        const result = await this.friendsService.getFriends(userId);
-        return new SuccessResponse({
-            message: 'Friend list fetched',
-            metadata: {
-                friends: result
-            },
-        });
-    }
-    
-    //Huy loi moi ket bna
-    @ApiBearerAuth()
-    @UseGuards(AccessTokenGuard)
-    @Post('cancel/:id')
-    @ApiParam({ name: 'id', description: 'Id ', required: true })
-    async cancelRequest(@Param('id') requestId: string, @Req() req: Request) {
-        const userId = (req as any).user.userId;
-        logger.info(`Cancelling requestId:${requestId} for userId:${userId}`);
-        const result = await this.friendsService.cancelRequest(requestId, userId);
-        return new SuccessResponse({
-            message: 'Friend request cancelled successfully',
-            metadata: result,
-        });
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        description: 'Limit number of results (optional, default = 10)',
+    })
+    async getFriendList(
+        @Param('type') type: 'all' | 'sent' | 'pending' | 'deleted', @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+        @Req() req: Request,
+    ) {
         
+        const userId = (req as any).user.userId;
+        const result = await this.friendsService.getFriendListByType(userId, type, limit);
+
+        let message = '';
+        switch (type) {
+            case 'all':
+                message = 'Friend list fetched successfully';
+                break;
+            case 'sent':
+                message = 'Sent friend requests fetched successfully';
+                break;
+            case 'pending':
+                message = 'Pending friend requests fetched successfully';
+                break;
+            case 'deleted':
+                message = 'Deleted friend requests fetched successfully';
+                break;
+            default:
+                throw new BadRequestException('Invalid type');
+        }
+
+        return new SuccessResponse({
+            message,
+            metadata: result,
+        });
     }
 
-    @ApiBearerAuth()
+
+
+
+    // Gửi lời mời kết bạn
+    @Post('requests/:userId/action/:action')
     @UseGuards(AccessTokenGuard)
-    @Post('unfriend/:id')
-    @ApiParam({ name: 'id', description: 'Id ', required: true })
-    async unFriends(@Param('id') requestId: string, @Req() req: Request) {
-        const userId = (req as any).user.userId;
-        logger.info(`Cancelling requestId:${requestId} for userId:${userId}`);
-        const result = await this.friendsService.unFriend(requestId, userId);
+    @ApiBearerAuth()
+    @ApiParam({
+        name: 'action',
+        enum: ['accept', 'reject', 'cancel', 'send'],
+        required: true,
+        description: 'accept = Accept friend request, reject = Reject friend request, cancel = Cancel sent request, send = Send friend request',
+    })
+    async handleFriendRequestStatus(@Param('userId') toUser: string, @Param('action') action: 'accept' | 'reject' | 'cancel' | 'send', @Req() req: Request) {
+        const fromUser = (req as any).user.userId;
+        logger.info(`Accepting requestId:${fromUser} and ${toUser} with action: ${action}`);
+        const result = await this.friendsService.handleFriendRequestAction(fromUser, toUser, action);
         return new SuccessResponse({
-            message: 'Friend request cancelled successfully',
+            message: result.message,
             metadata: result,
         });
 
     }
+
+
+
+
 }
+
+
+

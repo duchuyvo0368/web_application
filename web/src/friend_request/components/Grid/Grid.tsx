@@ -7,6 +7,7 @@ import { getFriendPending } from '../../services/friend_request.service';
 
 interface Friend {
     _id: string;
+    userId: string
     name: string;
     avatar: string;
     followers?: string;
@@ -22,7 +23,8 @@ const FriendsRequestGrid: React.FC<{ className?: string }> = ({ className = '' }
                 const requests = res.metadata || [];
 
                 const formatted = requests.map((item: any) => ({
-                    _id: item._id, 
+                    _id: item.fromUser._id,
+                    userId:item.fromUser._id,
                     name: item.fromUser.name,
                     avatar: item.fromUser.avatar,
                     followers: item.fromUser.followers?.toString() || '0 followers',
@@ -36,7 +38,7 @@ const FriendsRequestGrid: React.FC<{ className?: string }> = ({ className = '' }
                 setLoading(false);
             },
         });
-          
+
     }, []);
 
     if (loading) return <p>Đang tải danh sách bạn bè...</p>;
@@ -45,11 +47,11 @@ const FriendsRequestGrid: React.FC<{ className?: string }> = ({ className = '' }
         <div className={`${styles.gridContainer} ${className}`}>
             {friends.map((friend) => (
                 <FriendCard
-                    id={friend._id}
+                    userId={friend.userId}
                     key={friend._id}
                     name={friend.name}
                     img={friend.avatar}
-                    followers={friend.followers} mutual={''}                />
+                    followers={friend.followers} mutual={''} />
             ))}
         </div>
     );

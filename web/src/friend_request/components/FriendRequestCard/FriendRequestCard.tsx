@@ -4,7 +4,7 @@ import styles from './FriendRequestCard.module.css';
 import { acceptFriendRequest, rejectFriendRequest } from '../../services/friend_request.service';
 
 interface FriendCardProps {
-    id: string;
+    userId: string;
     name: string;
     img: string;
     mutual: string;
@@ -15,7 +15,7 @@ interface FriendCardProps {
 }
 
 const FriendCard: React.FC<FriendCardProps> = ({
-    id,
+    userId,
     name,
     img,
     mutual,
@@ -26,11 +26,11 @@ const FriendCard: React.FC<FriendCardProps> = ({
 }) => {
     const [accepted, setAccepted] = useState(false);
     const [rejected, setRejected] = useState(false);
-    console.log('FriendCard rendered with requestId:', id);
+    console.log('FriendCard rendered with requestId:', userId);
     const handleAccept = async () => {
         try {
             await acceptFriendRequest({
-                id,
+                userId,
                 onSuccess: (res) => {
                     console.log('Chấp nhận thành công:', res);
                 },
@@ -50,7 +50,7 @@ const FriendCard: React.FC<FriendCardProps> = ({
     const handleReject = async () => {
         try {
             await rejectFriendRequest({
-                id,
+                userId,
                 onSuccess: (res) => {
                     console.log('Đã từ chối yêu cầu kết bạn:', res);
                 },

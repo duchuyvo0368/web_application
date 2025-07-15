@@ -16,9 +16,9 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getFriends({
+        getFriends({limit: 10,
             onSuccess: (res) => {
-                const rawFriends = res.metadata.friends || [];
+                const rawFriends = res.metadata || [];
 
                 const formatted = rawFriends.map((user: any) => ({
                     _id: user._id,
@@ -29,6 +29,7 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
 
                 setFriends(formatted);
                 setLoading(false);
+                console.log("data"+formatted)
             },
             onError: (err) => {
                 console.error('Lỗi khi lấy bạn bè:', err);

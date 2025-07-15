@@ -20,6 +20,7 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { logger } from '../../utils/logger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import path from 'path';
+import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
 
 @Controller('users')
 export class UserController {
@@ -65,6 +66,7 @@ export class UserController {
     // }
 
     @UseGuards(AccessTokenGuard)
+    @ApiParam({ name: 'limit', required: true, example: '10' })
     @Get('')
     async getAllUsers(@Param('limit') limit: string, @Req() req: Request) {
         const userId = (req as any).user.userId;
@@ -78,6 +80,7 @@ export class UserController {
             },
         });
     }
+    @ApiBasicAuth()
     @UseGuards(AccessTokenGuard)
     @Get('profile')
     async getUserById(@Req() req: Request) {
@@ -93,30 +96,30 @@ export class UserController {
         });
     }
 
-    @UseGuards(AccessTokenGuard)
-    @Patch('follow/:id')
-    async followUser(@Param('id') id: string, @Req() req: Request) {
-        const currentUserId = (req as any).user.userId;
+    // @UseGuards(AccessTokenGuard)
+    // @Patch('follow/:id')
+    // async followUser(@Param('id') id: string, @Req() req: Request) {
+    //     const currentUserId = (req as any).user.userId;
 
-        if (currentUserId === id) {
-            throw new NotFoundException('You cannot follow yourself');
-        }
+    //     if (currentUserId === id) {
+    //         throw new NotFoundException('You cannot follow yourself');
+    //     }
 
-        const updatedTarget = await this.userService.updateFollowersCount(id, true);
-        const updatedCurrent = await this.userService.updateFollowingCount(currentUserId, true); // A
+    //     const updatedTarget = await this.userService.updateFollowersCount(id, true);
+    //     const updatedCurrent = await this.userService.updateFollowingCount(currentUserId, true); // A
 
-        if (!updatedTarget || !updatedCurrent) {
-            throw new NotFoundException('User not found');
-        }
+    //     if (!updatedTarget || !updatedCurrent) {
+    //         throw new NotFoundException('User not found');
+    //     }
 
-        return new SuccessResponse({
-            message: 'Followed successfully',
-            metadata: {
-                currentUser: updatedCurrent,
-                targetUser: updatedTarget,
-            },
-        });
-    }
+    //     return new SuccessResponse({
+    //         message: 'Followed successfully',
+    //         metadata: {
+    //             currentUser: updatedCurrent,
+    //             targetUser: updatedTarget,
+    //         },
+    //     });
+    // }
 
     // @UseGuards(AccessTokenGuard)
     // @Patch('unfollow/:id')

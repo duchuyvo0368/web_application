@@ -33,8 +33,8 @@ export const addFriend = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/request`,
-            { toUser },
+        const res = await axios.post(`${API_CONFIG}/friends/requests/${toUser}/action/send`,
+        {},
             {
                 withCredentials: true,
             }

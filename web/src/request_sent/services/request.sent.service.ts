@@ -11,7 +11,7 @@ export const getRequestSent = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/friends/requests/sent`, {
+        const res = await axios.get(`${API_CONFIG}/friends/list/sent?limit=5`, {
             withCredentials: true,
         });
 
@@ -21,15 +21,15 @@ export const getRequestSent = async ({
         onError?.(err.response?.data || err.message || err);
     }
 };
-export const cancelRequest = async ({ id, onSuccess,
+export const cancelRequest = async ({ userId, onSuccess,
     onError,
 }: {
-    id: string;
+    userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/cancel/${id}`,{}, {
+        const res = await axios.post(`${API_CONFIG}/friends/requests/${userId}/action/cancel`, {}, {
             withCredentials: true,
         });
 

@@ -4,7 +4,7 @@ import styles from './RequestSentCard.module.css';
 import {  cancelRequest, getRequestSent } from '../../services/request.sent.service';
 
 interface RequestSentCardProps {
-    id: string;
+    userId: string;
     name: string;
     img: string;
     mutual?: string;
@@ -14,7 +14,7 @@ interface RequestSentCardProps {
 }
 
 const RequestSentCard: React.FC<RequestSentCardProps> = ({
-    id,
+    userId,
     name,
     img,
     mutual,
@@ -24,10 +24,10 @@ const RequestSentCard: React.FC<RequestSentCardProps> = ({
 }) => {
     const [cancel, setCancel] = useState(false);
     const [addFriends, setAddFriend] = useState(false);
-    console.log('FriendCard rendered with requestId:', id);
+    console.log('FriendCard rendered with requestId:', userId);
     const handleCancelRequest = async () => {
         try {
-            await cancelRequest({id,
+            await cancelRequest({userId,
                 onSuccess: (res) => {
                     console.log('Chấp nhận thành công:', res);
                 },

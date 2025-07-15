@@ -12,7 +12,7 @@ export const getFriends = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/friends/list`, {
+        const res = await axios.get(`${API_CONFIG}/friends/list/all?limit=${limit}`, {
             withCredentials: true,
         });
 
@@ -32,7 +32,7 @@ export const addFriend = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/request`,
+        const res = await axios.post(`${API_CONFIG}/friends/list/sent`,
             { toUser },
             {
                 withCredentials: true,
@@ -55,7 +55,7 @@ export const unFriend = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/unfriend/${id}`,{ }, {
+        const res = await axios.post(`${API_CONFIG}/friends/${id}/unfriend`,{ }, {
             withCredentials: true,
         });
 

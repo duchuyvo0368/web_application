@@ -1,8 +1,9 @@
+
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { FriendRelation, FriendRelationDocument } from './entities/friend.model';
-import { FORBIDDEN, NotFoundError } from '../../utils/error.response';
+import { BadRequestError, FORBIDDEN, NotFoundError } from '../../utils/error.response';
 import { convertToObject, getInfoData } from '../../utils/index';
 import { logger } from '../../utils/logger';
 import { FORBIDDEN_MESSAGE } from '@nestjs/core/guards';
@@ -14,74 +15,69 @@ export class FriendService {
         private friendRelationModel: Model<FriendRelationDocument>,
     ) { }
 
-    // Gửi lời mời kết bạn
-    async sendRequest(fromUser: string, toUser: string) {
-        if (fromUser === toUser) {
-            throw new BadRequestException('Cannot send request to yourself');
-        }
-
-        const existing = await this.friendRelationModel.findOne({
-            fromUser,
-            toUser,
+    // Từ chối lời mời
+    async rejectRequest(fromUser: string, toUser: string) {
+        const request = await this.friendRelationModel.findOne({
+            fromUser: toUser,
+            toUser: fromUser,
             status: 'pending',
         });
 
-        if (existing) {
-            throw new BadRequestException('Friend request already sent');
+        if (!request) {
+            throw new NotFoundException('Friend request not found or already processed');
         }
 
-        return this.friendRelationModel.create({ fromUser, toUser });
-    }
-
-    // Từ chối lời mời
-    async rejectRequest(requestId: string) {
-        const request = await this.friendRelationModel.findById(requestId);
-        if (!request || request.status !== 'pending') {
-            throw new NotFoundException('Request not found');
+        if (request.toUser.toString() !== toUser.toString()) {
+            throw new FORBIDDEN('You are not authorized to reject this request');
         }
 
         request.status = 'rejected';
         await request.save();
+
         return request;
     }
 
+
+
     // Chấp nhận lời mời
-    async acceptRequest(id: string, toUserId: string) {
-        const request = await this.friendRelationModel.findById(id);
-        logger.info(`Accepting requestId: ${id}`);
-        logger.info(`Request details: ${JSON.stringify(request)}`);
+    async acceptRequest(fromUser: string, toUser: string) {
+        const request = await this.friendRelationModel.findOne({
+            fromUser: toUser,
+            toUser: fromUser,
+            status: 'pending',
+        });
 
-        if (!request || request.status !== 'pending') {
-            throw new NotFoundError('The friend request does not exist or has been processed.');
-        }
-
-        if (request.toUser.toString() !== toUserId.toString()) {
-            throw new FORBIDDEN('You do not have permission to accept this request');
+        logger.info(`Accepting friend request from fromUser:${fromUser} to toUser: ${toUser} and request: ${JSON.stringify(request)}`);
+        if (!request) {
+            throw new BadRequestError('The friend request does not exist or has been processed.' +request);
         }
 
         request.status = 'accepted';
         request.acceptedAt = new Date();
         await request.save();
 
+        logger.info(`Friend request from ${fromUser} accepted by user ${toUser}`);
+
         return request;
     }
 
 
+
     // Lấy danh sách lời mời đến chưa xác nhận
-    async getPendingRequests(toUserId: string) {
+    async getPending(userId: string, limit: number) {
         return this.friendRelationModel
-            .find({ toUser: toUserId, status: 'pending' })
-            .populate('fromUser', 'name avatar email');
+            .find({ toUser: userId, status: 'pending' })
+            .populate('fromUser', 'name avatar email').limit(limit).lean();
     }
 
-    async getRequestSent(fromUser: string) {
+    // Lấy danh sách lời mời đã gửi
+    async getSentFriendRequest(userId: string, limit: number) {
         return this.friendRelationModel
-            .find({ fromUser: fromUser, status: 'pending' })
-            .populate('toUser', 'name avatar email');
+            .find({ fromUser: userId, status: 'pending' })
+            .populate('toUser', 'name avatar email').limit(limit).lean();
     }
-
     // Lấy danh sách bạn bè (đã accepted)
-    async getFriends(userId: string) {
+    async getFriends(userId: string, limit: number) {
         const relations = await this.friendRelationModel.find({
             status: 'accepted',
             $or: [
@@ -90,7 +86,7 @@ export class FriendService {
             ]
         })
             .populate('fromUser', 'name avatar')
-            .populate('toUser', 'name avatar ')
+            .populate('toUser', 'name avatar ').limit(limit)
             .lean();
         logger.info(`Fetching friends for userId: ${relations}`);
         return relations.map((relation) => {
@@ -109,6 +105,40 @@ export class FriendService {
             };
         });
     }
+
+    // Gửi lời mời kết bạn
+    async friendRequest(fromUser: string, toUser: string) {
+        if (fromUser === toUser) {
+            throw new BadRequestException('Cannot send request to yourself');
+        }
+
+        const existing = await this.friendRelationModel.findOne({
+            fromUser,
+            toUser,
+            status: 'pending',
+        });
+
+        if (existing) {
+            throw new BadRequestException('Friend request already sent');
+        }
+
+        return this.friendRelationModel.create({ fromUser, toUser });
+    }
+
+    // Hủy lời mời kết bạn
+    async cancelFriendRequest(fromUser: string, toUser: string) {
+        const cancelRequest = await this.friendRelationModel.findOneAndDelete({
+            toUser: toUser,
+            fromUser: fromUser,
+            status: 'pending'
+        });
+        if (!cancelRequest) {
+            throw new NotFoundError('Friend request not found or not authorized to cancel');
+        }
+        logger.info(`Friend request ${toUser} cancelled by user ${fromUser}`);
+        return cancelRequest
+    }
+
     async getRelatedUserIds(userId: string): Promise<string[]> {
         const relations = await this.friendRelationModel.find({
             $or: [
@@ -130,22 +160,9 @@ export class FriendService {
         return Array.from(relatedIds);
     }
 
-    async cancelRequest(requestId: string, fromUser: string) {
-        const cancelRequest = await this.friendRelationModel.findOneAndDelete({
-            _id: requestId,
-            fromUser: fromUser,
-            status: 'pending'
-        });
-        if (!cancelRequest) {
-            throw new NotFoundError('Friend request not found or not authorized to cancel');
-        }
-        logger.info(`Friend request ${requestId} cancelled by user ${fromUser}`);
-        return cancelRequest
-    }
-
-    async unFriend(requestId: string, userId: string) {
+    // Hủy kết bạn
+    async unFriend(userId: string) {
         const unFriend = await this.friendRelationModel.findOneAndDelete({
-            _id: requestId,
             status: 'accepted',
             $or: [
                 { fromUser: userId },
@@ -155,8 +172,58 @@ export class FriendService {
         if (!unFriend) {
             throw new NotFoundError('Friend request not found or not authorized to cancel');
         }
-        logger.info(`Friend request ${requestId} unfriend by user ${userId}`);
+        logger.info(`Friend request ${userId} unfriend by user ${userId}`);
         return unFriend
     }
+    // Xử lý hành động gửi hoặc hủy lời mời kết bạn
+    async handleFriendRequestAction(
+        fromUser: string,
+        toUser: string,
+        action: 'send' | 'cancel' | 'accept' | 'reject'
+    ) {
+        switch (action) {
+            case 'send':
+                await this.friendRequest(fromUser, toUser);
+                return { message: 'Friend request sent successfully' };
+
+            case 'cancel':
+                await this.cancelFriendRequest(fromUser, toUser);
+                return { message: 'Friend request cancelled successfully' };
+            case 'accept':
+                await this.acceptRequest(fromUser, toUser);
+                return { message: 'Friend request accepted successfully' };
+            case 'reject':
+                await this.rejectRequest(fromUser, toUser);
+                return { message: 'Friend request rejected successfully' };
+            default:
+                throw new BadRequestException(`Unsupported action: ${action}`);
+        }
+
+
+    }
+
+
+    async getFriendListByType(
+        userId: string,
+        type: 'all' | 'sent' | 'pending' | 'deleted',
+        limit: number
+    ) {
+        switch (type) {
+            case 'all':
+                return this.getFriends(userId, limit);
+            case 'sent':
+                return this.getSentFriendRequest(userId, limit);
+            case 'pending':
+                return this.getPending(userId, limit);
+            case 'deleted':
+                return this.unFriend(userId);
+            default:
+                throw new BadRequestException('Invalid type');
+        }
+    }
+
+
+
+
 }
 

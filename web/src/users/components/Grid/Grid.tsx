@@ -51,7 +51,7 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
                     key={`${friend.name}-${index}`}
                     name={friend.name}
                     img={friend.img}
-                    mutual={friend.mutual}
+                    mutual=""
                     followersCount={`${friend.followersCount ?? 0} followers`}
 
                 />

@@ -25,7 +25,7 @@ const RequestSentGrid: React.FC<{ className?: string }> = ({ className = '' }) =
                     const requests = res.metadata || [];
         
                     const formatted = requests.map((item: any) => ({
-                        _id: item._id, 
+                        _id: item.toUser._id, 
                         name: item.toUser.name,
                         avatar: item.toUser.avatar,
                         followersCount: item.toUser.followersCount?.toString() ,
@@ -49,7 +49,7 @@ const RequestSentGrid: React.FC<{ className?: string }> = ({ className = '' }) =
             {friends.map((friend) => (
                 <RequestSentCard
                     key={friend._id}
-                    id={friend._id}
+                    userId={friend._id}
                     name={friend.name}
                     img={friend.avatar}
                     mutual={''}

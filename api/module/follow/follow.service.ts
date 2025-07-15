@@ -1,6 +1,6 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Follow, FollowRelation } from './entities/follow.model';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateFollowDto } from './dto/create-follow.dto';
 import { UpdateFollowDto } from './dto/update-follow.dto';
 import { Model } from 'mongoose';
@@ -40,14 +40,28 @@ export class FollowService {
     }
 
 
-    async unfollow(userId: string, followingId: string): Promise<FollowRelation | null> {
+    async unfollow(userId: string, Id: string): Promise<FollowRelation | null> {
         const follow = await this.followModel.findOneAndDelete({
             followerId: userId,
-            followingId: followingId
+            followingId: Id
         });
         if (!follow) {
             throw new NotFoundError('You are not following this user');
         }
         return follow;
     }
+
+    async handleFollowAction(userId: string, targetUserId: string, action: 'follow' | 'unfollow'): Promise<string> {
+        switch (action) {
+            case 'follow':
+                await this.createFollow(userId, targetUserId);
+                return 'Followed successfully';
+            case 'unfollow':
+                await this.unfollow(userId, targetUserId);
+                return 'Unfollowed successfully';
+            default:
+                throw new BadRequestException('Invalid action');
+        }
+    }
+
 }

@@ -12,7 +12,7 @@ export const getFriendPending = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/friends/pending`, {
+        const res = await axios.get(`${API_CONFIG}/friends/list/pending`, {
             withCredentials: true,
         });
 
@@ -24,15 +24,15 @@ export const getFriendPending = async ({
 };
 
 // Chấp nhận yêu cầu kết bạn
-export const acceptFriendRequest = async ({ id, onSuccess,
+export const acceptFriendRequest = async ({ userId, onSuccess,
     onError,
 }: {
-    id: string;
+    userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/accept/${id}`,{}, {
+        const res = await axios.post(`${API_CONFIG}/friends/requests/${userId}/action/accept`,{}, {
             withCredentials: true,
         });
 
@@ -43,15 +43,15 @@ export const acceptFriendRequest = async ({ id, onSuccess,
     }
 };
 // Từ chối yêu cầu kết bạn
-export const rejectFriendRequest = async({ id, onSuccess, 
+export const rejectFriendRequest = async({ userId, onSuccess, 
     onError,
 }: {
-    id: string;
+    userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/reject/${id}`,{}, {
+        const res = await axios.post(`${API_CONFIG}/friends/requests/${userId}/action/reject`,{}, {
             withCredentials: true,
         });
 
