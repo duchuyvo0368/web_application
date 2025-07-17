@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/module.auth';
 import { Follow, FollowSchema } from './entities/follow.model';
 import { FollowController } from './follow.controller';
 import { FollowService } from './follow.service';
+import { UserModule } from 'module/user/user_module';
 
 @Module({
     imports: [
@@ -16,7 +17,8 @@ import { FollowService } from './follow.service';
             ],
             'MONGODB_CONNECTION',
         ),
-        AuthModule
+        AuthModule,
+        UserModule
 
     ],
     controllers: [FollowController],

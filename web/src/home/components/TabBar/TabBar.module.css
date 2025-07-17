@@ -1,0 +1,39 @@
+.tabBar {
+    margin-bottom: 20px;
+    display: flex;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+    align-items: center;
+    padding: 0 16px;
+}
+
+.tabItem {
+    flex: 1;
+    text-align: center;
+    padding: 16px 0 8px 0;
+    cursor: pointer;
+    color: #222;
+    font-weight: 400;
+    border-bottom: 2px solid transparent;
+    position: relative;
+    transition: color 0.2s, border-bottom 0.2s, background 0.2s;
+    background: none;
+}
+
+.tabItem:hover {
+    background: #f5faff;
+    color: #1976d2;
+}
+
+.active {
+    color: #1976d2;
+    font-weight: 600;
+    border-bottom: 2px solid #1976d2;
+    background: none;
+}
+
+.badgeSpan {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}

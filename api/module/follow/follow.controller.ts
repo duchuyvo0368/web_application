@@ -5,26 +5,33 @@ import { SuccessResponse } from 'utils/success.response';
 import { ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import { AccessTokenGuard } from 'module/auth/guards/access-token.guard';
 import { logger } from 'utils/logger';
+import { log } from 'console';
 
 
 @Controller('follow')
 export class FollowController {
     constructor(private readonly followService: FollowService) { }
 
-    
-    @Post('/:userId/follow')
+
+    @ApiParam({ name: 'userId', required: true })
+    @ApiParam({ name: 'action', enum: ['addfollow', 'unfollow'] })
+    @UseGuards(AccessTokenGuard)
+    @Post('/:userId/action/:action')
     async followHandler(
-        @Param('id') targetUserId: string,
-        @Body('action') action: 'follow' | 'unfollow',
+        @Param('userId') targetUserId: string,
+        @Param('action') action: 'addfollow' | 'unfollow',
         @Req() req: Request
     ) {
+
         const userId = (req as any).user.userId;
-        const message = await this.followService.handleFollowAction(userId, targetUserId, action);
+        logger.info(`Follow action: ${action} for user: ${targetUserId} and: from user: ${userId}`);
+        const result = await this.followService.handleFollowAction(userId, targetUserId, action);
 
-        return new SuccessResponse({ message });
+        return new SuccessResponse({
+            metadata: result,
+            message:result.message
+        });
     }
-
-
-    
+   
 
 }

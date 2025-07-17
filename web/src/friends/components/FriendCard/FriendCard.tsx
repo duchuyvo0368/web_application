@@ -6,7 +6,7 @@ import { addFriend, unFriend } from '../../services/friends.service';
 interface FriendCardProps {
     name: string;
     img: string;
-    id: string;
+    userId: string;
     mutual: string;
     followingCount?: string;
     isInitiallyFriend?: boolean;
@@ -17,7 +17,7 @@ interface FriendCardProps {
 const FriendCard: React.FC<FriendCardProps> = ({
     name,
     img,
-    id,
+    userId,
     mutual,
     followingCount ,
     isInitiallyFriend = false,
@@ -28,17 +28,20 @@ const FriendCard: React.FC<FriendCardProps> = ({
 
     const handleToggleFriend = () => {
         if (isFriend) {
-            addFriend({toUser:id,
-                onSuccess: (data) => {
-                    console.log('Đã gửi lời mời kết bạn:', data);
-                },
-                onError: (err) => {
-                    console.error('Lỗi khi gửi lời mời kết bạn:', err);
-                }
-            })
+            // addFriend({
+            //     toUser: userId,
+            //     onSuccess: (data) => {
+            //         console.log('Đã gửi lời mời kết bạn:', data);
+            //     },
+            //     onError: (err) => {
+            //         console.error('Lỗi khi gửi lời mời kết bạn:', err);
+            //     }
+            // })
             onAddFriend?.();
         } else {
-            unFriend({id,
+            console.log('userId:'+userId)
+            unFriend({
+                userId,
                 onSuccess: (data) => {
                     console.log('Đã hủy kết bạn:', data);
                 },

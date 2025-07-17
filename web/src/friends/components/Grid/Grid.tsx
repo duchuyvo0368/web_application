@@ -5,7 +5,8 @@ import styles from './Grid.module.css';
 import { getFriends } from '../../services/friends.service';
 
 interface Friend {
-    _id: string;
+    _id:string;
+    userId: string;
     name: string;
     avatar: string;
     followingCount?: string;
@@ -16,12 +17,13 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getFriends({limit: 10,
+        getFriends({limit: 12,
             onSuccess: (res) => {
                 const rawFriends = res.metadata || [];
 
                 const formatted = rawFriends.map((user: any) => ({
-                    _id: user._id,
+                    _id: rawFriends._id,
+                    userId: user.userId,
                     name: user.name,
                     avatar: user.avatar,
                     followingCount: user.followingCount?.toString() || '0 followers',
@@ -42,10 +44,10 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
 
     return (
         <div className={`${styles.gridContainer} ${className}`}>
-            {friends.map((friend) => (
+            {friends.map((friend,idx) => (
                 <FriendCard
-                    key={friend._id}
-                    id={friend._id}
+                    key={friend._id||idx}
+                    userId={friend.userId}
                     name={friend.name}
                     img={friend.avatar}
                     followingCount={friend.followingCount} mutual={''}

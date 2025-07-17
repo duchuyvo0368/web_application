@@ -5,7 +5,7 @@ import { CREATED, SuccessResponse } from '../../utils/success.response';
 import { LoginUserDto } from './dto/login.dto';
 import { BadRequestError } from '../../utils/error.response';
 import { RegisterDto } from './dto/register.dto';
-import { ApiBody, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { log } from 'console';
 import { logger } from '../../utils/logger';
 import { AccessTokenGuard } from './guards/access-token.guard';
@@ -83,57 +83,36 @@ export class AuthController {
         logger.info(`User ID from request: ${userId}`);
         logger.info(`Logging out userId: ${userId}`);
         const refreshToken = req.cookies['refreshToken'];
-
         if (refreshToken) {
             await this.authService.logout(userId);
         }
-        // Xóa cookie
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
-
         return { message: 'Logout successfully' };
     }
 
-    
+    @ApiBearerAuth() 
+    @ApiHeader({
+        name: 'Authorization',
+        description: 'Nhập Bearer <refresh_token> để lấy access token mới',
+        required: true,
+        example: 'Bearer your-refresh-token-here',
+    })
     @Post('refresh-token')
     @UseGuards(RefreshTokenGuard)
     async handlerRefreshToken(
         @Res({ passthrough: true }) res: Response,
         @Req() req: Request,
     ) {
-        const userId = (req as any).user.userId;
-        const email = (req as any).user.email;
-        const refreshToken = req.cookies['refreshToken'];
-        const ip = req.ip || req.connection.remoteAddress;
-        logger.info(`refreshToken from request: ${refreshToken}`);
-        logger.info(`email from request: ${email}`);
-        logger.info(`pass from request: ${userId}`);
-        logger.info(`userId from request: ${ip}`);
+        const user = (req as any).user;
+        const refreshToken = (req as any).refreshToken;
         if (!refreshToken) {
             throw new BadRequestException('Refresh token is required');
         }
-
+        logger.info(`Received refresh token for userId: ${user.userId}, email: ${user.email}`);
         const result = await this.authService.handlerRefreshToken(
             refreshToken,
-            userId,
-            email,
+            user.userId,
+            user.email,
         );
-
-        // Set lại access + refresh token mới vào cookie
-        res.cookie('accessToken', result.tokens.accessToken, {
-            httpOnly: true,
-            //secure: false,
-            sameSite: 'strict',
-            maxAge: 15 * 60 * 1000, // 15 phút
-        });
-
-        res.cookie('refreshToken', result.tokens.refreshToken, {
-            httpOnly: true,
-            //secure: false,
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
-        });
-
         return new SuccessResponse({
             message: 'Refresh token successfully',
             metadata: result,

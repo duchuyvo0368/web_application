@@ -7,15 +7,14 @@
   align-items: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border-bottom: 1px solid #f0f0f0;
-  padding: 0 16px;
+  padding: 0 8px;
   box-sizing: border-box;
   overflow: visible;
-  /* position: sticky; */
-  /* top: 0; */
-  /* position: fixed; */
-  /* top: 0; */
-  /* width: 100%; */
-  /* z-index: 1000; */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
 }
 
 .toolbar-container {
@@ -30,6 +29,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
 }
 
 .menu-btn {
@@ -39,6 +39,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  margin-left: 24px;
 }
 
 .weather {
@@ -74,10 +75,13 @@
 .toolbar-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  padding-right: 0;
+  margin-right: 0;
 }
 
 .login-btn {
-
+  background: #1976d2;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -89,6 +93,9 @@
   margin-right: 0;
 }
 
+.login-btn:hover {
+  background: #1565c0;
+}
 
 
 .toolbar-friends-btn {
@@ -111,7 +118,8 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 8px;
+  margin-right: 24px;
+  margin-left: 0;
 }
 
 .dropdown-menu {

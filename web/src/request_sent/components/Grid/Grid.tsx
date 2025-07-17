@@ -8,6 +8,7 @@ import RequestSentCard from '../RequestCard/RequestSentCard';
 
 interface RequestSent {
     _id: string;
+    userId:string;
     name: string;
     avatar: string;
     mutual?: string;
@@ -25,7 +26,8 @@ const RequestSentGrid: React.FC<{ className?: string }> = ({ className = '' }) =
                     const requests = res.metadata || [];
         
                     const formatted = requests.map((item: any) => ({
-                        _id: item.toUser._id, 
+                        _id:item._id,
+                        userId: item.toUser._id, 
                         name: item.toUser.name,
                         avatar: item.toUser.avatar,
                         followersCount: item.toUser.followersCount?.toString() ,
@@ -49,7 +51,7 @@ const RequestSentGrid: React.FC<{ className?: string }> = ({ className = '' }) =
             {friends.map((friend) => (
                 <RequestSentCard
                     key={friend._id}
-                    userId={friend._id}
+                    userId={friend.userId}
                     name={friend.name}
                     img={friend.avatar}
                     mutual={''}

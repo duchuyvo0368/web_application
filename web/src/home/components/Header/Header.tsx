@@ -69,7 +69,7 @@ const Toolbar: React.FC = () => {
           {user ? (
             <div className={styles['dropdown']}>
               <div className={styles['dropdown-trigger']}>
-                <Link href="/user/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+                <Link href="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                   {user.avatar && (
                     <img
                       src={user.avatar}

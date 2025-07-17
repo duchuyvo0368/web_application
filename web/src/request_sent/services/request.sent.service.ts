@@ -29,7 +29,7 @@ export const cancelRequest = async ({ userId, onSuccess,
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/requests/${userId}/action/cancel`, {}, {
+        const res = await axios.post(`${API_CONFIG}/friends/requests/${userId}/action/deleted`, {}, {
             withCredentials: true,
         });
 

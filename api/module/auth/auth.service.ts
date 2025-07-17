@@ -1,7 +1,7 @@
 import { InjectModel } from "@nestjs/mongoose";
 import { User, UserDocument } from "../user/user.model";
 import { Model } from "mongoose";
-import { AuthFailureError, BadRequestError } from "../../utils/error.response";
+import { AuthFailureError, BadRequestError, FORBIDDEN } from "../../utils/error.response";
 import { logger } from "../../utils/logger";
 import * as bcrypt from 'bcrypt';
 import { createTokenPair } from "./auth.utils";
@@ -113,9 +113,10 @@ export class AuthService {
         if (!stored) {
             throw new AuthFailureError('Refresh token has been revoked');
         }
-        // Tạo mới token
+        if (stored.refreshToken !== refreshToken) {
+            throw new FORBIDDEN('Invalid refresh token');
+        }
         const tokens = await createTokenPair({ userId, email });
-        // Cập nhật refreshToken mới
         await this.keyTokenService.updateOne(userId,refreshToken );
         return {
             user: { _id: userId, email },

@@ -17,6 +17,7 @@ import { FriendModule } from '../firends/friend.module';
     providers: [
         UserService,
     ],
-    exports: [MongooseModule],
+    exports: [MongooseModule, UserService],
+    
 })
 export class UserModule { }

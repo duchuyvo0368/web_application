@@ -46,10 +46,10 @@ export class FriendsController {
         description: 'Limit number of results (optional, default = 10)',
     })
     async getFriendList(
-        @Param('type') type: 'all' | 'sent' | 'pending' | 'deleted', @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+        @Param('type') type: 'all' | 'sent' | 'pending' , @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
         @Req() req: Request,
     ) {
-        
+
         const userId = (req as any).user.userId;
         const result = await this.friendsService.getFriendListByType(userId, type, limit);
 
@@ -63,9 +63,6 @@ export class FriendsController {
                 break;
             case 'pending':
                 message = 'Pending friend requests fetched successfully';
-                break;
-            case 'deleted':
-                message = 'Deleted friend requests fetched successfully';
                 break;
             default:
                 throw new BadRequestException('Invalid type');
@@ -86,11 +83,11 @@ export class FriendsController {
     @ApiBearerAuth()
     @ApiParam({
         name: 'action',
-        enum: ['accept', 'reject', 'cancel', 'send'],
+        enum: ['accept', 'reject', 'deleted', 'send', 'unfriend'],
         required: true,
         description: 'accept = Accept friend request, reject = Reject friend request, cancel = Cancel sent request, send = Send friend request',
     })
-    async handleFriendRequestStatus(@Param('userId') toUser: string, @Param('action') action: 'accept' | 'reject' | 'cancel' | 'send', @Req() req: Request) {
+    async handleFriendRequestStatus(@Param('userId') toUser: string, @Param('action') action: 'accept' | 'reject' | 'deleted' | 'unfriend' | 'send', @Req() req: Request) {
         const fromUser = (req as any).user.userId;
         logger.info(`Accepting requestId:${fromUser} and ${toUser} with action: ${action}`);
         const result = await this.friendsService.handleFriendRequestAction(fromUser, toUser, action);

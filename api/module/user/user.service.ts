@@ -32,6 +32,9 @@ export class UserService {
     getUserById = async (userId: string): Promise<any | null> => {
         return this.userModel.findById(userId).lean();
     };
+    async findByIds(ids: string[]) {
+        return this.userModel.find({ _id: { $in: ids } }).select('_id name avatar').lean();
+    }
 
     createUser = async (body: UserDto) => {
         const { name, email, password, avatar, bio } = body;

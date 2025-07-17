@@ -13,7 +13,7 @@ interface User {
     followersCount?: string;
 }
 
-const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
+const UserGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
     const [friends, setFriends] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -60,4 +60,4 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
     );
 };
 
-export default FriendsGrid;
+export default UserGrid;

@@ -46,16 +46,16 @@ export const addFriend = async ({
     }
 };
 export const unFriend = async ({
-    id,
+    userId,
     onSuccess,
     onError,
 }: {
-    id?: string;
+        userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/friends/${id}/unfriend`,{ }, {
+        const res = await axios.post(`${API_CONFIG}/friends/requests/${userId}/action/unfriend`,{ }, {
             withCredentials: true,
         });
 

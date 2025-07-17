@@ -8,6 +8,7 @@ import { convertToObject, getInfoData } from '../../utils/index';
 import { logger } from '../../utils/logger';
 import { FORBIDDEN_MESSAGE } from '@nestjs/core/guards';
 import { filter } from 'lodash';
+import { from } from 'rxjs';
 @Injectable()
 export class FriendService {
     constructor(
@@ -22,12 +23,12 @@ export class FriendService {
             toUser: fromUser,
             status: 'pending',
         });
-
+        logger.info(`Rejecting friend request from fromUser:${fromUser} to toUser: ${toUser} and request: ${JSON.stringify(request)}`);
         if (!request) {
             throw new NotFoundException('Friend request not found or already processed');
         }
 
-        if (request.toUser.toString() !== toUser.toString()) {
+        if (request.fromUser.toString() !== toUser.toString()) {
             throw new FORBIDDEN('You are not authorized to reject this request');
         }
 
@@ -49,7 +50,7 @@ export class FriendService {
 
         logger.info(`Accepting friend request from fromUser:${fromUser} to toUser: ${toUser} and request: ${JSON.stringify(request)}`);
         if (!request) {
-            throw new BadRequestError('The friend request does not exist or has been processed.' +request);
+            throw new BadRequestError('The friend request does not exist or has been processed.' + request);
         }
 
         request.status = 'accepted';
@@ -126,7 +127,7 @@ export class FriendService {
     }
 
     // Hủy lời mời kết bạn
-    async cancelFriendRequest(fromUser: string, toUser: string) {
+    async deleteFriendRequest(fromUser: string, toUser: string) {
         const cancelRequest = await this.friendRelationModel.findOneAndDelete({
             toUser: toUser,
             fromUser: fromUser,
@@ -161,33 +162,37 @@ export class FriendService {
     }
 
     // Hủy kết bạn
-    async unFriend(userId: string) {
+    async unFriend(fromUserId: string, toUserId: string) {
         const unFriend = await this.friendRelationModel.findOneAndDelete({
             status: 'accepted',
             $or: [
-                { fromUser: userId },
-                { toUser: userId }
+                { fromUser: fromUserId, toUser: toUserId },
+                { fromUser: toUserId, toUser: fromUserId }
             ]
         });
+
         if (!unFriend) {
-            throw new NotFoundError('Friend request not found or not authorized to cancel');
+            throw new NotFoundError('Friend relation not found or already removed');
         }
-        logger.info(`Friend request ${userId} unfriend by user ${userId}`);
-        return unFriend
+
+        logger.info(`User ${fromUserId} unfriended user ${toUserId}`);
+        return unFriend;
     }
+
+
     // Xử lý hành động gửi hoặc hủy lời mời kết bạn
     async handleFriendRequestAction(
         fromUser: string,
         toUser: string,
-        action: 'send' | 'cancel' | 'accept' | 'reject'
+        action: 'send' | 'deleted' | 'accept' | 'reject' | 'unfriend'
     ) {
         switch (action) {
             case 'send':
                 await this.friendRequest(fromUser, toUser);
                 return { message: 'Friend request sent successfully' };
 
-            case 'cancel':
-                await this.cancelFriendRequest(fromUser, toUser);
+            case 'deleted':
+                await this.deleteFriendRequest(fromUser, toUser);
                 return { message: 'Friend request cancelled successfully' };
             case 'accept':
                 await this.acceptRequest(fromUser, toUser);
@@ -195,6 +200,9 @@ export class FriendService {
             case 'reject':
                 await this.rejectRequest(fromUser, toUser);
                 return { message: 'Friend request rejected successfully' };
+            case 'unfriend':
+                await this.unFriend(fromUser, toUser);
+                return { message: 'Unfriended successfully' };
             default:
                 throw new BadRequestException(`Unsupported action: ${action}`);
         }
@@ -205,7 +213,7 @@ export class FriendService {
 
     async getFriendListByType(
         userId: string,
-        type: 'all' | 'sent' | 'pending' | 'deleted',
+        type: 'all' | 'sent' | 'pending',
         limit: number
     ) {
         switch (type) {
@@ -215,8 +223,6 @@ export class FriendService {
                 return this.getSentFriendRequest(userId, limit);
             case 'pending':
                 return this.getPending(userId, limit);
-            case 'deleted':
-                return this.unFriend(userId);
             default:
                 throw new BadRequestException('Invalid type');
         }
