@@ -2,10 +2,10 @@ import multerS3 from 'multer-s3';
 import multer from 'multer';
 import { S3Client } from '@aws-sdk/client-s3';
 import path from 'path';
-const AWS_BUCKET_NAME = 'trainning-buckets'
-const AWS_ACCESS_KEY_ID = 'AKIA4SYAMJGBKAPOGSVN'
-const AWS_SECRET_ACCESS_KEY = '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'
-const AWS_REGION = 'us-east-1'
+const AWS_BUCKET_NAME = ''
+const AWS_ACCESS_KEY_ID = ''
+const AWS_SECRET_ACCESS_KEY = ''
+const AWS_REGION = ''
 // Debug log for AWS env variables
 // console.log('AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET');
 // console.log('AWS_SECRET_ACCESS_KEY:', process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET');
