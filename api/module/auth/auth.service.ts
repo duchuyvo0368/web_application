@@ -87,8 +87,8 @@ export class AuthService {
         logger.info(`login_tokens::${JSON.stringify(tokens)}`);
         await this.keyTokenService.createKeyToken(userId, tokens.refreshToken);
         return {
-            shop: getInfoData({
-                fields: ['_id', 'name', 'email'],
+            user: getInfoData({
+                fields: ['_id', 'name', 'email', 'avatar'],
                 objects: user,
             }),
             tokens,
@@ -113,13 +113,19 @@ export class AuthService {
         if (!stored) {
             throw new AuthFailureError('Refresh token has been revoked');
         }
+        logger.info(`stored.refreshToken ${stored.refreshToken} refreshToken:${refreshToken}`)
         if (stored.refreshToken !== refreshToken) {
             throw new FORBIDDEN('Invalid refresh token');
         }
         const tokens = await createTokenPair({ userId, email });
-        await this.keyTokenService.updateOne(userId,refreshToken );
+        logger.info(`token ${JSON.stringify(tokens)}`)
+        const result = await this.keyTokenService.updateToken(
+            userId,
+            tokens.refreshToken,
+        );
+        logger.info(`token ${JSON.stringify(result)}`)
         return {
-            user: { _id: userId, email },
+            result: { _id: userId, email },
             tokens,
         };
 

@@ -36,10 +36,11 @@ export class KeyTokenService {
         return this.keyTokenDocument.findOne({ refreshToken }).lean();
     }
 
-    async updateOne(userId:string,refreshToken:string) {
-        return this.keyTokenDocument.updateOne(
-            { userId },
-            { refreshToken }
+    async updateToken(userId: string, refreshToken: string) {
+        const result = await this.keyTokenDocument.updateOne(
+            { userId },              
+            { $set: { refreshToken } }  
         );
+        return result;
     }
 }

@@ -11,27 +11,33 @@ interface User {
     img: string;
     mutual?: string;
     followersCount?: string;
+    isFollowing: boolean;
 }
 
 const UserGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
     const [friends, setFriends] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const limit = 12;
+    const [totalPages, setTotalPages] = useState(1);
 
-    useEffect(() => {
+    const fetchUsers = (pageNumber: number) => {
+        setLoading(true);
         getAllUser({
-            limit: 15,
+            limit,
+            page: pageNumber,
             onSuccess: (res) => {
-                const rawFriends = res.metadata.users || [];
-
+                const rawFriends = res.metadata.data || [];
                 const formatted = rawFriends.map((item: any) => ({
                     id: item._id,
                     name: item.name,
                     img: item.avatar,
-                    mutual: item.mutual || '0 mutual friends',
-                    followersCount: item.followersCount ,
+                    followersCount: item.followersCount,
+                    isFollowing: item.isFollowing,
                 }));
 
                 setFriends(formatted);
+                setTotalPages(res.metadata.pagination?.totalPages || 1);
                 setLoading(false);
             },
             onError: (err) => {
@@ -39,23 +45,56 @@ const UserGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
                 setLoading(false);
             },
         });
+    };
 
-    }, []);
-    if (loading) return <p>Đang tải danh sách bạn bè...</p>;
+    useEffect(() => {
+        fetchUsers(page);
+    }, [page]);
+
+    const handlePrev = () => {
+        if (page > 1) setPage((prev) => prev - 1);
+    };
+
+    const handleNext = () => {
+        if (page < totalPages) setPage((prev) => prev + 1);
+    };
 
     return (
-        <div className={`${styles.gridContainer} ${className}`}>
-            {friends.map((friend, index) => (
-                <UserCard
-                    id={friend.id}
-                    key={`${friend.name}-${index}`}
-                    name={friend.name}
-                    img={friend.img}
-                    mutual=""
-                    followersCount={`${friend.followersCount ?? 0} followers`}
+        <div className={`${className} ${styles.gridWrapper}`}>
+            {/* Overlay loading */}
+            {loading && (
+                <div className={styles.loadingOverlay}>
+                    <p>Loading data...</p>
+                </div>
+            )}
 
-                />
-            ))}
+            {/* Danh sách user */}
+            <div className={styles.gridContainer} style={{ opacity: loading ? 0.3 : 1 }}>
+                {friends.map((friend, index) => (
+                    <UserCard
+                        id={friend.id}
+                        key={`${friend.name}-${index}`}
+                        name={friend.name}
+                        img={friend.img}
+                        isFollowing={friend.isFollowing}
+                        mutual=""
+                        followersCount={friend.followersCount}
+                    />
+                ))}
+            </div>
+
+            {/* Phân trang */}
+            <div className={styles.pagination}>
+                <button onClick={handlePrev} disabled={page === 1 || loading} className={styles.pageBtn}>
+                Previous
+                </button>
+                <span className={styles.pageInfo}>
+                    Page {page} / {totalPages}
+                </span>
+                <button onClick={handleNext} disabled={page === totalPages || loading} className={styles.pageBtn}>
+                    Next
+                </button>
+            </div>
         </div>
     );
 };

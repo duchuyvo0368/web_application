@@ -19,7 +19,7 @@ import { PostsModule } from 'module/posts/posts.module';
             rootPath: join(__dirname, '..', 'uploads'),
             serveRoot: '/uploads',
         }),
-        //UploadModule,
+        UploadModule,
         FriendModule,
         UserModule,
         FollowModule,

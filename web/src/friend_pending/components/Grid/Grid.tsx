@@ -23,7 +23,7 @@ const FriendsRequestGrid: React.FC<{ className?: string }> = ({ className = '' }
                 const requests = res.metadata || [];
 
                 const formatted = requests.map((item: any) => ({
-                    _id: item.fromUser._id,
+                    _id: item._id,
                     userId:item.fromUser._id,
                     name: item.fromUser.name,
                     avatar: item.fromUser.avatar,

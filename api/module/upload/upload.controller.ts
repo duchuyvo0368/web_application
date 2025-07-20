@@ -7,6 +7,7 @@ import {
     UseGuards,
     Req,
     Param,
+    Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -18,9 +19,10 @@ import {
     ApiParam,
 } from '@nestjs/swagger';
 import { uploadConfig } from './utils/multer.config';
-import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { UploadService } from './upload.service';
 import { NotFoundError } from 'utils/error.response';
+import { AuthGuard } from 'module/auth/guards/access-token.guard';
+import { UserService } from 'module/user/user.service';
 
 interface MulterS3File extends Express.Multer.File {
     key?: string;
@@ -29,44 +31,51 @@ interface MulterS3File extends Express.Multer.File {
     etag?: string;
 }
 
-@ApiTags('Upload')
+@ApiTags('User')
 @Controller('upload')
 export class UploadController {
-    constructor(private readonly uploadService: UploadService) { }
+    constructor(private readonly uploadService: UploadService, private readonly userService:UserService) { }
 
-    @Post('/:type')
-    @ApiOperation({ summary: 'Upload file by type (avatar, post, ...)' })
-    @ApiParam({
-        name: 'type',
-        required: true,
-        description: 'Type of image (avatar, post, cover, etc.)',
-    })
+    @Post()
+    @ApiOperation({ summary: 'Upload file (avatar or post)' })
     @ApiConsumes('multipart/form-data')
     @ApiBearerAuth()
     @ApiBody({
         schema: {
             type: 'object',
             properties: {
+                type: {
+                    type: 'avatar',
+                    description: "Upload type (avatar or post)"
+                },
                 file: {
                     type: 'string',
                     format: 'binary',
-                    description: 'Image file (JPEG, PNG, GIF, WebP) - Max 5MB',
-                },
+                    description: 'Image file (JPEG, PNG, etc.) - Max 5MB'
+                }
             },
-            required: ['file'],
-        },
+            required: ['file', 'type']
+        }
     })
-    @UseGuards(AccessTokenGuard)
+    @UseGuards(AuthGuard)
     @UseInterceptors(FileInterceptor('file', uploadConfig))
     async uploadFile(
-        @Param('type') type: string,
+        @Body('type') type: string,
         @UploadedFile() file: MulterS3File,
-        @Req() req: any,
+        @Req() req: any
     ) {
-        if (type!== 'avatar' && type !== 'post') {
-             return new NotFoundError(`Invalid upload type: ${type}. Allowed types are 'avatar' and 'post'.`);
+        if (type !== 'avatar' && type !== 'post') {
+            return new NotFoundError(`Invalid upload type: ${type}. Allowed types are 'avatar' and 'post'.`);
         }
-        return this.uploadService.handleUpload(file, req.user.userId, type);
-      
+
+        const uploadResult = await this.uploadService.handleUpload(file, req.user.userId, type);
+
+        if (type === 'avatar') {
+            await this.userService.updateAvatar(req.user.userId, uploadResult.metadata.url);
+        }
+
+        return uploadResult;
+
     }
+
 }

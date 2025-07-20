@@ -2,36 +2,53 @@ import { Controller, Post, Body, Patch, UseGuards, Req, Param, Delete, BadReques
 import { CreateFollowDto } from './dto/create-follow.dto';
 import { FollowService } from './follow.service';
 import { SuccessResponse } from 'utils/success.response';
-import { ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
-import { AccessTokenGuard } from 'module/auth/guards/access-token.guard';
 import { logger } from 'utils/logger';
 import { log } from 'console';
+import { AuthGuard } from 'module/auth/guards/access-token.guard';
+import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 
 
+@ApiTags('Friends')
 @Controller('follow')
 export class FollowController {
     constructor(private readonly followService: FollowService) { }
 
 
-    @ApiParam({ name: 'userId', required: true })
-    @ApiParam({ name: 'action', enum: ['addfollow', 'unfollow'] })
-    @UseGuards(AccessTokenGuard)
-    @Post('/:userId/action/:action')
-    async followHandler(
-        @Param('userId') targetUserId: string,
-        @Param('action') action: 'addfollow' | 'unfollow',
-        @Req() req: Request
-    ) {
+    // @ApiBody({
+    //     schema: {
+    //         type: 'object',
+    //         properties: {
+    //             userId: {
+    //                 type: 'string',
+    //                 example: 'abc123',
+    //             },
+    //             status: {
+    //                 type: 'string',
+    //                 enum: ['addfollow', 'unfollow'],
+    //                 example: 'addfollow',
+    //             },
+    //         },
+    //         required: ['userId', 'action'],
+    //     },
+    // })
 
-        const userId = (req as any).user.userId;
-        logger.info(`Follow action: ${action} for user: ${targetUserId} and: from user: ${userId}`);
-        const result = await this.followService.handleFollowAction(userId, targetUserId, action);
+    // @UseGuards(AuthGuard)
+    // @Post('')
+    // async followHandler(
+    //     @Body('userId') targetUserId: string,
+    //     @Body('status') status: 'addfollow' | 'unfollow',
+    //     @Req() req: Request
+    // ) {
 
-        return new SuccessResponse({
-            metadata: result,
-            message:result.message
-        });
-    }
+    //     const userId = (req as any).user.userId;
+    //     logger.info(`Follow action: ${status} for user: ${targetUserId} and: from user: ${userId}`);
+    //     const result = await this.followService.handleFollowAction(userId, targetUserId, status);
+
+    //     return new SuccessResponse({
+    //         metadata: result,
+    //         message:result.message
+    //     });
+    // }
    
 
 }

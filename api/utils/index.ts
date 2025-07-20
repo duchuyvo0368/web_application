@@ -107,3 +107,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         });
     }
 }
+const meFields = ['_id', 'name', 'email', 'bio', 'avatar', 'phone', 'birthday'];
+const friendFields = ['_id', 'name', 'email', 'bio', 'avatar'];
+const strangerFields = ['_id', 'name', 'avatar'];
+
+export function filterFields<T extends object>(obj: T, fields: string[]): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([key]) => fields.includes(key))
+    ) as Partial<T>;
+}

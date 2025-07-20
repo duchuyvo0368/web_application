@@ -19,8 +19,9 @@ import { FriendService } from './friends.service';
 import { CREATED, SuccessResponse } from '../../utils/success.response';
 import { logger } from '../../utils/logger';
 import { BadRequestError, NotFoundError } from '../../utils/error.response';
-import { AccessTokenGuard } from '../auth/guards/access-token.guard';
+
 import { ApiBearerAuth, ApiBody, ApiHeader, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from 'module/auth/guards/access-token.guard';
 
 
 @Controller('friends')
@@ -31,10 +32,10 @@ export class FriendsController {
 
 
     // nhưng lơì mời bạn đã gửi
-    @Get('list/:type')
-    @UseGuards(AccessTokenGuard)
+    @Get('')
+    @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @ApiParam({
+    @ApiQuery({
         name: 'type',
         enum: ['all', 'sent', 'pending'],
         required: true,
@@ -46,7 +47,7 @@ export class FriendsController {
         description: 'Limit number of results (optional, default = 10)',
     })
     async getFriendList(
-        @Param('type') type: 'all' | 'sent' | 'pending' , @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+        @Query('type') type: 'all' | 'sent' | 'pending', @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
         @Req() req: Request,
     ) {
 
@@ -78,19 +79,32 @@ export class FriendsController {
 
 
     // Gửi lời mời kết bạn
-    @Post('requests/:userId/action/:action')
-    @UseGuards(AccessTokenGuard)
+    @Post('/update-status')
+    @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @ApiParam({
-        name: 'action',
-        enum: ['accept', 'reject', 'deleted', 'send', 'unfriend'],
-        required: true,
-        description: 'accept = Accept friend request, reject = Reject friend request, cancel = Cancel sent request, send = Send friend request',
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                userId: {
+                    type: 'string',
+                    example: 'abc123',
+                },
+                status: {
+                    type: 'string',
+                    enum: ['accept', 'reject', 'deleted', 'send', 'unfriend'],
+                    example: 'send',
+                    description: 'accept = ..., send = ...',
+                },
+            },
+            required: ['userId', 'status'],
+        },
     })
-    async handleFriendRequestStatus(@Param('userId') toUser: string, @Param('action') action: 'accept' | 'reject' | 'deleted' | 'unfriend' | 'send', @Req() req: Request) {
+
+    async handleFriendRequestStatus(@Body('userId') toUser: string, @Body('status') status: 'accept' | 'reject' | 'deleted' | 'unfriend' | 'send' | 'follow' | 'unfollow', @Req() req: Request) {
         const fromUser = (req as any).user.userId;
-        logger.info(`Accepting requestId:${fromUser} and ${toUser} with action: ${action}`);
-        const result = await this.friendsService.handleFriendRequestAction(fromUser, toUser, action);
+        logger.info(`Accepting requestId:${fromUser} and ${toUser} with action: ${status}`);
+        const result = await this.friendsService.handleFriendRequestAction(fromUser, toUser, status);
         return new SuccessResponse({
             message: result.message,
             metadata: result,

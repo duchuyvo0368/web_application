@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, BadRequestException, Res, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, BadRequestException, Res, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
 import { CREATED, SuccessResponse } from '../../utils/success.response';
@@ -8,8 +8,13 @@ import { RegisterDto } from './dto/register.dto';
 import { ApiBearerAuth, ApiBody, ApiHeader, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { log } from 'console';
 import { logger } from '../../utils/logger';
-import { AccessTokenGuard } from './guards/access-token.guard';
+import { AuthGuard } from './guards/access-token.guard';
+import { AuthRequest } from './interfaces/auth-request.interface';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
+
+// Define AuthRequest interface if not already defined elsewhere
+
+
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -21,18 +26,6 @@ export class AuthController {
         @Req() req: Request) {
         try {
             const result = await this.authService.register(registerUserDto);
-            res.cookie('accessToken', result.tokens?.accessToken, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'strict',
-                maxAge: 15 * 60 * 1000,
-            });
-            res.cookie('refreshToken', result.tokens?.refreshToken, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
             return new CREATED({
                 message: 'Create user successfully',
                 metadata: result,
@@ -47,33 +40,17 @@ export class AuthController {
         @Body() loginUserDto: LoginUserDto,
         @Res({ passthrough: true }) res: Response
     ) {
-        try {
-            const result = await this.authService.loginUser(loginUserDto);
 
-            res.cookie('accessToken', result.tokens.accessToken, {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'strict',
-                maxAge: 15 * 60 * 1000,
-            });
-            res.cookie('refreshToken', result.tokens.refreshToken, {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-            });
+        const result = await this.authService.loginUser(loginUserDto);
+        return new SuccessResponse({
+            message: 'Login successfully',
+            metadata: result,
+        });
 
-            return new SuccessResponse({
-                message: 'Login successfully',
-                metadata: result,
-            });
-        } catch (err) {
-            throw new BadRequestError(err.message);
-        }
     }
 
-  
-    @UseGuards(AccessTokenGuard)
+
+    @UseGuards(AuthGuard)
     @Post('logout')
     async logout(
         @Res({ passthrough: true }) res: Response,
@@ -82,36 +59,37 @@ export class AuthController {
         const userId = (req as any).user.userId;
         logger.info(`User ID from request: ${userId}`);
         logger.info(`Logging out userId: ${userId}`);
-        const refreshToken = req.cookies['refreshToken'];
-        if (refreshToken) {
-            await this.authService.logout(userId);
-        }
+        await this.authService.logout(userId);
         return { message: 'Logout successfully' };
     }
 
-    @ApiBearerAuth() 
+
     @ApiHeader({
-        name: 'Authorization',
-        description: 'Nhập Bearer <refresh_token> để lấy access token mới',
+        name: 'x-refresh-token',
+        description: 'refresh token',
         required: true,
-        example: 'Bearer your-refresh-token-here',
+        example: 'your-refresh-token-here',
     })
+
     @Post('refresh-token')
     @UseGuards(RefreshTokenGuard)
     async handlerRefreshToken(
         @Res({ passthrough: true }) res: Response,
-        @Req() req: Request,
+        @Req() req: AuthRequest,
     ) {
-        const user = (req as any).user;
-        const refreshToken = (req as any).refreshToken;
+        const user = req.user;
+        const refreshToken = req.refreshToken;
         if (!refreshToken) {
             throw new BadRequestException('Refresh token is required');
         }
-        logger.info(`Received refresh token for userId: ${user.userId}, email: ${user.email}`);
+        logger.info(`Received refresh token for userId: ${user}, email: ${user}`);
+        if (!user) {
+            throw new UnauthorizedException('User not found in request');
+        }
         const result = await this.authService.handlerRefreshToken(
             refreshToken,
             user.userId,
-            user.email,
+            user.email
         );
         return new SuccessResponse({
             message: 'Refresh token successfully',

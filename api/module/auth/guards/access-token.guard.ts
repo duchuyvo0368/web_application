@@ -1,38 +1,29 @@
-// guards/access-token.guard.ts
 import {
+    Injectable,
     CanActivate,
     ExecutionContext,
-    Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
-import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
-import { AuthFailureError } from '../../../utils/error.response';
-import { logger } from '../../../utils/logger';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'default';
+import { AuthRequest } from '../interfaces/auth-request.interface';
+import { logger } from 'utils/logger';
 
 @Injectable()
-export class AccessTokenGuard implements CanActivate {
-    canActivate(context: ExecutionContext): boolean {
-        const req = context.switchToHttp().getRequest<Request>();
-
-        const token = req.cookies.accessToken; 
-        logger.info(`Access Token: ${token}`);
-        if (!token) {
-            logger.warn('Missing credentials');
-            throw new AuthFailureError('Missing credentials');
-        }
+export class AuthGuard implements CanActivate {
+    canActivate(context: ExecutionContext): boolean | Promise < boolean > {
+        const request = context.switchToHttp().getRequest<AuthRequest>();
+        const accessToken = request.headers['authorization']?.replace('Bearer ', '');
+        const secret = process.env.JWT_SECRET || 'default';
+        logger.info(`Access token: ${accessToken}`);
+        if(!accessToken) throw new UnauthorizedException('No access token provided');
 
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
-
-            logger.info(`Access Token verified for user: ${decoded.userId}`);
-            (req as any).user = decoded;
+            const decoded: any = jwt.verify(accessToken, secret);
+            request.user = decoded;
             return true;
-        } catch (err: any) {
-            logger.error(`Access Token Verification Failed: ${err.message}`);
-            throw new AuthFailureError('Invalid Access Token');
+        } catch(err) {
+            throw new UnauthorizedException('Invalid or expired access token');
         }
     }
 }
-  
+

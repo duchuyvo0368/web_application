@@ -54,8 +54,8 @@ export class FollowService {
         return follow;
     }
 
-    async handleFollowAction(fromUser: string, targetUserId: string, action: 'addfollow' | 'unfollow') {
-        switch (action) {
+    async handleFollowAction(fromUser: string, targetUserId: string, status: 'addfollow' | 'unfollow') {
+        switch (status) {
             case 'addfollow':
                 await this.createFollow(fromUser, targetUserId);
                 return { message: 'Followed successfully' };
@@ -64,7 +64,7 @@ export class FollowService {
                 await this.unfollow(fromUser, targetUserId);
                 return { message: 'Unfollowed successfully' };
             default:
-                throw new BadRequestException('Invalid action');
+                throw new BadRequestException('Invalid status');
         }
     }
     async getHandleFollow(fromUser: string) {

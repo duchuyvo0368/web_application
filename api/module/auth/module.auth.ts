@@ -1,5 +1,5 @@
 // src/auth/auth.module.ts
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -7,25 +7,27 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { User, UserSchema } from '../user/user.model'; // hoặc đường dẫn đúng tới user.model
 import { KeyTokenModule } from '../token/keyToken.module';
-import { AccessTokenGuard } from './guards/access-token.guard';
+import { UserModule } from 'module/user/user_module';
+import { AuthGuard } from './guards/access-token.guard';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 
 @Module({
     imports: [
+        forwardRef(() => UserModule),
         MongooseModule.forFeature(
             [{ name: User.name, schema: UserSchema }],
             'MONGODB_CONNECTION',
         ),
-        JwtModule.register({}), 
-        KeyTokenModule, 
+        JwtModule.register({}),
+        KeyTokenModule,
     ],
     controllers: [AuthController],
-    providers: [AuthService, AccessTokenGuard, RefreshTokenGuard],
+    providers: [AuthService, AuthGuard, RefreshTokenGuard],
     exports: [
+        AuthGuard,
         RefreshTokenGuard,
-        RefreshTokenGuard,
-        AuthService,              
-        MongooseModule,          
+        AuthService,
+        MongooseModule,
     ],
 })
 export class AuthModule { }

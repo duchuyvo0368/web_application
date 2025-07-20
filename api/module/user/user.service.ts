@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.model';
 import { convertToObject, getInfoData } from '../../utils/index';
@@ -9,7 +9,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { logger } from '../../utils/logger';
 import { UserDto } from './dto/user.dto';
 import { FriendService } from '../firends/friends.service';
+import { filterFields } from '../../utils/index';
 
+const meFields = ['_id', 'name', 'email', 'bio', 'avatar', 'phone', 'birthday'];
+const friendFields = ['_id', 'name', 'email', 'bio', 'avatar'];
+const strangerFields = ['_id', 'name', 'avatar'];
 
 @Injectable()
 export class UserService {
@@ -29,7 +33,7 @@ export class UserService {
         return user;
     };
 
-    getUserById = async (userId: string): Promise<any | null> => {
+    findUserById = async (userId: string): Promise<any | null> => {
         return this.userModel.findById(userId).lean();
     };
     async findByIds(ids: string[]) {
@@ -90,32 +94,160 @@ export class UserService {
         return !!result;
     };
 
-    async getAllUsers(userId: string, limit: string): Promise<UserDocument[]> {
+
+
+
+    // async updateFollowersCount(toUserId: string, increment: boolean): Promise<User | null> {
+    //     const update = increment
+    //         ? { $inc: { followersCount: 1 } }
+    //         : { $inc: { followersCount: -1 } };
+
+    //     return this.userModel.findByIdAndUpdate(toUserId, update, { new: true });
+    // }
+
+    // async updateFollowingCount(userId: string, increment: boolean): Promise<User | null> {
+    //     const update = increment
+    //         ? { $inc: { followingCount: 1 } }
+    //         : { $inc: { followingCount: -1 } };
+
+    //     return this.userModel.findByIdAndUpdate(userId, update, { new: true });
+    // }
+
+    async getAllUsers(userId: string, limit: number, page: number) {
+        const skip = (page - 1) * limit;
+
         const relatedUserIds = await this.friendService.getRelatedUserIds(userId);
-        relatedUserIds.push(userId);
+        relatedUserIds.push(userId); // loại bỏ chính bản thân
 
-        return this.userModel
-            .find({ _id: { $nin: relatedUserIds } })
-            .limit(Number(limit))
-            .lean();
+        // Tổng user chưa liên quan
+        const totalItems = await this.userModel.countDocuments({
+            _id: { $nin: relatedUserIds },
+        });
+
+        const totalPages = Math.ceil(totalItems / limit);
+
+        // Random user chưa liên quan
+        const users = await this.userModel.aggregate([
+            {
+                $match: {
+                    _id: { $nin: relatedUserIds },
+                },
+            },
+            { $sample: { size: limit * page } }, // random trước, rồi chọn page sau
+            { $skip: skip },
+            { $limit: limit },
+            {
+                $project: {
+                    password: 0,
+                },
+            },
+        ]);
+
+        // Lấy người mà current user đang follow
+        const followingRelations = await this.friendService.getFollowingRelations(userId, limit * page);
+        const followedIds = new Set(followingRelations.map((rel) => rel.toUser.toString()));
+
+        const usersList = await Promise.all(
+            users.map(async (userItem) => {
+                const friendId = userItem._id.toString();
+
+                const [followersCount, followingCount] = await Promise.all([
+                    this.friendService.countFollowers(friendId),
+                    this.friendService.countFollowing(friendId),
+                ]);
+
+                return {
+                    ...userItem,
+                    isFollowing: followedIds.has(friendId),
+                    followersCount,
+                    followingCount,
+                };
+            }),
+        );
+
+        return {
+            data: usersList,
+            pagination: {
+                page,
+                limit,
+                totalItems,
+                totalPages,
+            },
+        };
+    }
+  
+
+
+
+
+
+    async getProfile(
+        userId: string, // user cần xem
+        currentUserId: string, // user đang đăng nhập
+    ): Promise<{
+        user: Partial<User>;
+        relation: 'me' | 'friend' | 'stranger';
+    }> {
+        const user = await this.userModel.findById(userId).lean();
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        let relation: 'me' | 'friend' | 'stranger' = 'stranger';
+
+        if (userId === currentUserId) {
+            relation = 'me';
+        } else {
+            const isFriend = await this.friendService.getFriendById(currentUserId, userId);
+            if (isFriend) {
+                relation = 'friend';
+            }
+        }
+
+        let fieldsToPick: string[] = [];
+
+        switch (relation) {
+            case 'me':
+                fieldsToPick = meFields;
+                break;
+            case 'friend':
+                fieldsToPick = friendFields;
+                break;
+            case 'stranger':
+                fieldsToPick = strangerFields;
+                break;
+        }
+
+        const filteredUser = filterFields(user, fieldsToPick);
+
+        return {
+            user: filteredUser,
+            relation,
+        };
     }
 
 
-    async updateFollowersCount(toUserId: string, increment: boolean): Promise<User | null> {
-        const update = increment
-            ? { $inc: { followersCount: 1 } }
-            : { $inc: { followersCount: -1 } };
+    async updateAvatar(userId: string, avatarUrl: string): Promise<any> {
+        const user = await this.userModel.findByIdAndUpdate(
+            userId,
+            { avatar: avatarUrl },
+            { new: true },
+        );
 
-        return this.userModel.findByIdAndUpdate(toUserId, update, { new: true });
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        return {
+            status: 'success',
+            message: 'Avatar updated successfully',
+            metadata: user,
+        };
     }
-
-    async updateFollowingCount(userId: string, increment: boolean): Promise<User | null> {
-        const update = increment
-            ? { $inc: { followingCount: 1 } }
-            : { $inc: { followingCount: -1 } };
-
-        return this.userModel.findByIdAndUpdate(userId, update, { new: true });
-    }
-
-
 }
+
+
+
+
+

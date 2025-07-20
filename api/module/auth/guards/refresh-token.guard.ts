@@ -1,41 +1,29 @@
 import {
+    Injectable,
     CanActivate,
     ExecutionContext,
-    Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
-import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
-import { AuthFailureError } from '../../../utils/error.response';
-import { logger } from '../../../utils/logger';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'default';
+import { AuthRequest } from '../interfaces/auth-request.interface';
+import { logger } from 'utils/logger';
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
-    canActivate(context: ExecutionContext): boolean {
-        const req = context.switchToHttp().getRequest<Request>();
+    canActivate(context: ExecutionContext): boolean | Promise<boolean> {
+        const request = context.switchToHttp().getRequest<AuthRequest>();
+        const refreshToken = request.cookies['refreshToken'] || request.headers['x-refresh-token'];
 
-        const authHeader = req.headers['authorization'];
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            logger.warn('Missing or malformed Authorization header');
-            throw new AuthFailureError('Missing or malformed refresh token');
-        }
-
-        const refreshToken = authHeader.replace(/^Bearer\s/, '').trim();
-        logger.info(`Verifying refresh token...`);
+        const secret = process.env.JWT_REFRESH_SECRET || 'default';
+        if (!refreshToken) throw new UnauthorizedException('No refresh token provided');
 
         try {
-            const decoded = jwt.verify(refreshToken, JWT_SECRET) as any;
-
-            // Gắn user và refresh token vào request để sử dụng sau
-            (req as any).user = decoded;
-            (req as any).refreshToken = refreshToken;
-
-            logger.info(`Refresh token verified. UserID: ${decoded.sub}`);
+            const decoded: any = jwt.verify(refreshToken, secret);
+            request.user = decoded;
+            request.refreshToken = refreshToken;
             return true;
         } catch (err) {
-            logger.error(`Refresh Token Verification Failed: ${err.message}`);
-            throw new AuthFailureError('Invalid or expired refresh token');
+            throw new UnauthorizedException('Invalid or expired refresh token');
         }
     }
 }

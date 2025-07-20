@@ -17,12 +17,13 @@ export const login = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.post(`${API_CONFIG}/auth/login`, data, {
-            withCredentials: true,
-        });
+        const res = await axios.post(`${API_CONFIG}/auth/login`, data)
+
         console.log("Login response:", res);
-        onSuccess?.(res.data.metadata.shop);
+        onSuccess?.(res.data); // ✅
+
     } catch (err: any) {
         onError?.(err.response?.data || err);
     }
 };
+

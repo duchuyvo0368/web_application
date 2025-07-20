@@ -20,13 +20,6 @@ export class User {
 
     @Prop({ type: String, default: null })
     bio?: string;
-
-
-    @Prop({ default: 0 })
-    followersCount: number;
-
-    @Prop({ default: 0 })
-    followingCount: number;
 }
 
 // 3. Schema factory

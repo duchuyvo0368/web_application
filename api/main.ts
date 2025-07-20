@@ -23,8 +23,15 @@ import { GlobalExceptionFilter } from './utils/index';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
+// main.ts
+import * as helmet from 'helmet';
+import { securityMiddleware } from 'module/middleware/security.middleware';
+
+
+
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    const expressApp = app.getHttpAdapter().getInstance();
     //app.use(checkOverload);
     //app.use(countConnect)
     app.setGlobalPrefix('v1/api');
@@ -32,7 +39,8 @@ async function bootstrap() {
         origin: 'http://localhost:3000',
         credentials: true,
     });
-
+    
+    securityMiddleware().forEach((mw) => expressApp.use(mw));
     app.useGlobalFilters(new GlobalExceptionFilter());
     app.use(cookieParser());
     const config = new DocumentBuilder()

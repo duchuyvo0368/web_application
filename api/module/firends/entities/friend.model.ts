@@ -14,9 +14,16 @@ export class FriendRelation {
     @Prop({
         type: String,
         enum: ['pending', 'accepted', 'rejected'],
-        default: 'pending',
+        default: null,
     })
-    status: string;
+    status: string|null;
+
+    @Prop({
+        type: String,
+        enum: ['follow', 'unfollow'],
+        default: 'unfollow',
+    })
+    isFollowing: string;
 
 
     @Prop({ type: Date, default: null })

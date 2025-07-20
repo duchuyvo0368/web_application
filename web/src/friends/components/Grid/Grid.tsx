@@ -19,14 +19,14 @@ const FriendsGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
     useEffect(() => {
         getFriends({limit: 12,
             onSuccess: (res) => {
-                const rawFriends = res.metadata || [];
+                const rawFriends = res.metadata.data || [];
 
                 const formatted = rawFriends.map((user: any) => ({
                     _id: rawFriends._id,
-                    userId: user.userId,
+                    userId: user._id,
                     name: user.name,
                     avatar: user.avatar,
-                    followingCount: user.followingCount?.toString() || '0 followers',
+                    followingCount: user.countFollowers?.toString()+' followers' || '0 followers',
                 }));
 
                 setFriends(formatted);

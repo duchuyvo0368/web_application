@@ -5,7 +5,7 @@ import Container from '../components/Layout/Container';
 import Sidebar from '../../sidebar/components/SideBarPage';
 import Banner from '../../banner/components/Banner';
 import FriendsGrid from '../../friends/components/Grid/Grid';
-import FriendsRequestGrid from '../../friend_request/components/Grid/Grid';
+import FriendsRequestGrid from '../../friend_pending/components/Grid/Grid';
 import RequestSentGrid from '../../request_sent/components/Grid/Grid';
 import UserGrid from '../../users/components/Grid/Grid';
 import Profile from '../../users/components/Profile/Profile';
