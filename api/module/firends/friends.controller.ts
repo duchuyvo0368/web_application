@@ -94,7 +94,8 @@ export class FriendsController {
                     type: 'string',
                     enum: ['accept', 'reject', 'deleted', 'send', 'unfriend'],
                     example: 'send',
-                    description: 'accept = ..., send = ...',
+                    description:
+                        'accept = đồng ý, reject = từ chối, deleted = xóa bạn, send = gửi lời mời, unfriend = hủy kết bạn',
                 },
             },
             required: ['userId', 'status'],

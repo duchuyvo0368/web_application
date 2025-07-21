@@ -19,7 +19,7 @@ const FriendCard: React.FC<FriendCardProps> = ({
     img,
     userId,
     mutual,
-    followingCount ,
+    followingCount,
     isInitiallyFriend = false,
     onAddFriend,
     onUnfriend,
@@ -39,7 +39,7 @@ const FriendCard: React.FC<FriendCardProps> = ({
             // })
             onAddFriend?.();
         } else {
-            console.log('userId:'+userId)
+            console.log('userId:' + userId)
             unFriend({
                 userId,
                 onSuccess: (data) => {

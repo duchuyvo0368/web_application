@@ -1,5 +1,4 @@
 import React from 'react';
-import { useRouter } from 'next/router';
 import styles from './SideBarPage.module.css';
 import HomeIcon from '@mui/icons-material/Home';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
@@ -17,15 +16,17 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import LiveTvIcon from '@mui/icons-material/LiveTv';
 import LayersIcon from '@mui/icons-material/Layers';
 import DescriptionIcon from '@mui/icons-material/Description';
+import { useRouter } from 'next/router';
 
 interface SidebarProps {
   activeTab: number;
   onSelect: (tab: number) => void;
+  menu?: { label: string; icon: React.ReactNode }[];
 }
 
 const menuHome = [
   { label: 'Home', icon: <HomeIcon fontSize="small" style={{ marginRight: 8, color: '#00bfff' }} /> },
-  { label: 'Design', icon: <DesignServicesIcon fontSize="small" style={{ marginRight: 8, color: '#3f51b5' }} /> },
+  { label: 'Friends', icon: <DesignServicesIcon fontSize="small" style={{ marginRight: 8, color: '#3f51b5' }} /> },
   { label: 'My Store', icon: <StoreMallDirectoryIcon fontSize="small" style={{ marginRight: 8, color: '#2196f3' }} /> },
   { label: 'Community', icon: <Diversity3Icon fontSize="small" style={{ marginRight: 8, color: '#1976d2' }} /> },
   { label: 'Digital Yearbook Exhibition', icon: <BrushIcon fontSize="small" style={{ marginRight: 8, color: '#795548' }} /> },
@@ -42,18 +43,20 @@ const menuHome = [
   { label: 'Event Report May 2024', icon: <DescriptionIcon fontSize="small" style={{ marginRight: 8, color: '#ffc107' }} /> },
 ];
 
-const BannerPage: React.FC<SidebarProps> = ({ activeTab, onSelect }) => {
-  const menu = menuHome;
+const BannerPage: React.FC<SidebarProps> = ({ activeTab, onSelect, menu }) => {
+  const menuToRender = menu || menuHome;
   const router = useRouter();
   return (
     <div className={styles.wrapper}>
       <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 0 }}>
-        {menu.map((item: { label: string; icon: React.ReactNode }, idx: number) => (
+        {menuToRender.map((item, idx) => (
           <div
             key={item.label}
             onClick={() => {
               if (idx === 0) {
                 router.push('/');
+              } else if (idx === 1) {
+                router.push('/friends');
               } else {
                 onSelect(idx);
               }

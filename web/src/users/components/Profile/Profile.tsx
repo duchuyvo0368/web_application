@@ -7,14 +7,18 @@ interface ProfileProps {
   userId: string;
 }
 
-const Profile: React.FC<ProfileProps> = ({ userId }) => {
+const   Profile: React.FC<ProfileProps> = ({ userId }) => {
   const [user, setUser] = useState<{ name: string; avatar?: string; email?: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [relation, setRelation] = useState<string | null>(null);
 
   const fetchProfile = () => {
     profile({
       userId,
-      onSuccess: (data) => setUser(data.metadata.user),
+      onSuccess: (data) => {
+        setUser(data.metadata.user)
+        setRelation(data.metadata.relation);
+      },
       onError: (err) => console.error('Load profile failed:', err),
     });
   };
@@ -34,7 +38,7 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
       file,
       onSuccess: (data) => {
         const newAvatarUrl = data.metadata.url;
-
+        
         // ✅ Cập nhật avatar trong state và localStorage
         setUser((prev) => {
           if (!prev) return prev;
@@ -48,11 +52,12 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
               parsed.avatar = newAvatarUrl;
               localStorage.setItem('userInfo', JSON.stringify(parsed));
             }
+           
           } catch (e) {
             console.error('Failed to update localStorage avatar:', e);
           }
 
-          // ✅ Gửi sự kiện avatarUpdated để component khác có thể nghe và cập nhật
+
           window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: newAvatarUrl }));
 
           return updatedUser;
@@ -81,10 +86,12 @@ const Profile: React.FC<ProfileProps> = ({ userId }) => {
       </div>
       <div className={styles.avatarWrap}>
         <img src={user.avatar} alt="avatar" className={styles.avatar} />
-        <label className={styles.uploadIcon}>
-          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
-          <CameraAltIcon fontSize="medium" />
-        </label>
+        {relation === 'me' && (
+    <label className={styles.uploadIcon}>
+      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+      <CameraAltIcon fontSize="medium" />
+    </label>
+  )}
         {loading && <div className={styles.uploading}>Uploading...</div>}
       </div>
       <div className={styles.info}>

@@ -34,7 +34,7 @@ interface MulterS3File extends Express.Multer.File {
 @ApiTags('User')
 @Controller('upload')
 export class UploadController {
-    constructor(private readonly uploadService: UploadService, private readonly userService:UserService) { }
+    constructor(private readonly uploadService: UploadService, private readonly userService: UserService) { }
 
     @Post()
     @ApiOperation({ summary: 'Upload file (avatar or post)' })
@@ -67,12 +67,12 @@ export class UploadController {
         if (type !== 'avatar' && type !== 'post') {
             return new NotFoundError(`Invalid upload type: ${type}. Allowed types are 'avatar' and 'post'.`);
         }
+        // if (!isAdmin && userId && userId !== currentUserId) {
+        //     throw new ForbiddenException("You don't have permission to upload for another user.");
+        // }
 
-        const uploadResult = await this.uploadService.handleUpload(file, req.user.userId, type);
+        const uploadResult = await this.uploadService.handleUpload(file, type, req.user.userId);
 
-        if (type === 'avatar') {
-            await this.userService.updateAvatar(req.user.userId, uploadResult.metadata.url);
-        }
 
         return uploadResult;
 

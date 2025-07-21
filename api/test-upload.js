@@ -31,9 +31,59 @@
 // }
 
 // seedUsers();
+// const { MongoClient } = require('mongodb');
+
+// async function updateAvatars() {
+//   const uri = 'mongodb://localhost:27017';
+//   const client = new MongoClient(uri);
+
+//   try {
+//     await client.connect();
+//     const db = client.db('users_dev');
+//     const usersCollection = db.collection('Users');
+
+//     // Tìm các user có email từ user50@example.com đến user10000@example.com
+//     const regex = /^user(\d+)@example\.com$/;
+//     const cursor = usersCollection.find({
+//       email: { $regex: regex }
+//     });
+
+//     let count = 0;
+
+//     while (await cursor.hasNext()) {
+//       const user = await cursor.next();
+
+//       // Lấy số thứ tự từ email (ví dụ: user59@example.com => 59)
+//       const match = user.email.match(regex);
+//       if (!match) continue;
+
+//       const index = parseInt(match[1]);
+//       if (index < 50 || index > 100000) continue;
+
+//       const newAvatar = `https://file.apetavers.com/api/files/admin/20241228/2c40e35d-58c2-4d1b-a23a-b1147900aa4a--150.png`;
+
+//       await usersCollection.updateOne(
+//         { _id: user._id },
+//         { $set: { avatar: newAvatar } }
+//       );
+
+//       count++;
+//       if (count % 1000 === 0) console.log(`Đã cập nhật ${count} users`);
+//     }
+
+//     console.log(`✅ Đã cập nhật avatar cho ${count} users (user50 → user10000)`);
+//   } catch (err) {
+//     console.error('❌ Lỗi khi cập nhật avatar:', err);
+//   } finally {
+//     await client.close();
+//   }
+// }
+
+// updateAvatars();
+
 const { MongoClient } = require('mongodb');
 
-async function updateAvatars() {
+async function deleteUsers() {
   const uri = 'mongodb://localhost:27017';
   const client = new MongoClient(uri);
 
@@ -42,41 +92,36 @@ async function updateAvatars() {
     const db = client.db('users_dev');
     const usersCollection = db.collection('Users');
 
-    // Tìm các user có email từ user50@example.com đến user10000@example.com
     const regex = /^user(\d+)@example\.com$/;
-    const cursor = usersCollection.find({
-      email: { $regex: regex }
-    });
 
-    let count = 0;
+    const cursor = usersCollection.find({ email: { $regex: regex } });
+
+    let deleteCount = 0;
 
     while (await cursor.hasNext()) {
       const user = await cursor.next();
 
-      // Lấy số thứ tự từ email (ví dụ: user59@example.com => 59)
       const match = user.email.match(regex);
       if (!match) continue;
 
       const index = parseInt(match[1]);
-      if (index < 50 || index > 100000) continue;
+      if (index <= 10000 || index > 100000) continue;
 
-      const newAvatar = `https://file.apetavers.com/api/files/admin/20241228/2c40e35d-58c2-4d1b-a23a-b1147900aa4a--150.png`;
+      await usersCollection.deleteOne({ _id: user._id });
+      deleteCount++;
 
-      await usersCollection.updateOne(
-        { _id: user._id },
-        { $set: { avatar: newAvatar } }
-      );
-
-      count++;
-      if (count % 1000 === 0) console.log(`Đã cập nhật ${count} users`);
+      if (deleteCount % 1000 === 0) {
+        console.log(`Đã xóa ${deleteCount} users`);
+      }
     }
 
-    console.log(`✅ Đã cập nhật avatar cho ${count} users (user50 → user10000)`);
+    console.log(`✅ Đã xóa ${deleteCount} users (user10001 → user100000)`);
   } catch (err) {
-    console.error('❌ Lỗi khi cập nhật avatar:', err);
+    console.error('❌ Lỗi khi xóa users:', err);
   } finally {
     await client.close();
   }
 }
 
-updateAvatars();
+deleteUsers();
+

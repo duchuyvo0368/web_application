@@ -22,47 +22,46 @@ export class FriendService {
     // Xử lý gửi lời mời kết bạn
     async friendRequest(fromUser: string, toUser: string) {
         if (fromUser === toUser) {
-            throw new BadRequestException('Cannot send request to yourself');
+            throw new BadRequestException('You cannot send a friend request to yourself');
         }
 
-        const existing = await this.friendRelationModel.findOne({ fromUser, toUser });
+        const existing = await this.friendRelationModel.findOne({
+            fromUser,
+            toUser,
+        });
 
         if (existing) {
-            if (existing.status === 'pending' || existing.status === 'accepted') {
-                throw new BadRequestException('Friend request already sent or already friends');
+            if (existing.type === 'pending') {
+                throw new BadRequestException('Friend request already sent');
             }
 
-            // Cập nhật lại trạng thái thành pending
-            await this.friendRelationModel.updateOne(
-                { _id: existing._id },
-                {
-                    $set: {
-                        status: 'pending',
-                    },
-                }
-            );
+            if (existing.type === 'accepted') {
+                throw new BadRequestException('You are already friends');
+            }
+
+            // If the previous request was rejected or deleted, update it
+            existing.type = 'pending';
+            await existing.save();
 
             return {
-                message: 'Friend request sent (existing relation updated)',
-                data: {
-                    fromUser,
-                    toUser,
-                    status: 'pending',
-                },
+                message: 'Friend request re-sent',
+                data: existing,
             };
         }
 
+        // Create new friend request
         const created = await this.friendRelationModel.create({
             fromUser,
             toUser,
-            status: 'pending',
+            type: 'pending',
         });
 
         return {
-            message: 'Friend request sent (new relation created)',
+            message: 'Friend request sent',
             data: created,
         };
     }
+
 
 
 
@@ -71,29 +70,27 @@ export class FriendService {
         const request = await this.friendRelationModel.findOne({
             fromUser: toUser,
             toUser: fromUser,
-            status: 'pending',
+            type: 'pending',
         });
-        logger.info(`fromUser:${fromUser} +toUser:${toUser}`)
-        logger.info(`requets:${request}`)
+       
         if (!request) {
             throw new BadRequestException('Friend request not found');
         }
 
-        if (request.status !== 'pending') {
+        if (request.type !== 'pending') {
             throw new BadRequestException('Cannot accept non-pending request');
         }
 
-        // Chỉ người nhận (toUser) mới được chấp nhận lời mời
         if (fromUser !== request.toUser.toString()) {
             throw new ForbiddenException('Not authorized to accept this request');
         }
 
-        // Cập nhật status và acceptedAt
+       
         await this.friendRelationModel.updateOne(
             { _id: request._id },
             {
                 $set: {
-                    status: 'accepted',
+                    type: 'accepted',
                     acceptedAt: new Date(),
                 },
             }
@@ -104,7 +101,7 @@ export class FriendService {
             data: {
                 fromUser,
                 toUser,
-                status: 'accepted',
+                type: 'accepted',
             },
         };
     }
@@ -114,7 +111,7 @@ export class FriendService {
         const request = await this.friendRelationModel.findOne({
             fromUser,
             toUser,
-            status: 'pending',
+            type: 'pending',
         });
 
         if (!request) {
@@ -126,15 +123,11 @@ export class FriendService {
             throw new ForbiddenException('Not authorized to reject this request');
         }
 
-        // Cập nhật trạng thái thành 'rejected'
-        await this.friendRelationModel.updateOne(
-            { _id: request._id },
-            { $set: { status: 'rejected' } }
-        );
+        await this.friendRelationModel.deleteOne({ _id: request._id });
 
         return {
             message: 'Friend request rejected',
-            data: { fromUser, toUser, status: 'rejected' },
+            data: { fromUser, toUser, type: 'rejected' },
         };
     }
 
@@ -144,95 +137,47 @@ export class FriendService {
         const request = await this.friendRelationModel.findOne({
             fromUser,
             toUser,
+            type: "pending"
         });
 
         if (!request) {
             throw new NotFoundException('Friend request not found');
         }
 
-        // Chỉ được huỷ nếu chưa được xử lý
-        if (request.status !== 'pending' && request.status !== null) {
-            throw new BadRequestException('Cannot cancel a processed friend request');
-        }
+        await this.friendRelationModel.deleteOne({ _id: request._id });
 
-        if (request.isFollowing === 'unfollow') {
-            // Nếu không follow và không còn request => xoá bản ghi luôn
-            await this.friendRelationModel.deleteOne({ _id: request._id });
-            return { message: 'Friend request deleted (no follow)' };
-        }
-
-        // Nếu vẫn đang follow thì chỉ xoá trạng thái request
-        await this.friendRelationModel.updateOne(
-            { _id: request._id },
-            { $set: { status: null, acceptedAt: null } }
-        );
-
-        return { message: 'Friend request cancelled (status cleared)' };
+        return { message: 'Friend request deleted (no follow)' };
     }
 
 
 
     // Theo dõi (follow)
     async follow(fromUser: string, toUser: string) {
-        if (fromUser === toUser) {
-            throw new BadRequestException('Cannot follow yourself');
-        }
 
-        const existing = await this.friendRelationModel.findOne({ fromUser, toUser });
-        const followStatus = existing?.isFollowing;
-        logger.info(`[DEBUG] isFollowing raw value: '${followStatus}'`);
-        logger.info(`[DEBUG] typeof: ${typeof followStatus}`);
-        logger.info(`[DEBUG] Object.prototype.toString: ${Object.prototype.toString.call(followStatus)}`);
-
-        if (existing?.isFollowing?.toString().trim().toLowerCase() === 'follow') {
-            throw new ConflictException('You are already following this person 1'); // ✅ Đúng logic
-        }
-
-        logger.info(`existing: ${existing}`)
+        if (fromUser === toUser) throw new BadRequestException('Cannot follow yourself');
+        const existing = await this.friendRelationModel.findOne({ fromUser, toUser, follow: 'follow' });
         if (!existing) {
             await this.friendRelationModel.create({
                 fromUser,
                 toUser,
-                isFollowing: 'follow',
-                status: null,
+                type: 'follow',
             });
-
-            return { message: 'Followed success (new relation created)' };
+            return { message: 'Followed successfully' };
         }
 
 
-
-        // Nếu đã có nhưng đang unfollow => cập nhật lại isFollowing
-        await this.friendRelationModel.updateOne(
-            { fromUser, toUser },
-            { $set: { isFollowing: 'follow' } }
-        );
-
-        return { message: 'Followed success' };
+        throw new BadRequestException('Cannot follow in current relationship state');
     }
 
+
     // Hủy theo dõi (unfollow)
-    // Nếu chỉ follow mà chưa gửi kết bạn thì xóa luôn
     async unfollow(fromUser: string, toUser: string) {
         logger.info(`data unfollow: ${fromUser} +${toUser}`)
-        const relation = await this.friendRelationModel.findOne({ fromUser, toUser });
-        logger.info(`data unfollow ${relation}`)
-        if (!relation || relation.isFollowing.toString() === 'unfollow') {
-            throw new BadRequestException('You are not following this person2');
+        const relation = await this.friendRelationModel.findOne({ fromUser, toUser, type: 'follow' });
+        if (!relation) {
+            throw new BadRequestException('You are not following this person');
         }
-
-        if (relation.status === null) {
-            // Nếu chỉ follow mà chưa gửi kết bạn -> xóa luôn
-            await this.friendRelationModel.deleteOne({ _id: relation._id });
-            return { message: 'Unfollowed and relation deleted (no friend request)' };
-        }
-
-        // Nếu đã từng gửi lời mời thì chỉ cập nhật lại trạng thái follow
-        await this.friendRelationModel.updateOne(
-            { _id: relation._id },
-            { $set: { isFollowing: 'unfollow' } }
-        );
-
+        await this.friendRelationModel.deleteOne({ _id: relation._id, });
         return { message: 'Unfollowed successfully' };
     }
 
@@ -240,7 +185,7 @@ export class FriendService {
     // Lấy danh sách lời mời đến chưa xác nhận
     async getPendingFriendRequests(userId: string, limit: number) {
         const pendingRequests = await this.friendRelationModel
-            .find({ toUser: userId, status: 'pending' })
+            .find({ toUser: userId, type: 'pending' })
             .populate('fromUser', 'name avatar email')
             .limit(limit)
             .lean();
@@ -268,7 +213,7 @@ export class FriendService {
     // Lấy danh sách lời mời đã gửi
     async getSentFriendRequest(userId: string, limit: number) {
         const pendingFriends = await this.friendRelationModel
-            .find({ fromUser: userId, status: 'pending' })
+            .find({ fromUser: userId, type: 'pending' })
             .populate('toUser', 'name avatar email')
             .limit(limit)
             .lean();
@@ -295,7 +240,7 @@ export class FriendService {
     async getFriends(userId: string, limit: number) {
         const relations = await this.friendRelationModel
             .find({
-                status: 'accepted',
+                type: 'accepted',
                 $or: [{ fromUser: userId }, { toUser: userId }],
             })
             .populate('fromUser', 'name avatar email')
@@ -329,7 +274,7 @@ export class FriendService {
     // Hủy kết bạn
     async unFriend(fromUserId: string, toUserId: string) {
         const unFriend = await this.friendRelationModel.findOneAndDelete({
-            status: 'accepted',
+            type: 'accepted',
             $or: [
                 { fromUser: fromUserId, toUser: toUserId },
                 { fromUser: toUserId, toUser: fromUserId }
@@ -349,8 +294,8 @@ export class FriendService {
     async getRelatedUserIds(userId: string): Promise<string[]> {
         const relations = await this.friendRelationModel.find({
             $or: [
-                { fromUser: userId, status: { $in: ['accepted', 'pending'] } },
-                { toUser: userId, status: { $in: ['accepted', 'pending'] } },
+                { fromUser: userId, type: { $in: ['accepted', 'pending'] } },
+                { toUser: userId, type: { $in: ['accepted', 'pending'] } },
             ],
         }).lean();
 
@@ -420,7 +365,7 @@ export class FriendService {
 
 
 
-    //userA following userB tinh so isFollowing theo id cua userA status:follow
+    //userA following userB tinh so isFollowing theo id cua userA type:follow
     //userC muon xem following cua userB truyen id userB vao lay ra SL following cua userB
     async countFollowing(userId: string): Promise<number> {
         return await this.friendRelationModel.countDocuments({
@@ -429,7 +374,7 @@ export class FriendService {
         });
     }
 
-    //userA duoc userB Followers tinh so isFollowing theo id cua toUser id cua userA status:follow
+    //userA duoc userB Followers tinh so isFollowing theo id cua toUser id cua userA type:follow
     //userC muon xem following cua userA truyen id userA vao lay ra SL following cua userA
     async countFollowers(userId: string): Promise<number> {
         logger.info(`followersId:${userId}`)

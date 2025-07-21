@@ -116,3 +116,11 @@ export function filterFields<T extends object>(obj: T, fields: string[]): Partia
         Object.entries(obj).filter(([key]) => fields.includes(key))
     ) as Partial<T>;
 }
+
+
+/**
+ * Trích xuất metadata từ nội dung chứa URL
+ * @param content Chuỗi nội dung (string)
+ * @returns Object metadata hoặc null nếu không có URL
+ */
+

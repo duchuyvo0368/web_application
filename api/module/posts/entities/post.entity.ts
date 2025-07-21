@@ -10,12 +10,32 @@ export class Post {
     title: string;
     @Prop({
         type: String,
-        enum: ['public', 'private', 'friend', 'followers'],
+        enum: ['public', 'friend'],
         default: 'public',
     })
-    status: string;
-    @Prop({ type: [String], default: [] })
-    images: string[];
+    privacy: string;
+    @Prop({ type: String, default: null})
+    images: string;
+
+    @Prop({
+        type: {
+            url: String,
+            title: String,
+            description: String,
+            image: String,
+        },
+        default: null,
+    })
+    post_link_meta?: {
+        post_link_url: string;
+        post_link_title?: string;
+        post_link_description?: string;
+        post_link_content?: string;
+        post_link_image?: string;
+    }
+    @Prop({ type: String, default:null})
+    content: string
+
     @Prop({ type: Number, default: 0 })
     likesCount: number;
     @Prop({ type: Number, default: 0 })

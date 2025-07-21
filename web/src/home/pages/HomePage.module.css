@@ -13,4 +13,110 @@
   margin-top: 0;
   width: 100%;
   box-sizing: border-box;
-} 
+}
+
+.createPostBar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  padding: 8px 20px;
+  cursor: pointer;
+  margin: 5px 0 15px 0;
+}
+
+.createPostAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.createPostInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  color: #444;
+  cursor: pointer;
+}
+
+.createPostModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.createPostModal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  min-width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.createPostModalTitle {
+  margin: 0;
+  margin-bottom: 16px;
+}
+
+.createPostModalDesc {
+  margin-bottom: 16px;
+  color: #888;
+}
+
+.createPostModalButton {
+  margin-top: 16px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: none;
+  background: #1976d2;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.createPostField {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.createPostIcon {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+.createPostSelect {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+.createPostInputField {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+.createPostTextarea {
+  flex: 1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+  resize: vertical;
+}

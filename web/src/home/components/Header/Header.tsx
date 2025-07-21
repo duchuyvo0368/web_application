@@ -13,12 +13,19 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { getAuthHeaders } from '../../../utils';
 
 
-
+interface User {
+    _id:string;
+    name: string;
+    avatar?: string;
+    email?: string;
+  }
+  
+ 
 const Toolbar: React.FC = () => {
     const router = useRouter();
 
 
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         const userJson = localStorage.getItem('userInfo');
@@ -71,7 +78,7 @@ const Toolbar: React.FC = () => {
                     {user ? (
                         <div className={styles['dropdown']}>
                             <div className={styles['dropdown-trigger']}>
-                                <Link href="/profile" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+                                <Link href={`/profile/${user._id}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
                                     {user.avatar && (
                                         <img
                                             src={user.avatar}
