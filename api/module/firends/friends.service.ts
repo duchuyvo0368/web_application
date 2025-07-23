@@ -319,13 +319,12 @@ export class FriendService {
 
 
     //lay ra mot ban bef
-    async getFriendById(userId: string, friendId: string): Promise<FriendRelation | null> {
+    async getFriendById(userId: string, id: string): Promise<FriendRelation | null> {
         const friend = await this.friendRelationModel.findOne({
             $or: [
-                { fromUser: userId, toUser: friendId },
-                { fromUser: friendId, toUser: userId },
+                { fromUser: userId, toUser: id },
+                { fromUser: id, toUser: userId },
             ],
-             type: 'accepted',
         }).lean();
         return friend;
     }

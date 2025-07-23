@@ -125,41 +125,44 @@ export class UserService {
 
 
 
-async getProfile(
-    userId: string,
-    friendId: string,
-): Promise<{
-    user: Partial<User>;
-    relation: 'me' | 'accepted' | 'pending' | 'stranger';
-}> {
-    const user = await this.userModel.findById(userId).lean();
-    if (!user) throw new NotFoundException('User not found');
+    async getProfile(
+        userId: string,
+        id: string,
+    ): Promise<{
+        user: Partial<User>;
+        relation: 'me' | 'accepted' | 'pending' | 'stranger';
+        isFollowing: boolean
+    }> {
+        const user = await this.userModel.findById(id).lean();
+        if (!user) throw new NotFoundException('User not found');
 
-    let relation: 'me' | 'accepted' | 'pending' | 'stranger' = 'stranger';
 
-    if (userId === friendId) {
-        relation = 'me';
-    } else {
-        const relationRecord = await this.friendService.getFriendById(userId, friendId); // check 2 chiều
-        if (relationRecord) {
-            relation = relationRecord.acceptedAt ? 'accepted' : 'pending';
+        let relation: 'me' | 'accepted' | 'pending' | 'stranger' = 'stranger';
+
+        if (userId === id) {
+            relation = 'me';
+        } else {
+            const friendRecord = await this.friendService.getFriendById(userId, id);
+            if (friendRecord) {
+                if (friendRecord.type === 'accepted') relation = 'accepted';
+                else if (friendRecord.type === 'pending') relation = 'pending';
+            }
         }
+
+        // 3. Kiểm tra xem userId có đang follow friendId không
+        //const isFollowing = await this.friendService.isFollowing(userId, friendId);
+
+        const { password, email, ...filteredUser } = user;
+         const followIds = await this.friendService.getFollowingUserIds(userId);
+        const isFollowing = followIds.includes(id);
+
+        return {
+            user: filteredUser,
+            relation,
+           isFollowing
+        };
     }
 
-    const filteredUser = filterFields(
-        user,
-        relation === 'me'
-            ? meFields
-            : relation === 'accepted'
-            ? friendFields
-            : strangerFields
-    );
-
-    return {
-        user: filteredUser,
-        relation,
-    };
-}
 
 
 
@@ -185,71 +188,71 @@ async getProfile(
 
 
 
-  
 
-async getAllUsers(userId: string, limit: number, page: number) {
-    const skip = (page - 1) * limit;
 
-    const objectIdList: Types.ObjectId[] = (await this.friendService.getRelatedUserIds(userId))
-        .map(id => new Types.ObjectId(id)); 
-    const aggResult = await this.userModel.aggregate([
-        { $match: { _id: { $nin: objectIdList } } },
-        {
-            $facet: {
-                data: [
-                    { $sample: { size: limit * page } },
-                    { $skip: skip },
-                    { $limit: limit },
-                    { $project: { password: 0 } }
-                ],
-                total: [
-                    { $count: 'count' }
-                ]
-            }
-        },
-    ]);
+    async getAllUsers(userId: string, limit: number, page: number) {
+        const skip = (page - 1) * limit;
 
-    const users = aggResult[0]?.data || [];
-    const totalItems = aggResult[0]?.total[0]?.count || 0;
-    const totalPages = Math.ceil((totalItems || 1) / limit);
+        const objectIdList: Types.ObjectId[] = (await this.friendService.getRelatedUserIds(userId))
+            .map(id => new Types.ObjectId(id));
+        const aggResult = await this.userModel.aggregate([
+            { $match: { _id: { $nin: objectIdList } } },
+            {
+                $facet: {
+                    data: [
+                        { $sample: { size: limit * page } },
+                        { $skip: skip },
+                        { $limit: limit },
+                        { $project: { password: 0 } }
+                    ],
+                    total: [
+                        { $count: 'count' }
+                    ]
+                }
+            },
+        ]);
 
-    // Lấy danh sách đang follow để đánh dấu isFollowing
-    const followingRelations = await this.friendService.getFollowingRelations(userId, limit * page);
-    const followedIds = new Set(followingRelations.map(rel => rel.toUser.toString()));
+        const users = aggResult[0]?.data || [];
+        const totalItems = aggResult[0]?.total[0]?.count || 0;
+        const totalPages = Math.ceil((totalItems || 1) / limit);
 
-    // Tính follower/following cho từng user
-    const usersList = await Promise.all(
-        users.map(async (userItem: any) => {
-            const friendId = userItem._id?.toString();
-            if (!friendId) return null; // Bỏ qua nếu không có _id
+        // Lấy danh sách đang follow để đánh dấu isFollowing
+        const followingRelations = await this.friendService.getFollowingRelations(userId, limit * page);
+        const followedIds = new Set(followingRelations.map(rel => rel.toUser.toString()));
 
-            const [followersCount, followingCount] = await Promise.all([
-                this.friendService.countFollowers(friendId),
-                this.friendService.countFollowing(friendId),
-            ]);
+        // Tính follower/following cho từng user
+        const usersList = await Promise.all(
+            users.map(async (userItem: any) => {
+                const friendId = userItem._id?.toString();
+                if (!friendId) return null; // Bỏ qua nếu không có _id
 
-            return {
-                ...userItem,
-                isFollowing: followedIds.has(friendId),
-                followersCount,
-                followingCount,
-            };
-        })
-    );
+                const [followersCount, followingCount] = await Promise.all([
+                    this.friendService.countFollowers(friendId),
+                    this.friendService.countFollowing(friendId),
+                ]);
 
-    // Lọc bỏ các user null (nếu có)
-    const filteredUsers = usersList.filter(Boolean);
+                return {
+                    ...userItem,
+                    isFollowing: followedIds.has(friendId),
+                    followersCount,
+                    followingCount,
+                };
+            })
+        );
 
-    return {
-        data: filteredUsers,
-        pagination: {
-            page,
-            limit,
-            totalItems,
-            totalPages,
-        },
-    };
-}
+        // Lọc bỏ các user null (nếu có)
+        const filteredUsers = usersList.filter(Boolean);
+
+        return {
+            data: filteredUsers,
+            pagination: {
+                page,
+                limit,
+                totalItems,
+                totalPages,
+            },
+        };
+    }
 
 
 }
