@@ -41,7 +41,7 @@ export class PostsService {
         content: string;
         images?: string;
         post_link_meta?: string;
-        privacy?: 'public' | 'friend';
+        privacy?: string;
     }) {
         let metadata = null;
         logger.info(`Incoming post data: ${JSON.stringify(data)}`);

@@ -13,7 +13,7 @@ export class PostsController {
 
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @Post()
+    @Post('create')
     async create(@Body() body: any, @Req() req: Request,) {
         return this.postService.createPost(body);
     }
