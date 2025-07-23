@@ -19,7 +19,7 @@ if (!process.env.AWS_ACCESS_KEY_ID) {
     throw new Error('[UPLOAD][FATAL] AWS_ACCESS_KEY is missing in environment variables. Please set it in your .env file.');
 }
 
-if (!process.env.AWS_SECRET_KEY) {
+if (!process.env.AWS_SECRET_ACCESS_KEY) {
     throw new Error('[UPLOAD][FATAL] AWS_SECRET_KEY is missing in environment variables. Please set it in your .env file.');
 }
 
@@ -28,7 +28,7 @@ const s3 = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_KEY,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     },
 });
 
@@ -42,7 +42,7 @@ export const uploadConfig = {
     storage: multerS3({
         s3,
         bucket: process.env.AWS_BUCKET_NAME,
-       // acl: 'public-read',
+        // acl: 'public-read',
         contentType: multerS3.AUTO_CONTENT_TYPE,
         metadata: (req, file, cb) => {
             cb(null, { fieldName: file.fieldname });

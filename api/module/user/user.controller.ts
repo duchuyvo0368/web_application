@@ -81,12 +81,12 @@ export class UserController {
         @Query('page') page:string = '1',
         @Req() req: Request,
     ) {
-        const currentUserId = (req as any).user.userId;
+        const userId = (req as any).user.userId;
         const pageNumber = Math.max(Number(page), 1);
         const limitNumber = Math.max(Number(limit), 1);
 
         const result = await this.userService.getAllUsers(
-            currentUserId,
+            userId,
             limitNumber,
             pageNumber,
         );

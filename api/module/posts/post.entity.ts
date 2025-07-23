@@ -14,7 +14,7 @@ export class Post {
         default: 'public',
     })
     privacy: string;
-    @Prop({ type: String, default: null})
+    @Prop({ type: String, default: null })
     images: string;
 
     @Prop({
@@ -33,7 +33,9 @@ export class Post {
         post_link_content?: string;
         post_link_image?: string;
     }
-    @Prop({ type: String, default:null})
+    @Prop({ type: [String], default: [] })
+    hastag?: string[]
+    @Prop({ type: String, default: null })
     content: string
 
     @Prop({ type: Number, default: 0 })

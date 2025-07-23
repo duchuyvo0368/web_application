@@ -4,7 +4,7 @@ import { PostsController } from './posts.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from 'module/auth/module.auth';
-import { Post, PostSchema } from './entities/post.entity';
+import { Post, PostSchema } from './post.entity';
 
 @Module({
     imports: [

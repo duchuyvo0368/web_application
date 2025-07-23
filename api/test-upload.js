@@ -1,34 +1,55 @@
-// const { MongoClient } = require('mongodb');
+const { MongoClient } = require('mongodb');
 
-// async function seedUsers() {
-//   const uri = 'mongodb://localhost:27017';
-//   const client = new MongoClient(uri);
+async function seedUsers() {
+  const uri = 'mongodb://localhost:27017';
+  const client = new MongoClient(uri);
 
-//   try {
-//     await client.connect();
-//     const db = client.db('users_dev');
-//     const usersCollection = db.collection('Users');
+  const firstNames = [
+    'Linh', 'Nam', 'Huy', 'Trang', 'Thảo', 'Minh', 'Dũng', 'Hiếu',
+    'Lan', 'Hà', 'Phương', 'Ngọc', 'Hương', 'Tuấn', 'Anh', 'Khoa',
+    'Châu', 'Quân', 'Mai', 'Bình', 'Quỳnh', 'Trung', 'Tiến', 'Vân',
+  ];
 
-//     const users = [];
+  const lastNames = [
+    'Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Vũ', 'Đặng', 'Bùi',
+    'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý', 'Tô', 'Đinh', 'Trịnh',
+  ];
 
-//     for (let i = 51; i <= 100000; i++) {
-//       users.push({
-//         email: `user${i}@example.com`,
-//         name: `User ${i}`,
-//         avatar: `https://i.pravatar.cc/150?img=${i % 70}`, // vòng lặp ảnh đại diện
-//         password: '123456',
-//         bio: `This is the bio of User ${i}`,
-//       });
-//     }
+  function getRandomName() {
+    const first = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const last = lastNames[Math.floor(Math.random() * lastNames.length)];
+    return `${last} ${first}`;
+  }
 
-//     const result = await usersCollection.insertMany(users);
-//     console.log(`✅ Đã thêm ${result.insertedCount} users vào MongoDB`);
-//   } catch (err) {
-//     console.error('❌ Lỗi khi seed:', err);
-//   } finally {
-//     await client.close();
-//   }
-// }
+  try {
+    await client.connect();
+    const db = client.db('users_dev');
+    const usersCollection = db.collection('Users');
+
+    const users = [];
+
+    for (let i = 1; i <= 10; i++) {
+      const name = getRandomName();
+      users.push({
+        email: `user${i}@example.com`,
+        name,
+        avatar: `https://i.pravatar.cc/150?img=${i % 70}`,
+        password: '123456',
+        bio: `Xin chào, tôi là ${name}`,
+      });
+    }
+
+    const result = await usersCollection.insertMany(users);
+    console.log(`✅ Đã thêm ${result.insertedCount} users vào MongoDB`);
+  } catch (err) {
+    console.error('❌ Lỗi khi seed:', err);
+  } finally {
+    await client.close();
+  }
+}
+
+seedUsers();
+
 
 // seedUsers();
 // const { MongoClient } = require('mongodb');
@@ -81,47 +102,47 @@
 
 // updateAvatars();
 
-const { MongoClient } = require('mongodb');
+// const { MongoClient } = require('mongodb');
 
-async function deleteUsers() {
-  const uri = 'mongodb://localhost:27017';
-  const client = new MongoClient(uri);
+// async function deleteUsers() {
+//   const uri = 'mongodb://localhost:27017';
+//   const client = new MongoClient(uri);
 
-  try {
-    await client.connect();
-    const db = client.db('users_dev');
-    const usersCollection = db.collection('Users');
+//   try {
+//     await client.connect();
+//     const db = client.db('users_dev');
+//     const usersCollection = db.collection('Users');
 
-    const regex = /^user(\d+)@example\.com$/;
+//     const regex = /^user(\d+)@example\.com$/;
 
-    const cursor = usersCollection.find({ email: { $regex: regex } });
+//     const cursor = usersCollection.find({ email: { $regex: regex } });
 
-    let deleteCount = 0;
+//     let deleteCount = 0;
 
-    while (await cursor.hasNext()) {
-      const user = await cursor.next();
+//     while (await cursor.hasNext()) {
+//       const user = await cursor.next();
 
-      const match = user.email.match(regex);
-      if (!match) continue;
+//       const match = user.email.match(regex);
+//       if (!match) continue;
 
-      const index = parseInt(match[1]);
-      if (index <= 10000 || index > 100000) continue;
+//       const index = parseInt(match[1]);
+//       if (index <= 10000 || index > 100000) continue;
 
-      await usersCollection.deleteOne({ _id: user._id });
-      deleteCount++;
+//       await usersCollection.deleteOne({ _id: user._id });
+//       deleteCount++;
 
-      if (deleteCount % 1000 === 0) {
-        console.log(`Đã xóa ${deleteCount} users`);
-      }
-    }
+//       if (deleteCount % 1000 === 0) {
+//         console.log(`Đã xóa ${deleteCount} users`);
+//       }
+//     }
 
-    console.log(`✅ Đã xóa ${deleteCount} users (user10001 → user100000)`);
-  } catch (err) {
-    console.error('❌ Lỗi khi xóa users:', err);
-  } finally {
-    await client.close();
-  }
-}
+//     console.log(`✅ Đã xóa ${deleteCount} users (user10001 → user100000)`);
+//   } catch (err) {
+//     console.error('❌ Lỗi khi xóa users:', err);
+//   } finally {
+//     await client.close();
+//   }
+// }
 
-deleteUsers();
+// deleteUsers();
 

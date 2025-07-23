@@ -72,7 +72,7 @@ export class FriendService {
             toUser: fromUser,
             type: 'pending',
         });
-       
+
         if (!request) {
             throw new BadRequestException('Friend request not found');
         }
@@ -85,7 +85,7 @@ export class FriendService {
             throw new ForbiddenException('Not authorized to accept this request');
         }
 
-       
+
         await this.friendRelationModel.updateOne(
             { _id: request._id },
             {
@@ -109,8 +109,8 @@ export class FriendService {
     // Xử lý từ chối lời mời kết bạn
     async rejectRequest(fromUser: string, toUser: string) {
         const request = await this.friendRelationModel.findOne({
-            fromUser,
-            toUser,
+            fromUser: toUser,        // người gửi lời mời
+            toUser: fromUser,  // bạn là người nhận
             type: 'pending',
         });
 
@@ -119,7 +119,7 @@ export class FriendService {
         }
 
         // Kiểm tra quyền từ chối
-        if (toUser !== request.toUser.toString()) {
+        if (fromUser !== request.toUser.toString()) {
             throw new ForbiddenException('Not authorized to reject this request');
         }
 
@@ -127,9 +127,10 @@ export class FriendService {
 
         return {
             message: 'Friend request rejected',
-            data: { fromUser, toUser, type: 'rejected' },
+            data: { fromUser, toUser: fromUser, type: 'rejected' },
         };
     }
+
 
 
     // delete một lời mời kết bạn
@@ -211,6 +212,27 @@ export class FriendService {
 
 
     // Lấy danh sách lời mời đã gửi
+
+
+
+    // Hủy kết bạn
+    async unFriend(fromUserId: string, toUserId: string) {
+        const unFriend = await this.friendRelationModel.findOneAndDelete({
+            type: 'accepted',
+            $or: [
+                { fromUser: fromUserId, toUser: toUserId },
+                { fromUser: toUserId, toUser: fromUserId }
+            ]
+        });
+
+        if (!unFriend) {
+            throw new NotFoundError('Friend relation not found or already removed');
+        }
+
+        logger.info(`User ${fromUserId} unfriended user ${toUserId}`);
+        return unFriend;
+    }
+
     async getSentFriendRequest(userId: string, limit: number) {
         const pendingFriends = await this.friendRelationModel
             .find({ fromUser: userId, type: 'pending' })
@@ -271,32 +293,13 @@ export class FriendService {
         };
     }
 
-    // Hủy kết bạn
-    async unFriend(fromUserId: string, toUserId: string) {
-        const unFriend = await this.friendRelationModel.findOneAndDelete({
-            type: 'accepted',
-            $or: [
-                { fromUser: fromUserId, toUser: toUserId },
-                { fromUser: toUserId, toUser: fromUserId }
-            ]
-        });
-
-        if (!unFriend) {
-            throw new NotFoundError('Friend relation not found or already removed');
-        }
-
-        logger.info(`User ${fromUserId} unfriended user ${toUserId}`);
-        return unFriend;
-    }
-
-
-
     async getRelatedUserIds(userId: string): Promise<string[]> {
         const relations = await this.friendRelationModel.find({
             $or: [
-                { fromUser: userId, type: { $in: ['accepted', 'pending'] } },
-                { toUser: userId, type: { $in: ['accepted', 'pending'] } },
+                { fromUser: userId },
+                { toUser: userId },
             ],
+            type: { $in: ['accepted', 'pending', 'follow'] },
         }).lean();
 
         const relatedIds = new Set<string>();
@@ -308,9 +311,12 @@ export class FriendService {
 
             relatedIds.add(otherId);
         }
+        relatedIds.add(userId);
 
         return Array.from(relatedIds);
     }
+
+
 
     //lay ra mot ban bef
     async getFriendById(userId: string, friendId: string): Promise<FriendRelation | null> {
@@ -322,6 +328,32 @@ export class FriendService {
         }).lean();
         return friend;
     }
+
+    async getFriendUserIds(userId: string): Promise<string[]> {
+        const relations = await this.friendRelationModel.find({
+            type: 'accepted',
+            $or: [
+                { fromUser: userId },
+                { toUser: userId },
+            ],
+        }).lean();
+
+        return relations.map(rel =>
+            rel.fromUser.toString() === userId
+                ? rel.toUser.toString()
+                : rel.fromUser.toString()
+        );
+    }
+
+    async getFollowingUserIds(userId: string): Promise<string[]> {
+        const relations = await this.friendRelationModel.find({
+            fromUser: userId,
+            type: 'follow',
+        }).lean();
+
+        return relations.map(rel => rel.toUser.toString());
+    }
+
 
 
 

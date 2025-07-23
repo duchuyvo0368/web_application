@@ -7,6 +7,7 @@ import styles from './index.module.css';
 import Sidebar from '../sidebar/components/SideBarPage';
 import HomePage from '../home/pages/HomePage';
 import Friends from '../pages/friends/index';
+import '../styles/reset.css';
 
 const IndexPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);

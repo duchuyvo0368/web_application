@@ -124,3 +124,11 @@ export function filterFields<T extends object>(obj: T, fields: string[]): Partia
  * @returns Object metadata hoặc null nếu không có URL
  */
 
+export function isValidUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url); // Nếu sai sẽ throw
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch (_) {
+        return false;
+    }
+}

@@ -2,6 +2,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import UserCard from '../UserCard/UserCard';
+import UserCardSkeleton from '../UserCardSkeleton/UserCardSkeleton';
 import styles from './Grid.module.css';
 import { getAllUser } from '../../services/user.service';
 
@@ -41,7 +42,7 @@ const UserGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
                 setLoading(false);
             },
             onError: (err) => {
-                console.error('Lỗi khi lấy bạn bè:', err);
+                console.error('❌ Lỗi khi lấy bạn bè:', err);
                 setLoading(false);
             },
         });
@@ -61,32 +62,29 @@ const UserGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
 
     return (
         <div className={`${className} ${styles.gridWrapper}`}>
-            {/* Overlay loading */}
-            {loading && (
-                <div className={styles.loadingOverlay}>
-                    <p>Loading data...</p>
-                </div>
-            )}
-
             {/* Danh sách user */}
-            <div className={styles.gridContainer} style={{ opacity: loading ? 0.3 : 1 }}>
-                {friends.map((friend, index) => (
-                    <UserCard
-                        id={friend.id}
-                        key={`${friend.name}-${index}`}
-                        name={friend.name}
-                        img={friend.img}
-                        isFollowing={friend.isFollowing}
-                        mutual=""
-                        followersCount={friend.followersCount}
-                    />
-                ))}
+            <div className={styles.gridContainer}>
+                {loading
+                    ? Array.from({ length: limit }).map((_, index) => (
+                          <UserCardSkeleton key={index} />
+                      ))
+                    : friends.map((friend, index) => (
+                          <UserCard
+                              id={friend.id}
+                              key={`${friend.name}-${index}`}
+                              name={friend.name}
+                              img={friend.img}
+                              isFollowing={friend.isFollowing}
+                              mutual=""
+                              followersCount={friend.followersCount}
+                          />
+                      ))}
             </div>
 
             {/* Phân trang */}
             <div className={styles.pagination}>
                 <button onClick={handlePrev} disabled={page === 1 || loading} className={styles.pageBtn}>
-                Previous
+                    Previous
                 </button>
                 <span className={styles.pageInfo}>
                     Page {page} / {totalPages}
