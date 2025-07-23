@@ -325,6 +325,7 @@ export class FriendService {
                 { fromUser: userId, toUser: friendId },
                 { fromUser: friendId, toUser: userId },
             ],
+             type: 'accepted',
         }).lean();
         return friend;
     }

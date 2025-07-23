@@ -100,14 +100,14 @@ export class UserController {
     @ApiBearerAuth()
     @Get(':userId')
     async getUserProfile(
-        @Param('userId') userId: string,
+        @Param('userId') friendId: string,
         @Req() req: Request,
     ) {
-        const currentUserId = (req as any).user.userId;
+        const userId = (req as any).user.userId;
 
         const result = await this.userService.getProfile(
             userId,
-            currentUserId,
+            friendId,
         );
 
         return new SuccessResponse({

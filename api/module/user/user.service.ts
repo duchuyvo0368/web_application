@@ -125,51 +125,44 @@ export class UserService {
 
 
 
-    async getProfile(
-        userId: string, // user cần xem
-        currentUserId: string, // user đang đăng nhập
-    ): Promise<{
-        user: Partial<User>;
-        relation: 'me' | 'friend' | 'stranger';
-    }> {
-        const user = await this.userModel.findById(userId).lean();
+async getProfile(
+    userId: string,
+    friendId: string,
+): Promise<{
+    user: Partial<User>;
+    relation: 'me' | 'accepted' | 'pending' | 'stranger';
+}> {
+    const user = await this.userModel.findById(userId).lean();
+    if (!user) throw new NotFoundException('User not found');
 
-        if (!user) {
-            throw new NotFoundException('User not found');
+    let relation: 'me' | 'accepted' | 'pending' | 'stranger' = 'stranger';
+
+    if (userId === friendId) {
+        relation = 'me';
+    } else {
+        const relationRecord = await this.friendService.getFriendById(userId, friendId); // check 2 chiều
+        if (relationRecord) {
+            relation = relationRecord.acceptedAt ? 'accepted' : 'pending';
         }
-
-        let relation: 'me' | 'friend' | 'stranger' = 'stranger';
-
-        if (userId === currentUserId) {
-            relation = 'me';
-        } else {
-            const isFriend = await this.friendService.getFriendById(currentUserId, userId);
-            if (isFriend) {
-                relation = 'friend';
-            }
-        }
-
-        let fieldsToPick: string[] = [];
-
-        switch (relation) {
-            case 'me':
-                fieldsToPick = meFields;
-                break;
-            case 'friend':
-                fieldsToPick = friendFields;
-                break;
-            case 'stranger':
-                fieldsToPick = strangerFields;
-                break;
-        }
-
-        const filteredUser = filterFields(user, fieldsToPick);
-
-        return {
-            user: filteredUser,
-            relation,
-        };
     }
+
+    const filteredUser = filterFields(
+        user,
+        relation === 'me'
+            ? meFields
+            : relation === 'accepted'
+            ? friendFields
+            : strangerFields
+    );
+
+    return {
+        user: filteredUser,
+        relation,
+    };
+}
+
+
+
 
 
     async updateAvatar(userId: string, avatarUrl: string): Promise<any> {
