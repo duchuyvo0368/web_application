@@ -156,7 +156,7 @@ export class FriendService {
     async follow(fromUser: string, toUser: string) {
 
         if (fromUser === toUser) throw new BadRequestException('Cannot follow yourself');
-        const existing = await this.friendRelationModel.findOne({ fromUser, toUser, follow: 'follow' });
+        const existing = await this.friendRelationModel.findOne({ fromUser, toUser, type: 'follow' });
         if (!existing) {
             await this.friendRelationModel.create({
                 fromUser,
@@ -299,7 +299,7 @@ export class FriendService {
                 { fromUser: userId },
                 { toUser: userId },
             ],
-            type: { $in: ['accepted', 'pending', 'follow'] },
+            type: { $in: ['accepted', 'pending'] },
         }).lean();
 
         const relatedIds = new Set<string>();
@@ -402,7 +402,7 @@ export class FriendService {
     async countFollowing(userId: string): Promise<number> {
         return await this.friendRelationModel.countDocuments({
             fromUser: userId,
-            isFollowing: 'follow',
+            type: 'follow',
         });
     }
 
@@ -410,9 +410,10 @@ export class FriendService {
     //userC muon xem following cua userA truyen id userA vao lay ra SL following cua userA
     async countFollowers(userId: string): Promise<number> {
         logger.info(`followersId:${userId}`)
+
         return await this.friendRelationModel.countDocuments({
             toUser: userId,
-            isFollowing: 'follow',
+            type: 'follow',
         });
     }
 
@@ -442,7 +443,7 @@ export class FriendService {
     async getFollowingRelations(userId: string, limit: number) {
         return this.friendRelationModel.find({
             fromUser: userId,
-            isFollowing: 'follow',
+            type: 'follow',
         }).select('toUser').limit(limit).lean();
     }
 
