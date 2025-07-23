@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from 'module/auth/module.auth';
 import { Post, PostSchema } from './post.entity';
+import { FriendModule } from 'module/firends/friend.module';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { Post, PostSchema } from './post.entity';
             'MONGODB_CONNECTION' 
           ),
         AuthModule,
+        FriendModule
 
     ],
     controllers: [PostsController],

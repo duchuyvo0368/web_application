@@ -27,7 +27,7 @@ export class PostsController {
         @Query('limit') limit = 10
     ) {
         const userId = req.user!!.userId;
-        const result = await this.postService.getAllFriendPosts(userId, Number(page), Number(limit));
+        const result = await this.postService.getNewsFeedPosts(userId, Number(page), Number(limit));
         return result;
     }
 

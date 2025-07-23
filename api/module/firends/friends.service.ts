@@ -362,9 +362,9 @@ export class FriendService {
     async handleFriendRequestAction(
         fromUser: string,
         toUser: string,
-        status: 'send' | 'deleted' | 'accept' | 'reject' | 'unfriend' | 'follow' | 'unfollow'
+        type: 'send' | 'deleted' | 'accept' | 'reject' | 'unfriend' | 'follow' | 'unfollow'
     ) {
-        switch (status) {
+        switch (type) {
             case 'send':
                 await this.friendRequest(fromUser, toUser);
                 return { message: 'Friend request sent successfully' };

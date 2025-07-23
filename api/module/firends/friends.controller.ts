@@ -90,7 +90,7 @@ export class FriendsController {
                     type: 'string',
                     example: 'abc123',
                 },
-                status: {
+                type: {
                     type: 'string',
                     enum: ['accept', 'reject', 'deleted', 'send', 'unfriend'],
                     example: 'send',
@@ -98,14 +98,14 @@ export class FriendsController {
                         'accept = đồng ý, reject = từ chối, deleted = xóa bạn, send = gửi lời mời, unfriend = hủy kết bạn',
                 },
             },
-            required: ['userId', 'status'],
+            required: ['userId', 'type'],
         },
     })
 
-    async handleFriendRequestStatus(@Body('userId') toUser: string, @Body('status') status: 'accept' | 'reject' | 'deleted' | 'unfriend' | 'send' | 'follow' | 'unfollow', @Req() req: Request) {
+    async handleFriendRequestStatus(@Body('userId') toUser: string, @Body('type') type: 'accept' | 'reject' | 'deleted' | 'unfriend' | 'send' | 'follow' | 'unfollow', @Req() req: Request) {
         const fromUser = (req as any).user.userId;
-        logger.info(`Accepting requestId:${fromUser} and ${toUser} with action: ${status}`);
-        const result = await this.friendsService.handleFriendRequestAction(fromUser, toUser, status);
+        logger.info(`Accepting requestId:${fromUser} and ${toUser} with action: ${type}`);
+        const result = await this.friendsService.handleFriendRequestAction(fromUser, toUser, type);
         return new SuccessResponse({
             message: result.message,
             metadata: result,

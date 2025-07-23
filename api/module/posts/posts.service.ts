@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ApiTags } from '@nestjs/swagger';
 import { Injectable } from '@nestjs/common';
 import { logger } from 'utils/logger';
+import { FriendService } from 'module/firends/friends.service';
 
 
 @ApiTags('Post')
@@ -15,6 +16,7 @@ export class PostsService {
     constructor(
         @InjectModel(Post.name, 'MONGODB_CONNECTION')
         private postModel: Model<PostRelation>,
+        private friendService:FriendService
     ) { }
 
 
@@ -63,37 +65,64 @@ export class PostsService {
 
 
 
-    async getAllFriendPosts(userId: string, page = 1, limit = 10) {
-        const skip = (page - 1) * limit;
+    async getNewsFeedPosts(userId: string, page = 1, limit = 10) {
+  const skip = (page - 1) * limit;
 
-        const [posts, totalItems] = await Promise.all([
-            this.postModel.find({
-                userId: { $ne: userId },
-                privacy: 'public',
-            })
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
+  // Lấy danh sách bạn bè (2 chiều) và danh sách đang follow (1 chiều)
+  const [friendIds, followIds] = await Promise.all([
+    this.friendService.getFriendUserIds(userId),
+    this.friendService.getFollowingUserIds(userId),
+  ]);
 
-            this.postModel.countDocuments({
-                userId: { $ne: userId },
-                privacy: 'public',
-            })
-        ]);
+  // Nếu không có bạn bè hoặc follow thì trả rỗng
+  if (friendIds.length === 0 && followIds.length === 0) {
+    return {
+      data: [],
+      pagination: {
+        page,
+        limit,
+        totalItems: 0,
+        totalPages: 0,
+      },
+    };
+  }
 
-        const totalPages = Math.ceil(totalItems / limit);
+  const query = {
+    $or: [
+      {
+        userId: { $in: friendIds },
+        privacy: { $in: ['public', 'friend'] }, 
+      },
+      {
+        userId: { $in: followIds },
+        privacy: 'public', 
+      },
+    ],
+  };
 
-        return {
-            data: posts,
-            pagination: {
-                page,
-                limit,
-                totalItems,
-                totalPages
-            }
-        };
-    }
+  const [posts, totalItems] = await Promise.all([
+    this.postModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+
+    this.postModel.countDocuments(query),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / limit);
+
+  return {
+    data: posts,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    },
+  };
+}
+
 
 
 
