@@ -126,42 +126,51 @@ export class UserService {
 
 
     async getProfile(
-        userId: string,
-        id: string,
+    userId: string,
+    id: string,
     ): Promise<{
-        user: Partial<User>;
-        relation: 'me' | 'accepted' | 'pending' | 'stranger';
-        isFollowing: boolean
+    user: Partial<User>;
+    relation: 'me' | 'accepted' | 'pending_sent' | 'pending_received' | 'stranger';
+    isFollowing: boolean;
     }> {
-        const user = await this.userModel.findById(id).lean();
-        if (!user) throw new NotFoundException('User not found');
+    // 1. Lấy user cần xem profile
+    const user = await this.userModel.findById(id).lean();
+    if (!user) throw new NotFoundException('User not found');
 
+    // 2. Xác định quan hệ bạn bè
+    let relation: 'me' | 'accepted' | 'pending_sent' | 'pending_received' | 'stranger' = 'stranger';
 
-        let relation: 'me' | 'accepted' | 'pending' | 'stranger' = 'stranger';
-
-        if (userId === id) {
-            relation = 'me';
-        } else {
-            const friendRecord = await this.friendService.getFriendById(userId, id);
-            if (friendRecord) {
-                if (friendRecord.type === 'accepted') relation = 'accepted';
-                else if (friendRecord.type === 'pending') relation = 'pending';
+    if (userId === id) {
+        relation = 'me';
+    } else {
+        const friendRecord = await this.friendService.getFriendById(userId, id);
+        if (friendRecord) {
+        if (friendRecord.type === 'accepted') {
+            relation = 'accepted';
+        } else if (friendRecord.type === 'pending') {
+            if (friendRecord.fromUser.toString() === userId) {
+            relation = 'pending_sent';
+            } else {
+            relation = 'pending_received';
             }
         }
-
-        // 3. Kiểm tra xem userId có đang follow friendId không
-        //const isFollowing = await this.friendService.isFollowing(userId, friendId);
-
-        const { password, email, ...filteredUser } = user;
-         const followIds = await this.friendService.getFollowingUserIds(userId);
-        const isFollowing = followIds.includes(id);
-
-        return {
-            user: filteredUser,
-            relation,
-           isFollowing
-        };
+        }
     }
+
+    // 3. Kiểm tra follow
+    const followIds = await this.friendService.getFollowingUserIds(userId);
+    const isFollowing = followIds.includes(id);
+
+    // 4. Lọc thông tin trả về
+    const { password, email, ...filteredUser } = user;
+
+    return {
+        user: filteredUser,
+        relation,
+        isFollowing,
+    };
+    }
+
 
 
 
