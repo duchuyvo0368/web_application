@@ -7,5 +7,5 @@ export interface AuthRequest extends Request {
         email: string;
         [key: string]: any;
     };
-    refreshToken?: string;
+    refreshToken: string;
 }

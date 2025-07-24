@@ -8,19 +8,19 @@ import { Post, PostSchema } from './post.entity';
 import { FriendModule } from 'module/firends/friend.module';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature(
-            [
-              { name: Post.name, schema: PostSchema },
-            ],
-            'MONGODB_CONNECTION' 
+     imports: [
+          MongooseModule.forFeature(
+               [
+                    { name: Post.name, schema: PostSchema },
+               ],
+               'MONGODB_CONNECTION'
           ),
-        AuthModule,
-        FriendModule
+          AuthModule,
+          FriendModule
 
-    ],
-    controllers: [PostsController],
-    providers: [PostsService],
-    exports: [MongooseModule,PostsService],
+     ],
+     controllers: [PostsController],
+     providers: [PostsService],
+     exports: [MongooseModule, PostsService],
 })
 export class PostsModule { }

@@ -7,7 +7,7 @@ interface ProfileProps {
   userId: string;
 }
 
-const   Profile: React.FC<ProfileProps> = ({ userId }) => {
+const Profile: React.FC<ProfileProps> = ({ userId }) => {
   const [user, setUser] = useState<{ name: string; avatar?: string; email?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [relation, setRelation] = useState<string | null>(null);
@@ -38,7 +38,7 @@ const   Profile: React.FC<ProfileProps> = ({ userId }) => {
       file,
       onSuccess: (data) => {
         const newAvatarUrl = data.metadata.url;
-        
+
         // ✅ Cập nhật avatar trong state và localStorage
         setUser((prev) => {
           if (!prev) return prev;
@@ -52,7 +52,7 @@ const   Profile: React.FC<ProfileProps> = ({ userId }) => {
               parsed.avatar = newAvatarUrl;
               localStorage.setItem('userInfo', JSON.stringify(parsed));
             }
-           
+
           } catch (e) {
             console.error('Failed to update localStorage avatar:', e);
           }
@@ -75,6 +75,11 @@ const   Profile: React.FC<ProfileProps> = ({ userId }) => {
 
   if (!user) return <div>Loading profile...</div>;
 
+  // Thêm các biến đếm giả định (hoặc lấy từ props/data nếu có)
+  const followingCount = 0;
+  const followerCount = 0;
+  const friendCount = 0;
+
   return (
     <div className={styles.profileContainer}>
       <div className={styles.coverWrap}>
@@ -87,11 +92,11 @@ const   Profile: React.FC<ProfileProps> = ({ userId }) => {
       <div className={styles.avatarWrap}>
         <img src={user.avatar} alt="avatar" className={styles.avatar} />
         {relation === 'me' && (
-    <label className={styles.uploadIcon}>
-      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
-      <CameraAltIcon fontSize="medium" />
-    </label>
-  )}
+          <label className={styles.uploadIcon}>
+            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+            <CameraAltIcon fontSize="medium" />
+          </label>
+        )}
         {loading && <div className={styles.uploading}>Uploading...</div>}
       </div>
       <div className={styles.info}>
@@ -105,6 +110,68 @@ const   Profile: React.FC<ProfileProps> = ({ userId }) => {
         <span className={styles.email}>{user.email}</span>
         <div className={styles.bio}>This is a placeholder for user bio and other profile info.</div>
       </div>
+      {/* Khối số lượng ở giữa dưới avatar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        margin: '16px 0',
+        gap: 24
+      }}>
+        <div style={{ padding: '8px 18px', minWidth: 70, textAlign: 'center' }}>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{followingCount}</div>
+          <div style={{ fontSize: 13, color: '#1976d2' }}>Following</div>
+        </div>
+        <div style={{ padding: '8px 18px', minWidth: 70, textAlign: 'center' }}>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{followerCount}</div>
+          <div style={{ fontSize: 13, color: '#1976d2' }}>Follower</div>
+        </div>
+        <div style={{ padding: '8px 18px', minWidth: 70, textAlign: 'center' }}>
+          <div style={{ fontWeight: 700, fontSize: 18 }}>{friendCount}</div>
+          <div style={{ fontSize: 13, color: '#43a047' }}>Bạn bè</div>
+        </div>
+      </div>
+
+      {/* Nút chỉ hiện nếu không phải là me */}
+      {relation !== 'me' && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 16 }}>
+          <button
+            style={{
+              background: '#1976d2',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '10px 28px',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+            onClick={() => {
+              // TODO: Gọi API follow hoặc xử lý logic follow
+              console.log('Follow', userId);
+            }}
+          >
+            Follow
+          </button>
+          <button
+            style={{
+              background: '#43a047',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '10px 28px',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+            onClick={() => {
+              // TODO: Gọi API gửi kết bạn hoặc xử lý logic thêm bạn
+              console.log('Thêm bạn', userId);
+            }}
+          >
+            Thêm bạn
+          </button>
+        </div>
+      )}
+
     </div>
   );
 };

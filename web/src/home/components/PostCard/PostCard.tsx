@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import styles from './PostCard.module.css';
 import LinkPreviewSkeleton from './LinkPreviewSkeleton';
+import Replay10Icon from '@mui/icons-material/Replay10';
+import Forward10Icon from '@mui/icons-material/Forward10';
+import SettingsIcon from '@mui/icons-material/Settings';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
+import PauseCircleFilledIcon from '@mui/icons-material/PauseCircleFilled';
 
 interface PostCardProps {
     avatar: string;
-    username: string;
+    user: [string, string]; // [id, name]
     time: string;
     title: string;
     content: string;
@@ -34,14 +41,30 @@ const formatHashtags = (text: string) => {
 };
 
 const PostCard: React.FC<PostCardProps & { isMetaLoading?: boolean }> = ({
-    avatar, username, time, title, content, image, stats, post_link_meta, isMetaLoading
+    avatar, user, time, title, content, image, stats, post_link_meta, isMetaLoading
 }) => {
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+        const handlePlay = () => setIsPlaying(true);
+        const handlePause = () => setIsPlaying(false);
+        video.addEventListener('play', handlePlay);
+        video.addEventListener('pause', handlePause);
+        return () => {
+            video.removeEventListener('play', handlePlay);
+            video.removeEventListener('pause', handlePause);
+        };
+    }, [image]);
+
     return (
         <div className={styles.card}>
             <div className={styles.header}>
                 <img src={avatar} alt="avatar" className={styles.avatar} />
                 <div>
-                    <div className={styles.username}>{username}</div>
+                    <div className={styles.username}>{user[1]}</div>
                     <div className={styles.time}>{time}</div>
                 </div>
             </div>
@@ -72,7 +95,80 @@ const PostCard: React.FC<PostCardProps & { isMetaLoading?: boolean }> = ({
             )}
             {(!post_link_meta && image) && (
                 isVideo(image) ? (
-                    <video src={image} controls className={styles.image} />
+                    <div style={{ position: 'relative' }}>
+                        <video
+                            src={image}
+                            className={styles.image}
+                            ref={el => {
+                                videoRef.current = el;
+                                if (el) {
+                                    (window as any)[`video_${image}`] = el;
+                                }
+                            }}
+                        />
+                        <div className={styles.videoControlsBar}>
+                            <button
+                                className="plyr__controls__item plyr__control"
+                                type="button"
+                                aria-pressed="false"
+                                title="Tua lùi 10s"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    const video = videoRef.current;
+                                    if (video) video.currentTime = Math.max(0, video.currentTime - 10);
+                                }}
+                            >
+                                <Replay10Icon fontSize="medium" />
+                            </button>
+                            <button
+                                className="plyr__controls__item plyr__control"
+                                type="button"
+                                aria-pressed="false"
+                                title={isPlaying ? 'Dừng video' : 'Phát video'}
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    const video = videoRef.current;
+                                    if (!video) return;
+                                    if (isPlaying) {
+                                        video.pause();
+                                    } else {
+                                        video.play();
+                                    }
+                                }}
+                            >
+                                {isPlaying ? (
+                                    <PauseCircleFilledIcon fontSize="large" />
+                                ) : (
+                                    <PlayCircleFilledIcon fontSize="large" />
+                                )}
+                            </button>
+                            <button
+                                className="plyr__controls__item plyr__control"
+                                type="button"
+                                aria-pressed="false"
+                                title="Tua tới 10s"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    const video = videoRef.current;
+                                    if (video) video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                                }}
+                            >
+                                <Forward10Icon fontSize="medium" />
+                            </button>
+                            <button
+                                className="plyr__controls__item plyr__control"
+                                type="button"
+                                aria-pressed="false"
+                                title="Cài đặt video"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    alert('Video settings coming soon!');
+                                }}
+                            >
+                                <SettingsIcon fontSize="medium" />
+                            </button>
+                        </div>
+                    </div>
                 ) : (
                     <img src={image} alt="post" className={styles.image} />
                 )

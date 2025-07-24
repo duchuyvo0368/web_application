@@ -16,4 +16,4 @@ const FriendsContainer: React.FC<FriendsContainerProps> = ({ sidebar, children, 
   );
 };
 
-export default FriendsContainer; 
+export default FriendsContainer;

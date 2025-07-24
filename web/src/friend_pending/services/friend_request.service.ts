@@ -39,7 +39,7 @@ export const acceptFriendRequest = async ({ userId, onSuccess,
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,{
             userId,
-            status: "accept"
+            type: "accept"
         },
         {
             headers:getAuthHeaders()
@@ -63,7 +63,7 @@ export const rejectFriendRequest = async({ userId, onSuccess,
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
             {
                 userId,
-                status: "reject"
+                type: "reject"
             },
             {
                 headers:getAuthHeaders()

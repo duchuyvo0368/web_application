@@ -42,7 +42,7 @@ export const addFriend = async ({
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
             {
                 userId,
-                status: "send"
+                type: "send"
             },
             {
                 headers:getAuthHeaders()
@@ -68,7 +68,7 @@ export const unFriend = async ({
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,{
             userId,
-            status: "unfriend"
+            type: "unfriend"
         },
         {
             headers:getAuthHeaders()

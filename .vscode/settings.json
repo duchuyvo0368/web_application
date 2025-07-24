@@ -146,7 +146,7 @@
     "errorLens.infoForeground": "#00CED1",
     "eslint.enable": true,
     "prettier.printWidth": 100, // Giới hạn độ dài dòng
-    "prettier.tabWidth": 4, // Số khoảng trắng cho mỗi tab
+    "prettier.tabWidth": 5, // Số khoảng trắng cho mỗi tab
     "prettier.useTabs": false, // Dùng dấu cách thay vì tab
     "prettier.semi": true, // Thêm dấu chấm phẩy cuối dòng
     "prettier.singleQuote": true, // Dùng nháy đơn thay vì nháy kép

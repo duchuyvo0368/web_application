@@ -37,7 +37,7 @@ export const cancelRequest = async ({ userId, onSuccess,
         const res = await axios.post(`${API_CONFIG}/friends/update-status`, 
             {
                 userId,
-                status: "deleted"
+                type: "deleted"
             },
             {
                 headers:getAuthHeaders()

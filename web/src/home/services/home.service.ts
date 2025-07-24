@@ -21,7 +21,7 @@ export const getPostUser = async ({
 }) => {
     try {
 
-        const res = await axios.get(`${API_CONFIG}/posts/all?limit=${limit}&page=${pages}`, {
+        const res = await axios.get(`${API_CONFIG}/posts?limit=${limit}&page=${pages}`, {
             headers: getAuthHeaders()
         });
 
@@ -32,3 +32,48 @@ export const getPostUser = async ({
     }
 };
 
+export const extractLinkMetadata = async ({
+    url,
+    onSuccess,
+    onError,
+}: {
+    url: string;
+    onSuccess?: (data: any) => void;
+    onError?: (err: any) => void;
+}) => {
+    try {
+
+        const res = await axios.post(
+            `${API_CONFIG}/posts/extract-link-metadata`,
+            { url },
+            { headers: getAuthHeaders() }
+          );
+
+        console.log('data_res', res);
+        onSuccess?.(res.data);
+    } catch (err: any) {
+        onError?.(err.response?.data || err.message || err);
+    }
+};
+
+
+export const createPost = async ({
+  data,
+  onSuccess,
+  onError,
+}: {
+  data: any;
+  onSuccess?: (data: any) => void;
+  onError?: (err: any) => void;
+}) => {
+  try {
+    const res = await axios.post(`${API_CONFIG}/posts/create`, data, {
+      headers: getAuthHeaders(),
+    });
+
+    console.log('data_res', res);
+    onSuccess?.(res.data);
+  } catch (err: any) {
+    onError?.(err.response?.data || err.message || err);
+  }
+};

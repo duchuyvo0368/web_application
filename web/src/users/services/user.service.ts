@@ -45,7 +45,7 @@ export const addFriend = async ({
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
             {
                 userId,
-                status: "send"
+                type: "send"
             },
             {
                 headers:getAuthHeaders()
@@ -71,7 +71,7 @@ export const addFollow = async ({
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
             {
                 userId,
-                status: "follow"
+                type: "follow"
             },
             {
                 headers:getAuthHeaders()
@@ -96,7 +96,7 @@ export const unFollow = async ({
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
             {
                 userId,
-                status: "unfollow"
+                type: "unfollow"
             },
             {
                 headers:getAuthHeaders()
@@ -115,7 +115,7 @@ export const profile = async ({
     onError,
 }: {
     userId: string;
-    status?: string;
+    type?: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {

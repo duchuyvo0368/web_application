@@ -45,6 +45,9 @@ export function securityMiddleware() {
             windowMs: 15 * 60 * 1000,
             delayAfter: 1000,
             delayMs: 500,
+            validate: {
+                delayMs: false, 
+            },
         }),
 
         // 5. Log IP và HTTP method

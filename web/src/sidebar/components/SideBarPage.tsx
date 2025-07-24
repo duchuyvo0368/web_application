@@ -55,8 +55,10 @@ const BannerPage: React.FC<SidebarProps> = ({ activeTab, onSelect, menu }) => {
             onClick={() => {
               if (idx === 0) {
                 router.push('/');
+                onSelect(idx); // Thêm dòng này
               } else if (idx === 1) {
                 router.push('/friends');
+                onSelect(idx); // Thêm dòng này
               } else {
                 onSelect(idx);
               }
