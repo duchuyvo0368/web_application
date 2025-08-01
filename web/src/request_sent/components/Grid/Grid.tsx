@@ -2,13 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import FriendCard from '../RequestCard/RequestSentCard';
 import styles from './Grid.module.css';
-import {  getRequestSent } from '../../services/request.sent.service';
+import { getRequestSent } from '../../services/request.sent.service';
 import RequestSentCard from '../RequestCard/RequestSentCard';
 
 
 interface RequestSent {
     _id: string;
-    userId:string;
+    userId: string;
     name: string;
     avatar: string;
     mutual?: string;
@@ -22,27 +22,31 @@ const RequestSentGrid: React.FC<{ className?: string }> = ({ className = '' }) =
     console.log('RequestSentGrid rendered', friends);
     useEffect(() => {
         getRequestSent({
-                onSuccess: (res) => {
-                    const requests = res.metadata || [];
-        
-                    const formatted = requests.map((item: any) => ({
-                        _id:item._id,
-                        userId: item.toUser._id, 
-                        name: item.toUser.name,
-                        avatar: item.toUser.avatar,
-                        followersCount: item.toUser.followersCount?.toString() ,
-                    }));
+            limit: 12,
+            page: 1,
+            onSuccess: (res) => {
+                const requests = res.metadata || [];
 
-                    setFriends(formatted);
-                    setLoading(false);
-                },
-                onError: (err) => {
-                    console.error('Lỗi khi lấy bạn bè:', err);
-                    setLoading(false);
-                },
-            });
-              
-        }, []);
+                const formatted = requests.map((item: any) => ({
+                    _id: item._id,
+                    userId: item.toUser._id,
+                    name: item.toUser.name,
+                    avatar: item.toUser.avatar,
+                    followersCount: item.toUser.followersCount?.toString(),
+                }));
+
+                setFriends(formatted);
+                setLoading(false);
+                // Lấy thông tin phân trang nếu cần:
+                // const pagination = res.pagination;
+            },
+            onError: (err) => {
+                console.error('Lỗi khi lấy bạn bè:', err);
+                setLoading(false);
+            },
+        });
+
+    }, []);
 
     if (loading) return <p>Đang tải danh sách bạn bè...</p>;
 

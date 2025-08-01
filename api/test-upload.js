@@ -28,7 +28,7 @@ async function seedUsers() {
 
     const users = [];
 
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 50; i++) {
       const name = getRandomName();
       users.push({
         email: `user${i}@example.com`,
@@ -146,3 +146,107 @@ seedUsers();
 
 // deleteUsers();
 
+
+
+// import mongoose from 'mongoose';
+// import { UserSchema } from '../src/schemas/user.schema';
+// import { FriendRelationSchema } from '../src/schemas/friend-relation.schema';
+
+// const MONGO_URI = 'mongodb://localhost:27017/users_dev'; // 🔧 chỉnh tên DB
+// const FROM_USER_ID = new mongoose.Types.ObjectId('687f034db77a2b9bca29c7d5'); // 👈 user đã có sẵn
+
+// const firstNames = [
+//   'Linh',
+//   'Nam',
+//   'Huy',
+//   'Trang',
+//   'Thảo',
+//   'Minh',
+//   'Dũng',
+//   'Hiếu',
+//   'Lan',
+//   'Hà',
+//   'Phương',
+//   'Ngọc',
+//   'Hương',
+//   'Tuấn',
+//   'Anh',
+//   'Khoa',
+//   'Châu',
+//   'Quân',
+//   'Mai',
+//   'Bình',
+//   'Quỳnh',
+//   'Trung',
+//   'Tiến',
+//   'Vân',
+// ];
+
+// const lastNames = [
+//   'Nguyễn',
+//   'Trần',
+//   'Lê',
+//   'Phạm',
+//   'Hoàng',
+//   'Vũ',
+//   'Đặng',
+//   'Bùi',
+//   'Đỗ',
+//   'Hồ',
+//   'Ngô',
+//   'Dương',
+//   'Lý',
+//   'Tô',
+//   'Đinh',
+//   'Trịnh',
+// ];
+
+// function getRandomName() {
+//   const first = firstNames[Math.floor(Math.random() * firstNames.length)];
+//   const last = lastNames[Math.floor(Math.random() * lastNames.length)];
+//   return `${last} ${first}`;
+// }
+
+// const run = async () => {
+//   await mongoose.connect(MONGO_URI);
+
+//   const UserModel = mongoose.model('Users', UserSchema);
+//   const FriendRelationModel = mongoose.model(
+//     'FriendRelation',
+//     FriendRelationSchema,
+//   );
+
+//   const users = [];
+
+//   // 1. Tạo danh sách 20 user
+//   for (let i = 1; i <= 2000; i++) {
+//     const name = getRandomName();
+//     users.push({
+//       email: `user_fake_${Date.now()}_${i}@example.com`,
+//       name,
+//       avatar: `https://i.pravatar.cc/150?img=${i % 70}`,
+//       password: '123456', // 🔐 giả định đã hash
+//       bio: `Xin chào, tôi là ${name}`,
+//     });
+//   }
+
+//   const createdUsers = await UserModel.insertMany(users);
+//   console.log(`✅ Đã thêm ${createdUsers.length} users`);
+
+//   // 2. Tạo quan hệ bạn bè từ FROM_USER_ID → mỗi user mới tạo
+//   const relations = createdUsers.map((user) => ({
+//     fromUser: FROM_USER_ID,
+//     toUser: user._id,
+//     type: 'accepted',
+//     acceptedAt: new Date(),
+//     createdAt: new Date(),
+//     updatedAt: new Date(),
+//   }));
+
+//   const result = await FriendRelationModel.insertMany(relations);
+//   console.log(`✅ Đã tạo ${result.length} mối quan hệ bạn bè`);
+
+//   await mongoose.disconnect();
+// };
+
+// run().catch(console.error);

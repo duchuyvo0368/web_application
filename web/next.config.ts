@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  devIndicators: false,
-  /* config options here */
+const nextConfig = {
+    devIndicators: false,
+    images: {
+        domains: ['trainning-buckets.s3.us-east-1.amazonaws.com'], // ✅ Add domain here
+    },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

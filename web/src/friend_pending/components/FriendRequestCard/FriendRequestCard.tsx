@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
-import styles from './FriendRequestCard.module.css';
 import { acceptFriendRequest, rejectFriendRequest } from '../../services/friend_request.service';
+import Link from 'next/link';
 
 interface FriendCardProps {
     userId: string;
@@ -37,15 +37,15 @@ const FriendCard: React.FC<FriendCardProps> = ({
                 onError: (err) => {
                     console.error('Lỗi khi chấp nhận:', err);
                 },
-            });            
+            });
             setAccepted(true);
             onAccept?.();
         } catch (err) {
             console.error('Lỗi khi chấp nhận kết bạn:', err);
         }
     };
-    
-    
+
+
 
     const handleReject = async () => {
         try {
@@ -64,7 +64,7 @@ const FriendCard: React.FC<FriendCardProps> = ({
         catch (err) {
             console.error('Lỗi khi từ chối yêu cầu kết bạn:', err);
         }
-        
+
     };
 
     const handleUnaccept = () => {
@@ -78,39 +78,40 @@ const FriendCard: React.FC<FriendCardProps> = ({
 
     return (
         <div className={styles.friendCard}>
-            <img src={img} alt={name} className={styles.friendAvatar} />
-            <div className={styles.friendInfo}>
-                <h3 className={styles.friendName}>{name}</h3>
-                <p className={styles.friendMutual}>{mutual}</p>
-                <p className={styles.followerCount}>{followers}</p>
-
-                <div className={styles.buttonGroup}>
-                    {!accepted ? (
-                        <>
-                            <button
-                                className={styles.actionButton}
-                                onClick={handleAccept}
-                            >
-                                Accept
-                            </button>
-                            <button
-                                className={styles.actionButton}
-                                onClick={handleReject}
-                            >
-                                Reject
-                            </button>
-                        </>
-                    ) : (
+            <Link href={`/profile/${userId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <img src={img} alt={name} className={styles.friendAvatar} />
+                <div className={styles.friendInfo}>
+                    <h3 className={styles.friendName}>{name}</h3>
+                    <p className={styles.friendMutual}>{mutual}</p>
+                    <p className={styles.followerCount}>{followers}</p>
+                </div></Link>
+            <div className={styles.buttonGroup}>
+                {!accepted ? (
+                    <>
                         <button
-                            className={`${styles.actionButton} ${styles.activeButton}`}
-                            onClick={handleUnaccept}
+                            className={styles.actionButton}
+                            onClick={handleAccept}
                         >
-                            ✓ Accepted 
+                            Accept
                         </button>
-                    )}
-                </div>
+                        <button
+                            className={styles.actionButton}
+                            onClick={handleReject}
+                        >
+                            Reject
+                        </button>
+                    </>
+                ) : (
+                    <button
+                        className={`${styles.actionButton} ${styles.activeButton}`}
+                        onClick={handleUnaccept}
+                    >
+                        ✓ Accepted
+                    </button>
+                )}
             </div>
         </div>
+       
     );
 };
 

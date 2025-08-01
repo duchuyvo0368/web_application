@@ -24,7 +24,7 @@ if (!process.env.AWS_SECRET_ACCESS_KEY) {
 }
 
 
-const s3 = new S3Client({
+export const s3 = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -33,7 +33,17 @@ const s3 = new S3Client({
 });
 
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    const allowedMimeTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'video/mp4',
+        'video/webm',
+        'video/quicktime',
+    ];
+
     if (allowedMimeTypes.includes(file.mimetype)) cb(null, true);
     else cb(new Error('Only images are allowed'));
 };
@@ -55,7 +65,9 @@ export const uploadConfig = {
         },
     }),
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB
+        fileSize: 50*1024 * 1024, // 5MB
     },
     fileFilter,
 };
+
+

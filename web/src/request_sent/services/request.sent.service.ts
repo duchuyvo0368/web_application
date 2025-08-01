@@ -8,15 +8,18 @@ const getAuthHeaders = () => {
     };
 };
 export const getRequestSent = async ({
+    limit,
+    page,
     onSuccess,
     onError,
 }: {
     limit?: number;
+    page?: number;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/friends?type=sent`, {
+        const res = await axios.get(`${API_CONFIG}/friends?type=sent&limit=${limit}&page=${page}`, {
            headers:getAuthHeaders()
         });
 

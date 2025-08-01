@@ -1,4 +1,3 @@
-import { UploadModule } from './../upload/upload.module';
 
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -9,12 +8,13 @@ import { UserService } from './user.service';
 import config from '../database/config';
 import { AuthModule } from '../auth/module.auth';
 import { FriendModule } from '../firends/friend.module';
-
+import { UploadModule } from '../upload/upload.module';
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }], 'MONGODB_CONNECTION'),
         forwardRef(() => AuthModule),
         forwardRef(() => FriendModule),
+        forwardRef(() => UploadModule)
     ],
     controllers: [UserController],
     providers: [

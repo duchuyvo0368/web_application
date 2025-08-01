@@ -12,9 +12,13 @@ export default function LoginPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-       const res= await axios.get('http://localhost:5000/v1/api/auth/profile', {
-            withCredentials: true,
-          });
+        const res = await axios.get('http://localhost:5000/v1/api/user', {
+          withCredentials: true,
+          params: {
+            page: 1,
+            limit: 10,
+          },
+        });
         if (res.data) {
           router.replace(redirect?.toString() || '/'); 
         } else {

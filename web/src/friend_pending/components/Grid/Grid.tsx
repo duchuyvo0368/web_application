@@ -32,6 +32,8 @@ const FriendsRequestGrid: React.FC<{ className?: string }> = ({ className = '' }
 
                 setFriends(formatted);
                 setLoading(false);
+                // Nếu cần lấy phân trang:
+                // const pagination = res.pagination;
             },
             onError: (err) => {
                 console.error('Lỗi khi lấy bạn bè:', err);

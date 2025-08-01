@@ -1,81 +1,59 @@
-// src/upload/upload.controller.ts
+// upload.controller.ts
 import {
     Controller,
     Post,
-    UploadedFile,
+    UploadedFiles,
     UseInterceptors,
+    BadRequestException,
     UseGuards,
-    Req,
-    Param,
-    Body,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import {
-    ApiBody,
-    ApiConsumes,
-    ApiOperation,
-    ApiTags,
-    ApiBearerAuth,
-    ApiParam,
-} from '@nestjs/swagger';
-import { uploadConfig } from './utils/multer.config';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { UploadService } from './upload.service';
-import { NotFoundError } from 'utils/error.response';
 import { AuthGuard } from 'module/auth/guards/access-token.guard';
-import { UserService } from 'module/user/user.service';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
-interface MulterS3File extends Express.Multer.File {
-    key?: string;
-    location?: string;
-    bucket?: string;
-    etag?: string;
-}
-
-@ApiTags('User')
 @Controller('upload')
 export class UploadController {
-    constructor(private readonly uploadService: UploadService, private readonly userService: UserService) { }
+    constructor(private readonly uploadService: UploadService) { }
 
-    @Post()
-    @ApiOperation({ summary: 'Upload file (avatar or post)' })
-    @ApiConsumes('multipart/form-data')
-    @ApiBearerAuth()
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                type: {
-                    type: 'avatar',
-                    description: "Upload type (avatar or post)"
-                },
-                file: {
-                    type: 'string',
-                    format: 'binary',
-                    description: 'Image file (JPEG, PNG, etc.) - Max 5MB'
-                }
-            },
-            required: ['file', 'type']
-        }
-    })
+    @Post('multipart')
     @UseGuards(AuthGuard)
-    @UseInterceptors(FileInterceptor('file', uploadConfig))
-    async uploadFile(
-        @Body('type') type: string,
-        @UploadedFile() file: MulterS3File,
-        @Req() req: any
-    ) {
-        if (type !== 'avatar' && type !== 'post') {
-            return new NotFoundError(`Invalid upload type: ${type}. Allowed types are 'avatar' and 'post'.`);
+    @UseInterceptors(
+        AnyFilesInterceptor({
+            storage: diskStorage({
+                destination: './uploads',
+                filename: (req, file, cb) => {
+                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                    cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+                },
+            }),
+            limits: {
+                fileSize: 100 * 1024 * 1024, // 100MB mỗi file
+                files: 10, // tối đa 10 file/lần
+            },
+        }),
+    )
+    async uploadMultipart(@UploadedFiles() files: Express.Multer.File[]) {
+        if (!files || files.length === 0) {
+            throw new BadRequestException('No files uploaded');
         }
-        // if (!isAdmin && userId && userId !== currentUserId) {
-        //     throw new ForbiddenException("You don't have permission to upload for another user.");
-        // }
 
-        const uploadResult = await this.uploadService.handleUpload(file, type, req.user.userId);
+        const results = await Promise.all(
+            files.map(async (file) => {
+                const key = `posts/${file.filename}`;
+                const url = await this.uploadService.uploadFileToS3Multipart(
+                    file.path,
+                    key,
+                    file.mimetype,
+                );
+                return { url };
+            }),
+        );
 
-
-        return uploadResult;
-
+        return {
+            message: 'Upload success',
+            files: results,
+        };
     }
-
 }

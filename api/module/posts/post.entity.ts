@@ -13,16 +13,21 @@ export class Post {
           enum: ['public', 'friend'],
           default: 'public',
      })
-     privacy: string;
-     @Prop({ type: String, default: null })
-     images: string;
+    privacy: string;
+    
+     @Prop({ type: [String], default: [] })
+     images: string[];
 
+     @Prop({ type: [String], default: [] })
+     videos: string[];
+     
      @Prop({
           type: {
-               url: String,
-               title: String,
-               description: String,
-               image: String,
+               post_link_url: String,
+               post_link_title: String,
+               post_link_description: String,
+               post_link_content: String,
+               post_link_image: String,
           },
           default: null,
      })
@@ -32,9 +37,10 @@ export class Post {
           post_link_description?: string;
           post_link_content?: string;
           post_link_image?: string;
-     }
+     };
+
      @Prop({ type: [String], default: [] })
-     hastag?: string[]
+     hashtag?: string[]
      @Prop({ type: String, default: null })
      content: string
 

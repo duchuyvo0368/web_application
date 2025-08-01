@@ -16,10 +16,12 @@ const ProfilePage: React.FC = () => {
       setUserId(id);
     } else {
       // fallback: lấy userId từ localStorage nếu không có id trên URL
-      const userData = localStorage.getItem('userInfo');
-      const user = userData ? JSON.parse(userData) : null;
-      if (user?._id) {
-        setUserId(user._id);
+      if (typeof window !== 'undefined') {
+        const userData = localStorage.getItem('userInfo');
+        const user = userData ? JSON.parse(userData) : null;
+        if (user?._id) {
+          setUserId(user._id);
+        }
       }
     }
   }, [id]);

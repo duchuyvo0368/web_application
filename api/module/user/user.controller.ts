@@ -23,6 +23,9 @@ import path from 'path';
 import { ApiBasicAuth, ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'module/auth/guards/access-token.guard';
 import { AuthRequest } from 'module/auth/interfaces/auth-request.interface';
+import { uploadConfig } from 'module/upload/utils/multer.config';
+import { AuthFailureError } from 'utils/error.response';
+import { MulterS3File } from 'module/upload/utils/multe.s3.file';
 
 
 @ApiTags('User')
@@ -115,7 +118,20 @@ export class UserController {
             metadata: result,
         });
     }
-
+    @Post('upload-avatar')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(FileInterceptor('file', uploadConfig))
+    async uploadAvatar(
+        @UploadedFile() file: MulterS3File,
+        @Req() req: AuthRequest,
+    ) {
+        const userId = req.user!!.userId;
+        if (!userId) {
+            throw new AuthFailureError("User auth")
+        }
+        return await this.userService.updateAvatar(userId, 'avatar', file);
+       
+    }
 
 }
 

@@ -14,16 +14,16 @@ export const getAllUser = async ({
     onError,
 }: {
     limit?: number;
-    page?:number
+    page?: number
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
     try {
         const res = await axios.get(`${API_CONFIG}/user?limit=${limit}&page=${page}`, {
-            
-            
-             headers: getAuthHeaders()
-            
+
+
+            headers: getAuthHeaders()
+
         });
 
         console.log('data_res', res);
@@ -34,10 +34,12 @@ export const getAllUser = async ({
 };
 export const addFriend = async ({
     userId,
+    type = "send",
     onSuccess,
     onError,
 }: {
     userId: string;
+    type?: "send" | "accept";
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
@@ -45,11 +47,11 @@ export const addFriend = async ({
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
             {
                 userId,
-                type: "send"
+                type
             },
             {
-                headers:getAuthHeaders()
-        })
+                headers: getAuthHeaders()
+            })
 
         console.log('data_res', res);
         onSuccess?.(res.data);
@@ -74,8 +76,8 @@ export const addFollow = async ({
                 type: "follow"
             },
             {
-                headers:getAuthHeaders()
-        })
+                headers: getAuthHeaders()
+            })
 
         console.log('data_res', res);
         onSuccess?.(res.data);
@@ -99,8 +101,8 @@ export const unFollow = async ({
                 type: "unfollow"
             },
             {
-                headers:getAuthHeaders()
-        })
+                headers: getAuthHeaders()
+            })
 
         console.log('data_res', res);
         onSuccess?.(res.data);
@@ -109,7 +111,7 @@ export const unFollow = async ({
     }
 };
 
-export const profile = async ({
+export const getProfile = async ({
     userId,
     onSuccess,
     onError,
@@ -122,9 +124,9 @@ export const profile = async ({
     try {
         const res = await axios.get(`${API_CONFIG}/user/${userId}`, {
             headers: getAuthHeaders()
-          });
-          
-          
+        });
+
+
         console.log('data_res', res);
         onSuccess?.(res.data);
     } catch (err: any) {
@@ -138,28 +140,76 @@ export const uploadFile = async ({
     file,
     onSuccess,
     onError,
-  }: {
+}: {
     type: string;
     file: File;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
-  }) => {
+}) => {
     try {
-      const formData = new FormData();
-      formData.append('type', type);
-      formData.append('file', file);
-  
-      const res = await axios.post(`${API_CONFIG}/upload`, formData, {
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-  
-      console.log('upload_res', res);
-      onSuccess?.(res.data);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await axios.post(`${API_CONFIG}/user/upload-avatar`, formData, {
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        console.log('upload_res', res);
+        onSuccess?.(res.data);
     } catch (err: any) {
-      onError?.(err.response?.data || err.message || err);
+        onError?.(err.response?.data || err.message || err);
     }
-  };
-  
+};
+
+
+export const cancelRequest = async ({ userId, onSuccess,
+    onError,
+}: {
+    userId: string;
+    onSuccess?: (data: any) => void;
+    onError?: (err: any) => void;
+}) => {
+    try {
+        const res = await axios.post(`${API_CONFIG}/friends/update-status`,
+            {
+                userId,
+                type: "deleted"
+            },
+            {
+                headers: getAuthHeaders()
+            })
+
+
+        console.log('data_res', res);
+        onSuccess?.(res.data);
+    } catch (err: any) {
+        onError?.(err.response?.data || err.message || err);
+    }
+};
+
+export const unFriend = async ({
+    userId,
+    onSuccess,
+    onError,
+}: {
+    userId: string;
+    onSuccess?: (data: any) => void;
+    onError?: (err: any) => void;
+}) => {
+    try {
+        const res = await axios.post(`${API_CONFIG}/friends/update-status`,{
+            userId,
+            type: "unfriend"
+        },
+        {
+            headers:getAuthHeaders()
+        })
+        console.log('data_res', res);
+        onSuccess?.(res.data);
+    } catch (err: any) {
+        onError?.(err.response?.data || err.message || err);
+    }
+};

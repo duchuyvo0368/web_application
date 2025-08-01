@@ -1,22 +1,4 @@
 import React from 'react';
-import styles from './SideBarPage.module.css';
-import HomeIcon from '@mui/icons-material/Home';
-import DesignServicesIcon from '@mui/icons-material/DesignServices';
-import StoreMallDirectoryIcon from '@mui/icons-material/StoreMallDirectory';
-import Diversity3Icon from '@mui/icons-material/Diversity3';
-import BrushIcon from '@mui/icons-material/Brush';
-import PersonIcon from '@mui/icons-material/Person';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import SettingsIcon from '@mui/icons-material/Settings';
-import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
-import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
-import NewReleasesIcon from '@mui/icons-material/NewReleases';
-import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import LiveTvIcon from '@mui/icons-material/LiveTv';
-import LayersIcon from '@mui/icons-material/Layers';
-import DescriptionIcon from '@mui/icons-material/Description';
-import { useRouter } from 'next/router';
 
 interface SidebarProps {
   activeTab: number;
@@ -47,36 +29,24 @@ const BannerPage: React.FC<SidebarProps> = ({ activeTab, onSelect, menu }) => {
   const menuToRender = menu || menuHome;
   const router = useRouter();
   return (
-    <div className={styles.wrapper}>
-      <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 0 }}>
-        {menuToRender.map((item, idx) => (
-          <div
-            key={item.label}
-            onClick={() => {
-              if (idx === 0) {
-                router.push('/');
-                onSelect(idx); // Thêm dòng này
-              } else if (idx === 1) {
-                router.push('/friends');
-                onSelect(idx); // Thêm dòng này
-              } else {
-                onSelect(idx);
-              }
-            }}
-            className={
-              activeTab === idx
-                ? `${styles.menuItem} ${styles.menuItemActive}`
-                : styles.menuItem
-            }
-            style={{ justifyContent: 'flex-start' }}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+    <nav className="p-4 bg-white rounded-lg shadow-md h-full">
+      <h3 className="font-bold mb-4">Sidebar</h3>
+      <ul>
+        <li
+          onClick={() => onSelect(0)}
+          className={`cursor-pointer p-2 rounded ${activeTab === 0 ? 'bg-blue-500 text-white' : 'hover:bg-gray-200'}`}
+        >
+          Home
+        </li>
+        <li
+          onClick={() => onSelect(1)}
+          className={`cursor-pointer p-2 rounded ${activeTab === 1 ? 'bg-blue-500 text-white' : 'hover:bg-gray-200'}`}
+        >
+          Profile
+        </li>
+      </ul>
+    </nav>
   );
 };
 
-export default BannerPage; 
+export default Sidebar;

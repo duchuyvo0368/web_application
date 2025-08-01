@@ -11,6 +11,9 @@ import {
      Query,
      BadRequestException,
      UnauthorizedException,
+     UploadedFile,
+     UseInterceptors,
+     UploadedFiles,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AuthGuard } from 'module/auth/guards/access-token.guard';
@@ -22,6 +25,9 @@ import {
 } from '@nestjs/swagger';
 import { isValidUrl } from '../../utils/index';
 import { AuthRequest } from 'module/auth/interfaces/auth-request.interface';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import { uploadConfig } from 'module/upload/utils/multer.config';
+import { MulterS3File } from 'module/upload/utils/multe.s3.file';
 // import { CreatePostDto } from './dto/create-post.dto';
 // import { UpdatePostDto } from './dto/update-post.dto';
 
@@ -30,10 +36,22 @@ export class PostsController {
      constructor(private readonly postService: PostsService) { }
 
      @UseGuards(AuthGuard)
+     @UseInterceptors(AnyFilesInterceptor(uploadConfig))
      @ApiBearerAuth()
      @Post('create')
-     async create(@Body() body: any, @Req() req: Request) {
-          return this.postService.createPost(body);
+     async create(
+         @UploadedFiles() files: Express.Multer.File[],
+         @Body() body: any,
+         @Req() req: AuthRequest
+     ) {
+         const userId = req.user?.userId 
+         if (!userId) {
+             throw new UnauthorizedException('User not found in request');
+         }
+         const images: MulterS3File[] = files.filter(file => file.fieldname === 'images');
+         const videos: MulterS3File[] = files.filter(file => file.fieldname === 'videos');
+         const { title, content, privacy, post_link_meta } = body;
+         return this.postService.createPost(body, userId, images, videos);
      }
 
      @ApiOperation({ summary: 'Get posts by type friend ' })

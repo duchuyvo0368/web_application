@@ -1,123 +1,107 @@
-/* eslint-disable @next/next/no-img-element */
-import React, { useState, useEffect } from 'react';
-import styles from './UserCard.module.css';
-import { addFollow, addFriend, unFollow } from '../../services/user.service';
-import Link from 'next/link';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client';
+import React, { useEffect, useState } from 'react';
+import UserCard from '../Card/UserCard';
+import UserCardSkeleton from '../../components/UserCardSkeleton/UserCardSkeleton';
+import { getAllUser } from '../../services/user.service';
 
-interface FriendCardProps {
+interface User {
     id: string;
     name: string;
     img: string;
-    mutual: string;
-    followersCount?: string; // chuỗi hoặc undefined
-    isFollowing?: boolean;
+    mutual?: string;
+    followersCount?: string;
+    isFollowing: boolean;
 }
 
-// Parse follower count an toàn
-const parseFollowerCount = (val: string | undefined): number => {
-    const num = Number(val);
-    return num;
-};
+const UserGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const limit = 12;
+    const [totalPages, setTotalPages] = useState(1);
 
-const FriendCard: React.FC<FriendCardProps> = ({
-    id,
-    name,
-    img,
-    mutual,
-    followersCount,
-    isFollowing: isFollowingProp = false,
-}) => {
-    const [isFriend, setIsFriend] = useState(false);
-    const [isFollowing, setIsFollowing] = useState(isFollowingProp);
-    const [loading, setLoading] = useState(false);
-    const [followerCount, setFollowerCount] = useState(parseFollowerCount(followersCount));
-
-    // Log để kiểm tra giá trị props truyền vào
-    useEffect(() => {
-        console.log(`[DEBUG] followersCount prop from parent:`, followersCount);
-        setIsFollowing(isFollowingProp);
-        setFollowerCount(parseFollowerCount(followersCount));
-    }, [isFollowingProp, followersCount]);
-
-    const handleAddFriend = () => {
-        if (loading) return;
+    const fetchUsers = (pageNumber: number) => {
         setLoading(true);
-        addFriend({
-            userId: id,
-            onSuccess: () => {
-                setIsFriend(true);
+        getAllUser({
+            limit,
+            page: pageNumber,
+            onSuccess: (res) => {
+                const rawUsers = res.metadata.data || [];
+                const formatted = rawUsers.map((item: any) => ({
+                    id: item._id,
+                    name: item.name,
+                    img: item.avatar,
+                    followersCount: item.followersCount,
+                    isFollowing: item.isFollowing,
+                }));
+
+                setUsers(formatted);
+                setTotalPages(res.metadata.pagination?.totalPages || 1);
                 setLoading(false);
             },
             onError: (err) => {
-                console.error('Lỗi khi gửi lời mời:', err);
+                console.error('❌ Error fetching users:', err);
                 setLoading(false);
             },
         });
     };
 
-    const handleToggleFollow = () => {
-        if (loading) return;
-        setLoading(true);
+    useEffect(() => {
+        fetchUsers(page);
+    }, [page]);
 
-        const wasFollowing = isFollowing;
-        const prevCount = followerCount;
+    const handlePrev = () => {
+        if (page > 1) setPage((prev) => prev - 1);
+    };
 
-        // UI cập nhật tức thời
-        const newIsFollowing = !wasFollowing;
-        const newCount = newIsFollowing ? prevCount + 1 : Math.max(0, prevCount - 1);
-
-        setIsFollowing(newIsFollowing);
-        setFollowerCount(newCount);
-
-        const action = newIsFollowing ? addFollow : unFollow;
-
-        action({
-            userId: id,
-            onSuccess: () => {
-                setLoading(false);
-            },
-            onError: (err) => {
-                console.error('Lỗi follow/unfollow:', err);
-                // Rollback nếu có lỗi
-                setIsFollowing(wasFollowing);
-                setFollowerCount(prevCount);
-                setLoading(false);
-            },
-        });
+    const handleNext = () => {
+        if (page < totalPages) setPage((prev) => prev + 1);
     };
 
     return (
+        <div className={`${className}`}>
+            {/* Danh sách user */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {loading
+                    ? Array.from({ length: limit }).map((_, index) => (
+                        <UserCardSkeleton key={index} />
+                    ))
+                    : users.map((user) => (
+                        <UserCard
+                            key={user.id}
+                            userId={user.id}
+                            name={user.name}
+                            avatarUrl={user.img}
+                            mutualFriends="2 mutual friends"
+                            initialFollowersCount={user.followersCount}
+                            isFollowing={user.isFollowing}
+                        />
+                    ))}
+            </div>
 
-        <div className={styles.friendCard}>
-            <Link href={`/profile/${id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <img src={img} alt={name} className={styles.friendAvatar} />
-                <div className={styles.friendInfo}>
-                    <h3 className={styles.friendName}>{name}</h3>
-                    <p className={styles.friendMutual}>{mutual}</p>
-                    <p className={styles.followerCount}>{followerCount} followers</p>
-                </div>
-            </Link>
-            <div className={styles.buttonGroup}>
+            {/* Phân trang */}
+            <div className="flex items-center justify-center gap-4 mt-6">
                 <button
-                    className={`${styles.actionButton} ${isFriend ? styles.activeButton : ''}`}
-                    onClick={handleAddFriend}
-                    disabled={isFriend || loading}
+                    onClick={handlePrev}
+                    disabled={page === 1 || loading}
+                    className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isFriend ? '✓ Friends' : 'Add Friend'}
+                    Previous
                 </button>
-
+                <span className="text-sm font-medium">
+                    Page {page} / {totalPages}
+                </span>
                 <button
-                    className={`${styles.actionButton} ${isFollowing ? styles.activeButton : ''}`}
-                    onClick={handleToggleFollow}
-                    disabled={loading}
+                    onClick={handleNext}
+                    disabled={page === totalPages || loading}
+                    className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isFollowing ? 'Unfollow' : 'Follow'}
+                    Next
                 </button>
             </div>
-        
-    </div >
-   
-  );
+        </div>
+    );
 };
 
-export default FriendCard;
+export default UserGrid;

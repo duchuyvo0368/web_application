@@ -52,22 +52,9 @@ export class FriendsController {
     ) {
 
         const userId = (req as any).user.userId;
-        const result = await this.friendsService.getFriendListByType(userId, type, limit);
+         const { message, result } = await this.friendsService.getFriendListByType(userId, type, limit);
 
-        let message = '';
-        switch (type) {
-            case 'all':
-                message = 'Friend list fetched successfully';
-                break;
-            case 'sent':
-                message = 'Sent friend requests fetched successfully';
-                break;
-            case 'pending':
-                message = 'Pending friend requests fetched successfully';
-                break;
-            default:
-                throw new BadRequestException('Invalid type');
-        }
+        
 
         return new SuccessResponse({
             message,

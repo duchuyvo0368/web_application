@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import styles from './FriendCard.module.css';
 import { addFriend, unFriend } from '../../services/friends.service';
+import Link from 'next/link';
 
 interface FriendCardProps {
     name: string;
@@ -28,15 +29,15 @@ const FriendCard: React.FC<FriendCardProps> = ({
 
     const handleToggleFriend = () => {
         if (isFriend) {
-            // addFriend({
-            //     toUser: userId,
-            //     onSuccess: (data) => {
-            //         console.log('Đã gửi lời mời kết bạn:', data);
-            //     },
-            //     onError: (err) => {
-            //         console.error('Lỗi khi gửi lời mời kết bạn:', err);
-            //     }
-            // })
+            addFriend({
+                toUser: userId,
+                onSuccess: (data) => {
+                    console.log('Đã gửi lời mời kết bạn:', data);
+                },
+                onError: (err) => {
+                    console.error('Lỗi khi gửi lời mời kết bạn:', err);
+                }
+            })
             onAddFriend?.();
         } else {
             console.log('userId:' + userId)
@@ -56,20 +57,23 @@ const FriendCard: React.FC<FriendCardProps> = ({
 
     return (
         <div className={styles.friendCard}>
-            <img src={img} alt={name} className={styles.friendAvatar} />
-            <div className={styles.friendInfo}>
-                <h3 className={styles.friendName}>{name}</h3>
-                <p className={styles.friendMutual}>{mutual}</p>
-                <p className={styles.followerCount}>{followingCount}</p>
-                <button
-                    className={`${styles.actionButton} ${isFriend ? '' : styles.activeButton}`}
-                    onClick={handleToggleFriend}
-                >
-                    {isFriend ? 'Add Friend' : '✓ Unfriend'}
-                </button>
+            <Link href={`/profile/${userId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <img src={img} alt={name} className={styles.friendAvatar} />
+                <div className={styles.friendInfo}>
+                    <h3 className={styles.friendName}>{name}</h3>
+                    <p className={styles.friendMutual}>{mutual}</p>
+                    <p className={styles.followerCount}>{followingCount}</p>
+                </div>
+            </Link>
+            <button
+                className={`${styles.actionButton} ${isFriend ? '' : styles.activeButton}`}
+                onClick={handleToggleFriend}
+            >
+                {isFriend ? 'Add Friend' : '✓ Unfriend'}
+            </button>
 
-            </div>
         </div>
+
     );
 };
 

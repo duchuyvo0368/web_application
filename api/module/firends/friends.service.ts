@@ -195,11 +195,13 @@ export class FriendService {
      }
 
      // Lấy danh sách lời mời đến chưa xác nhận
-     async getPendingFriendRequests(userId: string, limit: number) {
+     async getPendingFriendRequests(userId: string, limit: number, page: number) {
+          const skip = (page - 1) * limit;
           const pendingRequests = await this.friendRelationModel
                .find({ toUser: userId, type: 'pending' })
                .populate('fromUser', 'name avatar email')
                .limit(limit)
+               .skip(skip)
                .lean();
 
           const result = await Promise.all(
@@ -219,6 +221,12 @@ export class FriendService {
           );
 
           return result;
+          // pagination: {
+          //      totalItems,
+          //           currentPage: page,
+          //                totalPages: Math.ceil(totalItems / limit),
+          //                     limit,
+          //      },
      }
 
      // Hủy kết bạn
@@ -240,10 +248,12 @@ export class FriendService {
      }
 
      //lấy danh sách lời mời đã gửi
-     async getSentFriendRequest(userId: string, limit: number) {
+     async getSentFriendRequest(userId: string, limit: number, page: number) {
+          const skip = (page - 1) * limit;
           const pendingFriends = await this.friendRelationModel
                .find({ fromUser: userId, type: 'pending' })
                .populate('toUser', 'name avatar email')
+              // .skip(skip)
                .limit(limit)
                .lean();
 
@@ -264,10 +274,24 @@ export class FriendService {
           );
 
           return result;
+          // pagination: {
+          //      totalItems,
+          //           currentPage: page,
+          //                totalPages: Math.ceil(totalItems / limit),
+          //                     limit,
+          //      },
      }
 
      //lay danh sách bạn bè
-     async getFriends(userId: string, limit: number) {
+     async getFriends(userId: string, limit: number, page: number) {
+          const skip = (page - 1) * limit;
+
+          // Tìm tổng số bạn bè accepted
+          const totalItems = await this.friendRelationModel.countDocuments({
+               type: 'accepted',
+               $or: [{ fromUser: userId }, { toUser: userId }],
+          });
+
           const relations = await this.friendRelationModel
                .find({
                     type: 'accepted',
@@ -275,9 +299,10 @@ export class FriendService {
                })
                .populate('fromUser', 'name avatar email')
                .populate('toUser', 'name avatar email')
+               .skip(skip)
                .limit(limit)
                .lean();
-          logger.info(`data:${JSON.stringify(relations)}`);
+
           const friends = await Promise.all(
                relations.map(async (relation) => {
                     const friend =
@@ -298,8 +323,15 @@ export class FriendService {
 
           return {
                data: friends,
+               pagination: {
+                    totalItems,
+                    currentPage: page,
+                    totalPages: Math.ceil(totalItems / limit),
+                    limit,
+               },
           };
      }
+
 
      //lấy danh sách bạn bè lời mời đã gửi đề trừ khỏi list user
      async getRelatedUserIds(userId: string): Promise<string[]> {
@@ -341,7 +373,7 @@ export class FriendService {
           return friend;
      }
 
-     //kiểm tra bạn bè
+     // bạn bè
      async getFriendUserIds(userId: string): Promise<string[]> {
           const relations = await this.friendRelationModel
                .find({
@@ -357,7 +389,7 @@ export class FriendService {
           );
      }
 
-     //lấy follow theo userId
+     //check follow
      async isFollowing(userId: string, targetId: string): Promise<boolean> {
           const exists = await this.friendRelationModel.exists({
                type: 'follow',
@@ -366,6 +398,15 @@ export class FriendService {
           });
 
           return !!exists;
+     }
+     //lấy follow theo userId
+     async getFollowingUserIds(userId: string): Promise<string[]> {
+          const followRelations = await this.friendRelationModel.find({
+               type: 'follow',
+               fromUser: userId,
+          }).lean();
+
+          return followRelations.map(rel => rel.toUser.toString());
      }
 
 
@@ -411,7 +452,7 @@ export class FriendService {
           }
      }
 
-     //userA following userB tinh so isFollowing theo id cua userA type:follow
+     //userA following userB tinh so Following theo id cua userA type:follow
      //userC muon xem following cua userB truyen id userB vao lay ra SL following cua userB
      async countFollowing(userId: string): Promise<number> {
           return await this.friendRelationModel.countDocuments({
@@ -420,7 +461,7 @@ export class FriendService {
           });
      }
 
-     //userA duoc userB Followers tinh so isFollowing theo id cua toUser id cua userA type:follow
+     //userA duoc userB Followers tinh so Following theo id cua toUser id cua userA type:follow
      //userC muon xem following cua userA truyen id userA vao lay ra SL following cua userA
      async countFollowers(userId: string): Promise<number> {
           logger.info(`followersId:${userId}`);
@@ -431,24 +472,49 @@ export class FriendService {
           });
      }
 
+     //so lưong bạn be
+     async countFriends(userId: string): Promise<number> {
+          return this.friendRelationModel.countDocuments({
+               type: 'accepted',
+               $or: [
+                    { fromUser: userId },
+                    { toUser: userId },
+               ],
+          });
+     }
+
      async getFriendListByType(
           userId: string,
           type: 'all' | 'sent' | 'pending' | 'follow',
           limit: number,
      ) {
+          let message = '';
+          let result: any;
+
           switch (type) {
                case 'all':
-                    return this.getFriends(userId, limit);
+                    message = 'Friend list fetched successfully';
+                    result = await this.getFriends(userId, limit, 1);
+                    break;
                case 'sent':
-                    return this.getSentFriendRequest(userId, limit);
+                    message = 'Sent friend requests fetched successfully';
+                    result = await this.getSentFriendRequest(userId, limit, 1);
+                    break;
                case 'pending':
-                    return this.getPendingFriendRequests(userId, limit);
+                    message = 'Pending friend requests fetched successfully';
+                    result = await this.getPendingFriendRequests(userId, limit, 1);
+                    break;
                case 'follow':
-                    return this.getFollowingRelations(userId, limit);
+                    message = 'Follow list fetched successfully';
+                    result = await this.getFollowingRelations(userId, limit);
+                    break;
                default:
                     throw new BadRequestException('Invalid type');
           }
+
+          return { message, result };
      }
+
 
      async getFollowingRelations(userId: string, limit: number) {
           return this.friendRelationModel
