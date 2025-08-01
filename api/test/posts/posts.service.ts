@@ -35,45 +35,26 @@ export class PostsService {
         return matches.map((match) => match[1].toLowerCase());
     }
 
-    async createPost(
-        data: CreatePostDto,
-        userId: string,
-        images?: Express.Multer.File[],
-        videos?: Express.Multer.File[],
-    ) {
-        const imageUrls: string[] = [];
-        const videoUrls: string[] = [];
-
-        if (images?.length) {
-            for (const file of images) {
-                const result = await this.uploadService.handleUpload(file, 'post');
-                if (result.metadata?.url) imageUrls.push(result.metadata.url);
-            }
-        }
-
-        if (videos?.length) {
-            for (const file of videos) {
-                const result = await this.uploadService.handleUpload(file, 'post');
-                if (result.metadata?.url) videoUrls.push(result.metadata.url);
-            }
-        }
-
+    async createPost(data: CreatePostDto, userId: string): Promise<Post> {
         const newPostData = {
             userId,
-            title: data.title,
-            content: data.content,
-            privacy: data.privacy ?? 'public',
-            hashtags: data.hashtags ?? [],
-            post_link_meta: data.post_link_meta ?? null,
-            images: imageUrls,
-            videos: videoUrls,
+            title: data.title || '',
+            content: data.content || '',
+            privacy: data.privacy || 'public',
+            hashtags: data.hashtags ? [data.hashtags] : [],
+            post_link_meta: data.post_link_meta || null,
+            images: data.images || [],
+            videos: data.videos || [],
             likesCount: 0,
             commentsCount: 0,
         };
 
+        logger.info(`Creating post with data:`, newPostData);
+
         const post = await this.postModel.create(newPostData);
         return post;
     }
+
 
 
 

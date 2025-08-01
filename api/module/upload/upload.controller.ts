@@ -17,43 +17,44 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 export class UploadController {
     constructor(private readonly uploadService: UploadService) { }
 
-    @Post('multipart')
-    @UseGuards(AuthGuard)
-    @UseInterceptors(
-        AnyFilesInterceptor({
-            storage: diskStorage({
-                destination: './uploads',
-                filename: (req, file, cb) => {
-                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                    cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-                },
-            }),
-            limits: {
-                fileSize: 100 * 1024 * 1024, // 100MB mỗi file
-                files: 10, // tối đa 10 file/lần
-            },
-        }),
-    )
-    async uploadMultipart(@UploadedFiles() files: Express.Multer.File[]) {
-        if (!files || files.length === 0) {
-            throw new BadRequestException('No files uploaded');
-        }
+    // @Post('multipart')
+    // @UseGuards(AuthGuard)
+    // @UseInterceptors(
+    //     AnyFilesInterceptor({
+    //         storage: diskStorage({
+    //             destination: './uploads',
+    //             filename: (req, file, cb) => {
+    //                 const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    //                 cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+    //             },
+    //         }),
+    //         limits: {
+    //             fileSize: 100 * 1024 * 1024, // 100MB mỗi file
+    //             files: 10, // tối đa 10 file/lần
+    //         },
+    //     }),
+    // )
+    // @Post('create-multipart')
+    // async createMultipart(@Body() body: { fileName: string; contentType: string }) {
+    //     return this.uploadService.createMultipartUpload(body.fileName, body.contentType);
+    // }
 
-        const results = await Promise.all(
-            files.map(async (file) => {
-                const key = `posts/${file.filename}`;
-                const url = await this.uploadService.uploadFileToS3Multipart(
-                    file.path,
-                    key,
-                    file.mimetype,
-                );
-                return { url };
-            }),
-        );
+    // @Get('presigned-url')
+    // async getPresignedUrl(
+    //     @Query('uploadId') uploadId: string,
+    //     @Query('key') key: string,
+    //     @Query('partNumber') partNumber: string,
+    //     @Query('contentType') contentType: string,
+    // ) {
+    //     return {
+    //         url: await this.uploadService.getPresignedUrl(uploadId, key, parseInt(partNumber), contentType),
+    //     };
+    // }
 
-        return {
-            message: 'Upload success',
-            files: results,
-        };
-    }
+    // @Post('complete-multipart')
+    // async complete(@Body() body: { key: string; uploadId: string; parts: { ETag: string; PartNumber: number }[] }) {
+    //     return {
+    //         location: await this.uploadService.completeMultipartUpload(body.key, body.uploadId, body.parts),
+    //     };
+    // }
 }

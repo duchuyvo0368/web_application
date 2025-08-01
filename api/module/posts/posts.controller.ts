@@ -1,33 +1,34 @@
 import {
-     Controller,
-     Get,
-     Post,
-     Body,
-     Patch,
-     Param,
-     Delete,
-     UseGuards,
-     Req,
-     Query,
-     BadRequestException,
-     UnauthorizedException,
-     UploadedFile,
-     UseInterceptors,
-     UploadedFiles,
+    Controller,
+    Get,
+    Post,
+    Body,
+    Patch,
+    Param,
+    Delete,
+    UseGuards,
+    Req,
+    Query,
+    BadRequestException,
+    UnauthorizedException,
+    UploadedFile,
+    UseInterceptors,
+    UploadedFiles,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AuthGuard } from 'module/auth/guards/access-token.guard';
 import {
-     ApiBearerAuth,
-     ApiBody,
-     ApiOperation,
-     ApiQuery,
+    ApiBearerAuth,
+    ApiBody,
+    ApiOperation,
+    ApiQuery,
 } from '@nestjs/swagger';
 import { isValidUrl } from '../../utils/index';
 import { AuthRequest } from 'module/auth/interfaces/auth-request.interface';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { uploadConfig } from 'module/upload/utils/multer.config';
 import { MulterS3File } from 'module/upload/utils/multe.s3.file';
+import { CreatePostDto } from './create-post.dto';
 // import { CreatePostDto } from './dto/create-post.dto';
 // import { UpdatePostDto } from './dto/update-post.dto';
 
@@ -38,10 +39,47 @@ export class PostsController {
      @UseGuards(AuthGuard)
      @UseInterceptors(AnyFilesInterceptor(uploadConfig))
      @ApiBearerAuth()
+     @ApiOperation({ summary: 'Create Post' })
+     @ApiBody({
+         schema: {
+             type: 'object',
+             properties: {
+                 title: { type: 'string', example: 'Title Post' },
+                 content: { type: 'string', example: 'Content Post' },
+                 privacy: { type: 'string', example: 'public | friend | private' },
+                 hashtags: {
+                     type: 'array',
+                     items: { type: 'string' },
+                     example: ['nestjs', 'backend'],
+                 },
+                 images: {
+                     type: 'array',
+                     items: { type: 'string' },
+                     example: ['https://example.com/image1.jpg'],
+                 },
+                 videos: {
+                     type: 'array',
+                     items: { type: 'string' },
+                     example: ['https://example.com/video1.mp4'],
+                 },
+                 post_link_meta: {
+                     type: 'object',
+                     properties: {
+                         post_link_url: { type: 'string', example: 'https://vnexpress.net/...' },
+                         post_link_title: { type: 'string', example: 'Title link' },
+                         post_link_description: { type: 'string', example: 'description link' },
+                         post_link_content: { type: 'string', example: 'Content link' },
+                         post_link_image: { type: 'string', example: 'https://...' },
+                     }
+                 }
+             },
+             required: ['title', 'content']
+         }
+     })
      @Post('create')
      async create(
          @UploadedFiles() files: Express.Multer.File[],
-         @Body() body: any,
+         @Body() body: CreatePostDto,
          @Req() req: AuthRequest
      ) {
          const userId = req.user?.userId 
@@ -50,7 +88,6 @@ export class PostsController {
          }
          const images: MulterS3File[] = files.filter(file => file.fieldname === 'images');
          const videos: MulterS3File[] = files.filter(file => file.fieldname === 'videos');
-         const { title, content, privacy, post_link_meta } = body;
          return this.postService.createPost(body, userId, images, videos);
      }
 
@@ -135,23 +172,23 @@ export class PostsController {
           return { metadata };
      }
 
-     //   @Get()
-     //   findAll() {
-     //     return this.postsService.findAll();
-     //   }
+    //   @Get()
+    //   findAll() {
+    //     return this.postsService.findAll();
+    //   }
 
-     //   @Get(':id')
-     //   findOne(@Param('id') id: string) {
-     //     return this.postsService.findOne(+id);
-     //   }
+    //   @Get(':id')
+    //   findOne(@Param('id') id: string) {
+    //     return this.postsService.findOne(+id);
+    //   }
 
-     // //   @Patch(':id')
-     // //   update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-     // //     //return this.postsService.update(+id, updatePostDto);
-     // //   }
+    // //   @Patch(':id')
+    // //   update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
+    // //     //return this.postsService.update(+id, updatePostDto);
+    // //   }
 
-     //   @Delete(':id')
-     //   remove(@Param('id') id: string) {
-     //     return this.postsService.remove(+id);
-     //   }
+    //   @Delete(':id')
+    //   remove(@Param('id') id: string) {
+    //     return this.postsService.remove(+id);
+    //   }
 }

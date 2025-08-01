@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
@@ -54,6 +54,11 @@ async function bootstrap() {
     app.useStaticAssets(join(__dirname, '..', 'uploads'), {
         prefix: '/uploads',
     });
+    app.useGlobalPipes(
+        new ValidationPipe({
+            transform: true, 
+        }),
+    );
 
     await app.listen(5000);
 }
