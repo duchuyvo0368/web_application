@@ -19,7 +19,9 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
-    "tailwind-scrollbar-hide": "^4.0.0"
+    "react-photo-view": "^1.2.7",
+    "tailwind-scrollbar-hide": "^4.0.0",
+    "yet-another-react-lightbox": "^3.25.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

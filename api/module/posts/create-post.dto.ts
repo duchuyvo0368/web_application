@@ -38,6 +38,12 @@ export class CreatePostDto {
     @IsArray()
     @IsString({ each: true })
     hashtags?: string[];
+    
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    friends_tagged?: string[];
+
 
     @IsOptional()
     @IsArray()
@@ -48,7 +54,6 @@ export class CreatePostDto {
     @IsArray()
     @IsString({ each: true })
     videos?: string[];
-
     @IsOptional()
     @ValidateNested()
     @Type(() => PostLinkMetaDto)

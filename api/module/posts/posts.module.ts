@@ -4,10 +4,11 @@ import { PostsController } from './posts.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from 'module/auth/module.auth';
-import { Post, PostSchema } from './post.entity';
+import { Post, PostSchema } from './posts.model';
 import { FriendModule } from 'module/firends/friend.module';
 import { UploadService } from 'module/upload/upload.service';
 import { UploadModule } from 'module/upload/upload.module';
+import { FeelModule } from 'module/feels/feels.module';
 
 @Module({
     imports: [
@@ -19,6 +20,7 @@ import { UploadModule } from 'module/upload/upload.module';
         ),
         AuthModule,
         FriendModule,
+      //  FeelModule,
         forwardRef(() => UploadModule)
 
     ],

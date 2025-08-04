@@ -19,10 +19,10 @@ export async function extractMetadata(url: string) {
         const metadata = await scraper({ html, url: finalUrl });
 
         return {
-            url: metadata.url,
-            title: metadata.title,
-            description: metadata.description,
-            image: metadata.image,
+            post_link_url: metadata.url,
+            post_link_title: metadata.title,
+            post_link_description: metadata.description,
+            post_link_image: metadata.image,
         };
     } catch (error) {
         console.error('Metadata extraction failed:', error.message);

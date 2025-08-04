@@ -24,11 +24,19 @@ GET:/v1/api/friends/requests/sent (lấy ra danh sách lời mời đã gửi)
 GET:/v1/api/friends/requests/pending (lấy ra danh sách chờ xác nhận)
 
 -----------------------------------------------------------------
--fix lời mời kết bạn❌
+-fix lời mời kết bạn
 -lấy post đã follow và bạn bè hiển thị lên feed ✅
--lấy post của mình trong profile (publlic và friend)❌
--lấy post của bạn bè bao gồm post public và post friend❌
--lấy post của người lạ bao gồm post public❌
+-lấy post của mình trong profile (publlic và friend)
+-lấy post của bạn bè bao gồm post public và post friend
+-lấy post của người lạ bao gồm post public
+--------------------------------------------------
+-like 
+-comment
+-xem profile ơ bạn bè và khong ban be
+-hien thị profile ơ
+-notification
+-push notification
+-
 
 
 

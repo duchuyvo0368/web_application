@@ -4,22 +4,38 @@
 import { UserInfo } from "../home/type";
 
 
-// Dùng cho component hiển thị bài viết (PostCard)
+
+
+// Dùngd cho component hiển thị bài viết (PostCard)
 export interface PostCardProps {
-  userName: string;
-  avatar: string;
-  time: string;
-  title: string;
-  content: string;
-  images: string[];
-  videos: string[];
-  stats: {
-    like: number;
-    comment: number;
-    view: number;
-  };
-  createdAt: string;
-  post_link_meta?: PostLinkMeta
+    postId: string;
+    userName: string;
+    avatar: string;
+    time: string;
+    title: string;
+    content: string;
+    images: string[];
+    hashtags: string[];
+    videos: string[];
+    feel: { [userId: string]: 'like' | 'love' | 'haha' };
+    feelCount: { [key: string]: number };
+    comments: number;
+    views: number;
+    createdAt: string;
+    post_link_meta?: PostLinkMeta
+}
+export interface CreateMultipartResponse {
+    uploadId: string;
+    key: string;
+}
+
+export interface PresignedUrlResponse {
+    url: string;
+}
+
+export interface UploadPart {
+    ETag: string;
+    PartNumber: number;
 }
 
 // Props truyền vào CreatePostModal
@@ -36,20 +52,22 @@ export interface PostCardProps {
 
 // Post dùng trong client (local state)
 
-// Post trả về từ server 
+// Post trả về từ server
 export interface PostFromServer {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  userId: string;
-  images?: string[];
-  videos?: string[];
-  privacy: 'public' | 'friends';
-  post_link_meta?: PostLinkMeta;
-  likesCount?: number;
-  commentsCount?: number;
-
+    _id: string;
+    title: string;
+    content: string;
+    hashtags?: string[];
+    createdAt: string;
+    userId: string;
+    images?: string[];
+    videos?: string[];
+    privacy: 'public' | 'friends';
+    post_link_meta?: PostLinkMeta;
+    feelCount: { [key: string]: number };
+    feel: { [userId: string]: 'like' | 'love' | 'haha' };
+    comments: number;
+    views: number;
 
 }
 
@@ -59,75 +77,80 @@ export interface PostFromServer {
 
 
 export interface Post {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  images?: string[];
-  videos?: string[];
-  privacy: 'public' | 'friends';
-  userId: string;
-  likesCount: number;
-  commentsCount: number;
+    id: string;
+    title: string;
+    content: string;
+    createdAt: string;
+    images?: string[];
+    videos?: string[];
+    privacy: 'public' | 'friends';
+    userId: string;
+    hashtags?: string[];
+    feel?: { [key: string]: string };
+    feelCount?: { [key: string]: number };
+    comments: number;
 }
 
 
 export interface CreatePostModalProps {
-  open: boolean;
-  userInfo: UserInfo;
-  onClose: () => void;
-  onPostCreated: (newPost: PostResponse) => void;
+    open: boolean;
+    userInfo: UserInfo;
+    onClose: () => void;
+    onPostCreated: (newPost: PostResponse) => void;
 }
 
 export interface ExtractLinkParams {
-  url: string;
-  onSuccess?: (meta: PostLinkMeta) => void;
-  onError?: (msg: string) => void;
+    url: string;
+    onSuccess?: (meta: PostLinkMeta) => void;
+    onError?: (msg: string) => void;
 }
 
 export interface PostLinkMeta {
-  post_link_url?: string;
-  post_link_title?: string;
-  post_link_description?: string;
-  post_link_content?: string;
-  post_link_image?: string;
+    post_link_url?: string;
+    post_link_title?: string;
+    post_link_description?: string;
+    post_link_content?: string;
+    post_link_image?: string;
 }
 
 export interface CreatePostParams {
-  data: {
-    title?: string;
-    content?: string;
-    privacy?: string;
-    userId: string;
-    images?: File[] | null;
-    videos?: File[] | null;
-    post_link_meta?: PostLinkMeta | null;
-    hashtags?: string[];
-    likeCount?: number;
-    commentsCount?: number;
-  };
-  onSuccess?: (res: PostResponse) => void;
-  onError?: (error: string) => void;
+    data: {
+        title?: string;
+        content?: string;
+        privacy?: string;
+        userId: string;
+        images?: string[] | null;
+        videos?: string[] | null;
+        post_link_meta?: PostLinkMeta | null;
+        hashtags?: string[];
+        feelCount?: { [key: string]: number };
+        feel?: { [key: string]: string };
+        comments?: number;
+    };
+    onSuccess?: (res: PostResponse) => void;
+    onError?: (error: string) => void;
 }
 
 export interface PostResponse {
-  _id: string;
-  title: string;
-  content: string;
-  privacy: string;
-  images?: string[];
-  videos?: string[];
-  post_link_meta?: PostLinkMeta;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-  likeCount: number;
-  commentsCount: number;
+    _id: string;
+    title: string;
+    content: string;
+    privacy: string;
+    images?: string[];
+    videos?: string[];
+    post_link_meta?: PostLinkMeta;
+    userId: string;
+    hashtags?: string[];
+    createdAt: string;
+    updatedAt: string;
+    feelCount: { [key: string]: number };
+    feel: { [key: string]: string };
+    comments: number;
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
 }

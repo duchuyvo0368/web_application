@@ -40,7 +40,7 @@ export class Post {
      };
 
      @Prop({ type: [String], default: [] })
-     hashtag?: string[]
+     hashtags?: string[]
      @Prop({ type: String, default: null })
      content: string
 

@@ -76,10 +76,7 @@
     "workbench.colorCustomizations": {
         "editorGutter.errorForeground": "#FF4500",
         "editorGutter.warningForeground": "#FFD700",
-        "editorGutter.infoForeground": "#87CEEB",
-        "editorError.foreground": "#FF0000", // Màu đỏ cho lỗi
-        "editorWarning.foreground": "#FFA500", // Màu cam cho cảnh báo
-        "editorInfo.foreground": "#00CED1"
+        "editorGutter.infoForeground": "#87CEEB"
     },
     "cSpell.enabled": true,
     "cSpell.language": "en,vi,es",

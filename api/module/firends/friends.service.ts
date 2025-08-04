@@ -515,7 +515,6 @@ export class FriendService {
           return { message, result };
      }
 
-
      async getFollowingRelations(userId: string, limit: number) {
           return this.friendRelationModel
                .find({
@@ -525,5 +524,42 @@ export class FriendService {
                .select('toUser')
                .limit(limit)
                .lean();
-     }
+    }
+    
+    //tim kiem ban b 
+    async searchFriendUsers(userId: string, query: string, limit: number, page: number) {
+        const skip = (page - 1) * limit;
+        const objectId = new Types.ObjectId(userId);
+
+       const relations = await this.friendRelationModel
+            .find({
+                type: 'accepted',
+                $or: [{ fromUser: userId }, { toUser: userId }],
+            })
+            .populate('fromUser', 'name avatar email')
+            .populate('toUser', 'name avatar email')
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        logger.info(`Logger:${relations}`)
+        const friends = relations.map(rel => {
+            const from = rel.fromUser as any;
+            const to = rel.toUser as any;
+            if (!from || !to) return null;
+            return from._id.equals(objectId) ? to : from;
+        }).filter(Boolean);
+
+        const lowerQuery = query.toLowerCase();
+        const filtered = friends.filter(user => {
+            const text = `${user.name} ${user.avatar} ${user.email}`.toLowerCase();
+            return text.includes(lowerQuery);
+        });
+
+        return filtered.slice(0, 10);
+    }
+
+
+
+
 }

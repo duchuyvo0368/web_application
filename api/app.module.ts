@@ -8,6 +8,7 @@ import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 //import { FollowModule } from 'module/follow/follow.module';
 import { PostsModule } from 'module/posts/posts.module';
+import { FeelModule } from 'module/feels/feels.module';
 
 @Module({
     imports: [MongooseModule.forRoot(`mongodb://${config.db.host}:${config.db.port}/${config.db.name}`, {
@@ -23,6 +24,7 @@ import { PostsModule } from 'module/posts/posts.module';
         FriendModule,
         UserModule,
         //FollowModule,
+       // FeelModule,
         PostsModule,
 
     ],

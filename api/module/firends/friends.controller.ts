@@ -14,6 +14,7 @@ import {
     Delete,
     DefaultValuePipe,
     ParseIntPipe,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { FriendService } from './friends.service';
 import { CREATED, SuccessResponse } from '../../utils/success.response';
@@ -22,6 +23,7 @@ import { BadRequestError, NotFoundError } from '../../utils/error.response';
 
 import { ApiBearerAuth, ApiBody, ApiHeader, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from 'module/auth/guards/access-token.guard';
+import { AuthRequest } from 'module/auth/interfaces/auth-request.interface';
 
 
 @Controller('friends')
@@ -61,6 +63,7 @@ export class FriendsController {
             metadata: result,
         });
     }
+    
 
 
 
@@ -89,8 +92,11 @@ export class FriendsController {
         },
     })
 
-    async handleFriendRequestStatus(@Body('userId') toUser: string, @Body('type') type: 'accept' | 'reject' | 'deleted' | 'unfriend' | 'send' | 'follow' | 'unfollow', @Req() req: Request) {
-        const fromUser = (req as any).user.userId;
+    async handleFriendRequestStatus(@Body('userId') toUser: string, @Body('type') type: 'accept' | 'reject' | 'deleted' | 'unfriend' | 'send' | 'follow' | 'unfollow', @Req() req: AuthRequest) {
+        const fromUser = req.user?.userId;
+        if (!fromUser) {
+            throw new UnauthorizedException('User not found in request');
+        }
         logger.info(`Accepting requestId:${fromUser} and ${toUser} with action: ${type}`);
         const result = await this.friendsService.handleFriendRequestAction(fromUser, toUser, type);
         return new SuccessResponse({
@@ -100,7 +106,25 @@ export class FriendsController {
 
     }
 
-
+    @Get('/search')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @ApiQuery({
+        name: 'query',
+        required: true,
+        description: 'Search query',
+    })
+    async searchFriendUsers(@Query('query') query: string,@Req() req:AuthRequest) {
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new UnauthorizedException('User not found in request');
+        }
+        const result = await this.friendsService.searchFriendUsers(userId, query);
+        return new SuccessResponse({
+            message: 'Search friend users successfully',
+            metadata: result,
+        });
+    }
 
 
 }

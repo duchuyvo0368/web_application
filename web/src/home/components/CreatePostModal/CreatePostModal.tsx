@@ -5,8 +5,7 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { ex } from '../../services/home.service';
-import type { UserInfo } from '../../types';
+import type { Post, UserInfo } from '../../types';
 
 interface CreatePostModalProps {
     open: boolean;
@@ -229,6 +228,8 @@ export default function CreatePostModal({ open, onClose, userInfo, onPostCreated
         document.body
     );
 }
+
+
 
 
 

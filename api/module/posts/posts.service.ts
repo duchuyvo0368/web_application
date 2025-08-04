@@ -1,5 +1,5 @@
 import { PostsModule } from 'module/posts/posts.module';
-import { Post, PostRelation } from './post.entity';
+import { Post, PostRelation } from './posts.model';
 import { extractMetadata } from './../../utils/extractMetadata';
 import { InjectModel } from '@nestjs/mongoose';
 import { ApiTags } from '@nestjs/swagger';
@@ -29,51 +29,30 @@ export class PostsService {
         const url = match[0];
         return await extractMetadata(url);
     }
-    private extractHashtags(content: string): string[] {
-        const regex = /#(\w+)/g;
-        const matches = [...content.matchAll(regex)];
-        return matches.map((match) => match[1].toLowerCase());
-    }
 
-    async createPost(
-        data: CreatePostDto,
-        userId: string,
-        images?: Express.Multer.File[],
-        videos?: Express.Multer.File[],
-    ) {
-        const imageUrls: string[] = [];
-        const videoUrls: string[] = [];
 
-        if (images?.length) {
-            for (const file of images) {
-                const result = await this.uploadService.handleUpload(file, 'post');
-                if (result.metadata?.url) imageUrls.push(result.metadata.url);
-            }
-        }
-
-        if (videos?.length) {
-            for (const file of videos) {
-                const result = await this.uploadService.handleUpload(file, 'post');
-                if (result.metadata?.url) videoUrls.push(result.metadata.url);
-            }
-        }
-
+    async createPost(data: CreatePostDto, userId: string): Promise<Post> {
         const newPostData = {
             userId,
-            title: data.title,
-            content: data.content,
-            privacy: data.privacy ?? 'public',
+            title: data.title || '',
+            content: data.content || '',
+            privacy: data.privacy || 'public',
             hashtags: data.hashtags ?? [],
-            post_link_meta: data.post_link_meta ?? null,
-            images: imageUrls,
-            videos: videoUrls,
-            likesCount: 0,
-            commentsCount: 0,
+            post_link_meta: data.post_link_meta || null,
+            images: data.images || [],
+            videos: data.videos || [],
+            feel: [],
+            friends_tagged: data.friends_tagged || [],
+            comments:0,
+            views: 0,
         };
+
+        logger.info(`Creating post with data:`, newPostData);
 
         const post = await this.postModel.create(newPostData);
         return post;
     }
+
 
 
 
@@ -117,6 +96,7 @@ export class PostsService {
             })
                 .sort({ createdAt: -1 })
                 .populate('userId', 'name avatar')
+                .populate('friends_tagged', 'email name avatar')
                 .lean();
 
             if (myPosts.length > 0) {
@@ -130,7 +110,8 @@ export class PostsService {
                 .populate('userId', 'name avatar')
                 .skip(page === 1 ? skip : skip)
                 .limit(relatedLimit)
-                .lean(),
+                .lean()
+                ,
             this.postModel.countDocuments(relatedQuery),
         ]);
 
@@ -157,7 +138,7 @@ export class PostsService {
     async getPostsByUser(id: string, userId: string, page = 1, limit = 10) {
         const skip = (page - 1) * limit;
 
-        // Xem chính mình
+      
         if (id === userId) {
             const [data, totalItems] = await Promise.all([
                 this.postModel
@@ -165,7 +146,8 @@ export class PostsService {
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(limit)
-                    .lean(),
+                    .lean()
+                    ,
                 this.postModel.countDocuments({ userId: id }),
             ]);
 
@@ -180,15 +162,14 @@ export class PostsService {
             };
         }
 
-        // Kiểm tra xem id này có phải bạn bè không
         const isFriend = await this.friendService.getFriendUserIds(userId);
 
-        // Là bạn bè
+       
         if (!isFriend) {
             return this.getFeedPosts(id, page, limit);
         }
 
-        // chỉ lấy bài viết public
+      
         const query = {
             userId: id,
             privacy: 'public',
@@ -215,6 +196,76 @@ export class PostsService {
             },
         };
     }
+
+
+    // nhiều loại cảm xúc
+    async likePost(postId: string, userId: string, feel: 'like' | 'love' | 'haha') {
+        const post = await this.postModel.findById(postId);
+        if (!post) throw new Error('Post not found');
+
+        const currentFeel = post.feel.get(userId);
+
+        if (currentFeel === feel) {
+         
+            return post;
+        }
+
+       
+        if (currentFeel) {
+            const oldCount = post.feelCount.get(currentFeel) || 0;
+            post.feelCount.set(currentFeel, Math.max(oldCount - 1, 0));
+        }
+
+     
+        post.feel.set(userId, feel);
+        const newCount = post.feelCount.get(feel) || 0;
+        post.feelCount.set(feel, newCount + 1);
+
+        await post.save();
+        return post;
+    }
+
+    async unlikePost(postId: string, userId: string) {
+        const post = await this.postModel.findById(postId);
+        if (!post) throw new Error('Post not found');
+
+        const currentFeel = post.feel.get(userId);
+        if (currentFeel) {
+            post.feel.delete(userId);
+            const count = post.feelCount.get(currentFeel) || 0;
+            post.feelCount.set(currentFeel, Math.max(count - 1, 0));
+        }
+
+        await post.save();
+        return post;
+    }
+
+    async handleFeel(postId: string, userId: string, feel?: 'like' | 'love' | 'haha') {
+        if (!userId) throw new Error('userId is required');
+
+        const post = await this.postModel.findById(postId);
+        if (!post) throw new Error('Post not found');
+
+        const currentFeel = post.feel.get(userId);
+
+        if (!feel || currentFeel === feel) {
+            await this.unlikePost(postId, userId);
+        } else {
+            await this.likePost(postId, userId, feel);
+        }
+
+        const updatedPost = await this.postModel.findById(postId);
+        return {
+            message: 'Update feel successfully',
+            userFeel: updatedPost?.feel.get(userId) || null,
+            feelCounts: Object.fromEntries(updatedPost?.feelCount || []),
+        };
+    }
+
+
+
+   
+
 
 
 

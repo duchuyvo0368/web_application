@@ -20,9 +20,7 @@ const HomePage: React.FC = () => {
         <Container sidebar={<Sidebar activeTab={actionSideBar} onSelect={setActiveSideBar} />}>
           <Banner />
           <Home/>
-          
-        </Container>
-         
+        </Container> 
       </main>
      
     </div>
