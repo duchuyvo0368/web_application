@@ -40,7 +40,7 @@ export const addFriend = async ({
     onError,
 }: {
     userId: string;
-    type?: "send" | "accept";
+    type?: "send" ;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
 }) => {
@@ -60,7 +60,57 @@ export const addFriend = async ({
         onError?.(err.response?.data || err.message || err);
     }
 };
+export const acceptFriend = async ({
+    userId,
+    onSuccess,
+    onError,
+}: {
+    userId: string;
+    onSuccess?: (data: any) => void;
+    onError?: (err: any) => void;
+}) => {
+    try {
+        const res = await axios.post(`${API_CONFIG}/friends/update-status`,
+            {
+                userId,
+                type:"accept"
+            },
+            {
+                headers: getAuthHeaders()
+            })
 
+        console.log('data_res', res);
+        onSuccess?.(res.data);
+    } catch (err: any) {
+        onError?.(err.response?.data || err.message || err);
+    }
+};
+
+export const rejectFriend = async ({
+    userId,
+    onSuccess,
+    onError,
+}: {
+    userId: string;
+    onSuccess?: (data: any) => void;
+    onError?: (err: any) => void;
+}) => {
+    try {
+        const res = await axios.post(`${API_CONFIG}/friends/update-status`,
+            {
+                userId,
+                type: "reject"
+            },
+            {
+                headers: getAuthHeaders()
+            })
+
+        console.log('data_res', res);
+        onSuccess?.(res.data);
+    } catch (err: any) {
+        onError?.(err.response?.data || err.message || err);
+    }
+};
 export const addFollow = async ({
     userId,
     onSuccess,

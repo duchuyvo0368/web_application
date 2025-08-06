@@ -2,13 +2,11 @@ import { forwardRef, Module } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { PostsController } from './posts.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-
 import { AuthModule } from 'module/auth/module.auth';
 import { Post, PostSchema } from './posts.model';
 import { FriendModule } from 'module/firends/friend.module';
-import { UploadService } from 'module/upload/upload.service';
 import { UploadModule } from 'module/upload/upload.module';
-import { FeelModule } from 'module/feels/feels.module';
+import { PostRepository } from './post.reponsitory';
 
 @Module({
     imports: [
@@ -20,12 +18,11 @@ import { FeelModule } from 'module/feels/feels.module';
         ),
         AuthModule,
         FriendModule,
-      //  FeelModule,
         forwardRef(() => UploadModule)
 
     ],
     controllers: [PostsController],
-    providers: [PostsService],
+    providers: [PostsService,PostRepository],
     exports: [MongooseModule, PostsService],
 })
 export class PostsModule { }

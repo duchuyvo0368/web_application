@@ -1,4 +1,4 @@
-import { Injectable, Inject, NotFoundException, UseGuards, Post } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, UseGuards, Post, BadRequestException } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './user.model';
 import { convertToObject, getInfoData } from '../../utils/index';
@@ -7,7 +7,7 @@ import { AuthFailureError, BadRequestError } from '../../utils/error.response';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { logger } from '../../utils/logger';
-import { UserDto } from './dto/user.dto';
+import { UserDto } from './user.dto';
 import { FriendService } from '../firends/friends.service';
 import { filterFields } from '../../utils/index';
 
@@ -109,26 +109,7 @@ export class UserService {
         return !!result;
     };
 
-    //   async getUserNameById(userId: string): Promise<string | null> {
-    //     const user = await this.userModel.findById(userId).select('name').lean();
-    //     return user?.name || null;
-    //   }
-
-    // async updateFollowersCount(toUserId: string, increment: boolean): Promise<User | null> {
-    //     const update = increment
-    //         ? { $inc: { followersCount: 1 } }
-    //         : { $inc: { followersCount: -1 } };
-
-    //     return this.userModel.findByIdAndUpdate(toUserId, update, { new: true });
-    // }
-
-    // async updateFollowingCount(userId: string, increment: boolean): Promise<User | null> {
-    //     const update = increment
-    //         ? { $inc: { followingCount: 1 } }
-    //         : { $inc: { followingCount: -1 } };
-
-    //     return this.userModel.findByIdAndUpdate(userId, update, { new: true });
-    // }
+    
 
     async getProfile(
         userId: string,
@@ -148,7 +129,7 @@ export class UserService {
         const relation = userId === id
             ? 'me'
             : await (async () => {
-                const friend = await this.friendService.getFriendById(userId, id);
+                const friend = await this.friendService.findAnyRelationBetweenUsers(userId, id);
                 if (!friend) return 'stranger';
                 if (friend.type === 'accepted') return 'accepted';
                 if (friend.type === 'pending') {
@@ -187,7 +168,7 @@ export class UserService {
             throw new Error('Không lấy được URL ảnh từ kết quả upload');
         }
 
-       await this.userModel.findByIdAndUpdate(
+        await this.userModel.findByIdAndUpdate(
             userId,
             { avatar: avatarUrl }, // ✅ avatar giờ là string, không còn lỗi
             { new: true }
@@ -268,5 +249,30 @@ export class UserService {
         };
     }
 
+    async searchFriendUsers(userId: string, query: string, limit: number, page: number) {
+        if (!Types.ObjectId.isValid(userId)) {
+            throw new BadRequestException('Invalid userId');
+        }
 
+        const skip = (page - 1) * limit;
+        const friendIds = await this.friendService.getRelatedUserIds(userId);
+
+        if (friendIds.length === 0) return [];
+
+        const regex = new RegExp(query, 'i');
+
+        const users = await this.userModel
+            .find({
+                _id: { $in: friendIds },
+                $or: [
+                    { name: regex },
+                ]
+            })
+            .select('name email avatar')
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        return users;
+    }
 }

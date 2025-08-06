@@ -106,25 +106,7 @@ export class FriendsController {
 
     }
 
-    @Get('/search')
-    @UseGuards(AuthGuard)
-    @ApiBearerAuth()
-    @ApiQuery({
-        name: 'query',
-        required: true,
-        description: 'Search query',
-    })
-    async searchFriendUsers(@Query('query') query: string,@Req() req:AuthRequest) {
-        const userId = req.user?.userId;
-        if (!userId) {
-            throw new UnauthorizedException('User not found in request');
-        }
-        const result = await this.friendsService.searchFriendUsers(userId, query);
-        return new SuccessResponse({
-            message: 'Search friend users successfully',
-            metadata: result,
-        });
-    }
+  
 
 
 }

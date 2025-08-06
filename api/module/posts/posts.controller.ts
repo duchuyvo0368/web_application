@@ -30,6 +30,7 @@ import { uploadConfig } from 'module/upload/utils/multer.config';
 import { MulterS3File } from 'module/upload/utils/multe.s3.file';
 import { CreatePostDto } from './create-post.dto';
 import { logger } from 'utils/logger';
+import { SuccessResponse } from 'utils/success.response';
 // import { CreatePostDto } from './dto/create-post.dto';
 // import { UpdatePostDto } from './dto/update-post.dto';
 
@@ -53,6 +54,11 @@ export class PostsController {
                     items: { type: 'string' },
                     example: ['nestjs', 'backend'],
                 },
+                friends_tagged: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['fullname'],
+                },
                 images: {
                     type: 'array',
                     items: { type: 'string' },
@@ -69,7 +75,6 @@ export class PostsController {
                         post_link_url: { type: 'string', example: 'https://vnexpress.net/...' },
                         post_link_title: { type: 'string', example: 'Tiêu đề link' },
                         post_link_description: { type: 'string', example: 'Mô tả link' },
-                        post_link_content: { type: 'string', example: 'Nội dung link' },
                         post_link_image: { type: 'string', example: 'https://...' },
                     }
                 }
@@ -85,62 +90,31 @@ export class PostsController {
     }
 
 
-    @ApiOperation({ summary: 'Get posts by type friend ' })
-    @ApiQuery({
-        name: 'type',
-        enum: ['friend', 'public', 'me'],
-        required: true,
-        description: 'Type of posts to retrieve',
-    })
-    @ApiQuery({
-        name: 'page',
-        required: false,
-        type: Number,
-        example: 1,
-        description: 'Current page number (default = 1)',
-    })
-    @ApiQuery({
-        name: 'limit',
-        required: false,
-        type: Number,
-        example: 10,
-        description: 'Number of posts per page (default = 10)',
-    })
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard)
-    @Get('')
-    async getFriendPosts(
-        @Req() req: AuthRequest,
-        @Query('page') page = '1',
-        @Query('limit') limit = '10',
-    ) {
-        const userId = req.user?.userId;
-        if (!userId) {
-            throw new UnauthorizedException('User not found in request');
-        }
-        const parsedPage = parseInt(page, 10);
-        const parsedLimit = parseInt(limit, 10);
-
-        return this.postService.getFeedPosts(userId, parsedPage, parsedLimit);
-    }
+    
 
     @ApiBearerAuth()
     @UseGuards(AuthGuard)
-    @Get(':id')
+    @Get(':userId')
     async getPostsByType(
         @Req() req: AuthRequest,
-        @Param('userId') id: string,
+        @Param('userId') userId: string,
         @Query('page') page = '1',
         @Query('limit') limit = '10',
     ) {
-        if (!id) {
+        
+       
+        const requesterId = req.user?.userId;
+        if (!userId || !requesterId) {
             throw new UnauthorizedException('User not found in request');
         }
-        const userId = req.user?.id
         const parsedPage = parseInt(page, 10);
         const parsedLimit = parseInt(limit, 10);
-
-        return this.postService.getPostsByUser(id, userId, parsedPage, parsedLimit);
+        logger.info(`data:${userId} requesterId:${requesterId}`)
+        const result = this.postService.getPostsByUserWithAccess(userId, requesterId, parsedPage, parsedLimit);
+        return new SuccessResponse({
+            message: 'Get posts by type',
+            metadata: result,
+        });
     }
 
     @ApiBearerAuth()
@@ -182,7 +156,44 @@ export class PostsController {
         return await this.postService.handleFeel(postId, userId, body.feel);
     }
 
+    @ApiOperation({ summary: 'Get posts by type friend ' })
+    @ApiQuery({
+        name: 'type',
+        enum: ['friend', 'public'],
+        required: true,
+        description: 'Type of posts to retrieve',
+    })
+    @ApiQuery({
+        name: 'page',
+        required: false,
+        type: Number,
+        example: 1,
+        description: 'Current page number (default = 1)',
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        example: 10,
+        description: 'Number of posts per page (default = 10)',
+    })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    @Get('')
+    async getFriendPosts(
+        @Req() req: AuthRequest,
+        @Query('page') page = '1',
+        @Query('limit') limit = '10',
+    ) {
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new UnauthorizedException('User not found in request');
+        }
+        const parsedPage = parseInt(page, 10);
+        const parsedLimit = parseInt(limit, 10);
 
+        return this.postService.getFeedPosts(userId, parsedPage, parsedLimit);
+    }
     //   @Get()
     //   findAll() {
     //     return this.postsService.findAll();

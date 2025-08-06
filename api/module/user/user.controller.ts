@@ -12,10 +12,12 @@ import {
     UploadedFiles,
     UseInterceptors,
     UploadedFile,
-    Query
+    Query,
+    UnauthorizedException,
+    BadRequestException
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserDto } from './dto/user.dto';
+import { UserDto } from './user.dto';
 import { SuccessResponse, CREATED } from '../../utils/success.response';
 import { logger } from '../../utils/logger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -33,47 +35,8 @@ import { MulterS3File } from 'module/upload/utils/multe.s3.file';
 export class UserController {
     constructor(private readonly userService: UserService) { }
 
-    // @Post('create')
-    // async createUser(@Body() body: UserDto) {
-    //     const result = await this.userService.createUser(body);
-    //     return new CREATED({
-    //         message: 'User created successfully',
-    //         metadata: result,
-    //     });
-    // }
-
-    // @Get(':id')
-    // async getUser(@Param('id') id: string) {
-    //     const user = await this.userService.findById(id);
-    //     if (!user) throw new NotFoundException('User not found');
-    //     return new SuccessResponse({
-    //         message: 'User found',
-    //         metadata: user,
-    //     });
-    // }
-
-    // @Patch(':id')
-    // async updateUser(@Param('id') id: string, @Body() body: UserDto) {
-    //     const user = await this.userService.updateUser(id, body);
-    //     if (!user) throw new NotFoundException('User not found');
-    //     return new SuccessResponse({
-    //         message: 'User updated',
-    //         metadata: user,
-    //     });
-    // }
-
-    // @Delete(':id')
-    // async deleteUser(@Param('id') id: string) {
-    //     const deleted = await this.userService.deleteUser(id);
-    //     if (!deleted) throw new NotFoundException('User not found');
-    //     return new SuccessResponse({
-    //         message: 'User deleted successfully',
-    //         metadata: { id },
-    //     });
-    // }
 
 
-    
     @ApiQuery({ name: 'limit', example: '12' })
     @ApiQuery({ name: 'page', example: '1' })
     @UseGuards(AuthGuard)
@@ -81,7 +44,7 @@ export class UserController {
     @Get()
     async getAllUsers(
         @Query('limit') limit: string = '12',
-        @Query('page') page:string = '1',
+        @Query('page') page: string = '1',
         @Req() req: Request,
     ) {
         const userId = (req as any).user.userId;
@@ -99,6 +62,57 @@ export class UserController {
             metadata: result,
         });
     }
+
+    @Post('upload-avatar')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(FileInterceptor('file', uploadConfig))
+    async uploadAvatar(
+        @UploadedFile() file: MulterS3File,
+        @Req() req: AuthRequest,
+    ) {
+        const userId = req.user!!.userId;
+        if (!userId) {
+            throw new AuthFailureError("User auth")
+        }
+        return await this.userService.updateAvatar(userId, 'avatar', file);
+
+    }
+    @Get('/search')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @ApiQuery({ name: 'query', example: 'huy' })
+    async searchFriendUsers(@Query('query') query: string, @Query('page') page: string = '1', @Query('limit') limit: string = '5', @Req() req: AuthRequest) {
+        if (!query) {
+            throw new BadRequestException('Query is required');
+        }
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new AuthFailureError("User auth")
+        }
+        const pageNumber = Math.max(Number(page), 1);
+        const limitNumber = Math.max(Number(limit), 1);
+
+        const result = await this.userService.searchFriendUsers(
+            userId,
+            query,
+            limitNumber,
+            pageNumber,
+        );
+
+        return new SuccessResponse({
+            message: 'User list fetched successfully',
+            metadata: result,
+        });
+
+
+    }
+
+
+
+
+
+
+
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @Get(':userId')
@@ -118,21 +132,6 @@ export class UserController {
             metadata: result,
         });
     }
-    @Post('upload-avatar')
-    @UseGuards(AuthGuard)
-    @UseInterceptors(FileInterceptor('file', uploadConfig))
-    async uploadAvatar(
-        @UploadedFile() file: MulterS3File,
-        @Req() req: AuthRequest,
-    ) {
-        const userId = req.user!!.userId;
-        if (!userId) {
-            throw new AuthFailureError("User auth")
-        }
-        return await this.userService.updateAvatar(userId, 'avatar', file);
-       
-    }
-
 }
 
 

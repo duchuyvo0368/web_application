@@ -10,6 +10,10 @@ import { Model, Types } from 'mongoose';
 import { UploadModule } from 'module/upload/upload.module';
 import { UploadService } from 'module/upload/upload.service';
 import { CreatePostDto } from './create-post.dto';
+import { async } from 'rxjs';
+import { FriendRelation } from '../firends/model/friend.model';
+import { PostRepository } from './post.reponsitory';
+import { convertToObject } from 'utils/index';
 
 @ApiTags('Post')
 @Injectable()
@@ -18,7 +22,7 @@ export class PostsService {
         @InjectModel(Post.name, 'MONGODB_CONNECTION')
         private postModel: Model<PostRelation>,
         private friendService: FriendService,
-        private readonly uploadService: UploadService,
+        private readonly postRepository: PostRepository,
     ) { }
 
     async extractLinkMetadata(content: string) {
@@ -32,26 +36,34 @@ export class PostsService {
 
 
     async createPost(data: CreatePostDto, userId: string): Promise<Post> {
-        const newPostData = {
-            userId,
+        const newPostData: Partial<Post> = {
+            userId: new Types.ObjectId(userId),
             title: data.title || '',
             content: data.content || '',
             privacy: data.privacy || 'public',
             hashtags: data.hashtags ?? [],
-            post_link_meta: data.post_link_meta || null,
+            post_link_meta: data.post_link_meta?.post_link_url
+                ? {
+                    post_link_url: data.post_link_meta.post_link_url,
+                    post_link_title: data.post_link_meta.post_link_title,
+                    post_link_description: data.post_link_meta.post_link_description,
+                    post_link_content: data.post_link_meta.post_link_content,
+                    post_link_image: data.post_link_meta.post_link_image,
+                }
+                : undefined,
             images: data.images || [],
             videos: data.videos || [],
-            feel: [],
-            friends_tagged: data.friends_tagged || [],
-            comments:0,
+            feel: new Map<string, string>(),
+            friends_tagged: (data.friends_tagged || []).map((id) => new Types.ObjectId(id)),
+            comments: 0,
             views: 0,
         };
 
         logger.info(`Creating post with data:`, newPostData);
 
-        const post = await this.postModel.create(newPostData);
-        return post;
+        return this.postRepository.createPost(newPostData, userId);
     }
+
 
 
 
@@ -63,7 +75,6 @@ export class PostsService {
     //friends and public
 
 
-
     async getFeedPosts(userId: string, page = 1, limit = 10) {
         const skip = (page - 1) * limit;
 
@@ -72,53 +83,19 @@ export class PostsService {
             this.friendService.getFollowingUserIds(userId),
         ]);
 
-        // Lọc trùng ID
-        const relatedUserIds = [...new Set([...friendIds, ...followIds])].filter(id => id !== userId);
-
-        const relatedQuery = {
-            userId: { $in: relatedUserIds },
-            $or: [
-                { userId: { $in: friendIds }, privacy: { $in: ['public', 'friend'] } },
-                { userId: { $in: followIds }, privacy: 'public' },
-            ],
-        };
-
         let myPosts: any[] = [];
         let relatedLimit = limit;
 
         if (page === 1) {
-            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // 1 giờ trước
-
-            myPosts = await this.postModel.find({
-                userId,
-                privacy: { $in: ['public', 'friend'] },
-                createdAt: { $gte: oneHourAgo },
-            })
-                .sort({ createdAt: -1 })
-                .populate('userId', 'name avatar')
-                .populate('friends_tagged', 'email name avatar')
-                .lean();
-
-            if (myPosts.length > 0) {
-                relatedLimit = limit - myPosts.length;
-            }
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+            myPosts = await this.postRepository.findMyRecentPosts(userId, oneHourAgo);
+            if (myPosts.length > 0) relatedLimit = limit - myPosts.length;
         }
 
-        const [relatedPosts, totalRelatedItems] = await Promise.all([
-            this.postModel.find(relatedQuery)
-                .sort({ createdAt: -1 })
-                .populate('userId', 'name avatar')
-                .skip(page === 1 ? skip : skip)
-                .limit(relatedLimit)
-                .lean()
-                ,
-            this.postModel.countDocuments(relatedQuery),
-        ]);
+        const { posts: relatedPosts, count: totalRelatedItems } =
+            await this.postRepository.findRelatedPosts(friendIds, followIds, relatedLimit, skip);
 
-        const data = page === 1 && myPosts.length > 0
-            ? [...myPosts, ...relatedPosts]
-            : relatedPosts;
-
+        const data = page === 1 && myPosts.length > 0 ? [...myPosts, ...relatedPosts] : relatedPosts;
         const totalItems = totalRelatedItems + (page === 1 ? myPosts.length : 0);
 
         return {
@@ -134,99 +111,39 @@ export class PostsService {
 
 
 
-    //bai viet theo id
-    async getPostsByUser(id: string, userId: string, page = 1, limit = 10) {
-        const skip = (page - 1) * limit;
 
-      
-        if (id === userId) {
-            const [data, totalItems] = await Promise.all([
-                this.postModel
-                    .find({ userId: id })
-                    .sort({ createdAt: -1 })
-                    .skip(skip)
-                    .limit(limit)
-                    .lean()
-                    ,
-                this.postModel.countDocuments({ userId: id }),
-            ]);
 
-            return {
-                data,
-                pagination: {
-                    page,
-                    limit,
-                    totalItems,
-                    totalPages: Math.ceil(totalItems / limit),
-                },
-            };
-        }
-
-        const isFriend = await this.friendService.getFriendUserIds(userId);
-
-       
-        if (!isFriend) {
-            return this.getFeedPosts(id, page, limit);
-        }
-
-      
-        const query = {
-            userId: id,
-            privacy: 'public',
-        };
-
-        const [data, totalItems] = await Promise.all([
-            this.postModel
-                .find(query)
-                .populate('userId', 'name')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            this.postModel.countDocuments(query),
-        ]);
-
-        return {
-            data,
-            pagination: {
-                page,
-                limit,
-                totalItems,
-                totalPages: Math.ceil(totalItems / limit),
-            },
-        };
-    }
 
 
     // nhiều loại cảm xúc
     async likePost(postId: string, userId: string, feel: 'like' | 'love' | 'haha') {
-        const post = await this.postModel.findById(postId);
+        const post = await this.postRepository.findById(postId);
         if (!post) throw new Error('Post not found');
 
         const currentFeel = post.feel.get(userId);
 
         if (currentFeel === feel) {
-         
+
             return post;
         }
 
-       
+
         if (currentFeel) {
             const oldCount = post.feelCount.get(currentFeel) || 0;
             post.feelCount.set(currentFeel, Math.max(oldCount - 1, 0));
         }
 
-     
+
         post.feel.set(userId, feel);
         const newCount = post.feelCount.get(feel) || 0;
         post.feelCount.set(feel, newCount + 1);
 
-        await post.save();
+        await this.postRepository.save(post);
         return post;
     }
 
     async unlikePost(postId: string, userId: string) {
-        const post = await this.postModel.findById(postId);
+        const post = await this.postRepository.findById(postId);
         if (!post) throw new Error('Post not found');
 
         const currentFeel = post.feel.get(userId);
@@ -235,15 +152,14 @@ export class PostsService {
             const count = post.feelCount.get(currentFeel) || 0;
             post.feelCount.set(currentFeel, Math.max(count - 1, 0));
         }
-
-        await post.save();
+        await this.postRepository.save(post)
         return post;
     }
 
     async handleFeel(postId: string, userId: string, feel?: 'like' | 'love' | 'haha') {
         if (!userId) throw new Error('userId is required');
 
-        const post = await this.postModel.findById(postId);
+        const post = await this.postRepository.findById(postId);
         if (!post) throw new Error('Post not found');
 
         const currentFeel = post.feel.get(userId);
@@ -254,7 +170,7 @@ export class PostsService {
             await this.likePost(postId, userId, feel);
         }
 
-        const updatedPost = await this.postModel.findById(postId);
+        const updatedPost = await this.postRepository.findById(postId);
         return {
             message: 'Update feel successfully',
             userFeel: updatedPost?.feel.get(userId) || null,
@@ -264,10 +180,44 @@ export class PostsService {
 
 
 
-   
 
 
 
 
+
+
+
+    private async getAccessLevel(userId: string, requesterId: string): Promise<'owner' | 'friend' | 'public'> {
+        if (userId === requesterId) return 'owner';
+
+        const isFriend = await this.friendService.isFriend(userId, requesterId);
+        logger.info(`isFriend: ${isFriend}`);
+        return isFriend ? 'friend' : 'public';
+    }
+
+    private buildPostQuery(userId: string, accessLevel: 'owner' | 'friend' | 'public') {
+        switch (accessLevel) {
+            case 'owner':
+                return { userId };
+            case 'friend':
+                return { userId, privacy: { $in: ['public', 'friend'] } };
+            case 'public':
+                return { privacy: 'public' };
+            default:
+                return { userId, privacy: 'public' };
+        }
+    }
+    async getPostsByUserWithAccess(
+        userId: string,
+        requesterId: string,
+        page = 1,
+        limit = 10,
+    ) {
+        const accessLevel = await this.getAccessLevel(userId, requesterId);
+        logger.info(`accessLevel: ${accessLevel}`);
+        const query = this.buildPostQuery(userId, accessLevel);
+
+        return this.postRepository.findPostsByQuery(query, page, limit);
+    }
 
 }

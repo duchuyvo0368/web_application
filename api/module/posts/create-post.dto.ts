@@ -1,27 +1,15 @@
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
+// dto/post-link-meta.dto.ts
 export class PostLinkMetaDto {
-    @IsOptional()
-    @IsString()
-    post_link_url?: string;
-
-    @IsOptional()
-    @IsString()
+    post_link_url: string; // bắt buộc
     post_link_title?: string;
-
-    @IsOptional()
-    @IsString()
     post_link_description?: string;
-
-    @IsOptional()
-    @IsString()
     post_link_content?: string;
-
-    @IsOptional()
-    @IsString()
     post_link_image?: string;
 }
+
 
 export class CreatePostDto {
     @IsString()

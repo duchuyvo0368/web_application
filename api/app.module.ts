@@ -9,9 +9,10 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 //import { FollowModule } from 'module/follow/follow.module';
 import { PostsModule } from 'module/posts/posts.module';
 import { FeelModule } from 'module/feels/feels.module';
+import { NotificationsModule } from 'module/notification/notification.module';
 
 @Module({
-    imports: [MongooseModule.forRoot(`mongodb://${config.db.host}:${config.db.port}/${config.db.name}`, {
+    imports: [  MongooseModule.forRoot(`mongodb://${config.db.host}:${config.db.port}/${config.db.name}`, {
         connectionName: 'MONGODB_CONNECTION',
         ...config.options,
     }),
@@ -23,9 +24,12 @@ import { FeelModule } from 'module/feels/feels.module';
         UploadModule,
         FriendModule,
         UserModule,
+        
         //FollowModule,
-       // FeelModule,
+      
         PostsModule,
+        FeelModule,
+      //  NotificationsModule,
 
     ],
 })

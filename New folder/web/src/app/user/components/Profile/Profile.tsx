@@ -6,7 +6,16 @@ import React, { useEffect, useState } from 'react';
 import Container from '@/app/components/Container/Container';
 import Header from '@/app/components/Header/Header';
 import Sidebar from '@/app/components/SideBar/SideBar';
-import { getProfile, uploadFile } from '@/app/user/user.service';
+import {
+    getProfile,
+    uploadFile,
+    addFriend,
+    acceptFriend,
+    cancelRequest,
+    unFriend,
+    addFollow,
+    unFollow,
+} from '@/app/user/user.service';
 import SkeletonProfile from '@/app/user/components/Skeleton/SkeletonProfile';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { useParams } from 'next/navigation';
@@ -65,7 +74,6 @@ const ProfilePage: React.FC = () => {
         if (!file) return;
 
         setLoading(true);
-
         uploadFile({
             type: 'avatar',
             file,
@@ -100,49 +108,148 @@ const ProfilePage: React.FC = () => {
         });
     };
 
-   const renderActionButtons = () => {
-    const base = 'rounded-xl px-6 py-2 font-semibold text-white transition';
-    const disabled = friendLoading || followLoading;
+    // ----- ACTION BUTTON HANDLERS -----
+    const handleAddFriend = () => {
+        if (!userId) return;
+        setFriendLoading(true);
+        addFriend({
+            userId,
+            onSuccess: () => {
+                setRelation('pending_sent');
+                setFriendLoading(false);
+            },
+            onError: (err) => {
+                console.error('Add friend failed:', err);
+                setFriendLoading(false);
+            }
+        });
+    };
 
-    return (
-        <div className="flex flex-wrap justify-center gap-4 mt-4 mb-6">
-            {relation === 'accepted' && (
-                <button disabled={disabled} className={`${base} bg-red-500 hover:bg-red-600`}>
-                    Unfriend
-                </button>
-            )}
-            {relation === 'pending_sent' && (
-                <button disabled={disabled} className={`${base} bg-gray-500 hover:bg-gray-600`}>
-                    Cancel Request
-                </button>
-            )}
-            {relation === 'pending_received' && (
-                <button disabled={disabled} className={`${base} bg-blue-600 hover:bg-blue-700`}>
-                    Accept
-                </button>
-            )}
-            {relation === 'stranger' && (
-                <button disabled={disabled} className={`${base} bg-green-600 hover:bg-green-700`}>
-                    Add Friend
-                </button>
-            )}
+    const handleAcceptFriend = () => {
+        if (!userId) return;
+        setFriendLoading(true);
+        acceptFriend({
+            userId,
+            onSuccess: () => {
+                setRelation('accepted');
+                setFriendCount((prev) => prev + 1);
+                setFriendLoading(false);
+            },
+            onError: (err) => {
+                console.error('Accept friend failed:', err);
+                setFriendLoading(false);
+            }
+        });
+    };
 
-            {/* Ẩn Follow nếu là chính mình */}
-            {relation !== 'me' && (
-                isFollowing ? (
-                    <button disabled={disabled} className={`${base} bg-gray-500 hover:bg-gray-600`}>
-                        Unfollow
+    const handleCancelRequest = () => {
+        if (!userId) return;
+        setFriendLoading(true);
+        cancelRequest({
+            userId,
+            onSuccess: () => {
+                setRelation('stranger');
+                setFriendLoading(false);
+            },
+            onError: (err) => {
+                console.error('Cancel request failed:', err);
+                setFriendLoading(false);
+            }
+        });
+    };
+
+    const handleUnfriend = () => {
+        if (!userId) return;
+        setFriendLoading(true);
+        unFriend({
+            userId,
+            onSuccess: () => {
+                setRelation('stranger');
+                setFriendCount((prev) => Math.max(prev - 1, 0));
+                setFriendLoading(false);
+            },
+            onError: (err) => {
+                console.error('Unfriend failed:', err);
+                setFriendLoading(false);
+            }
+        });
+    };
+
+    const handleFollow = () => {
+        if (!userId) return;
+        setFollowLoading(true);
+        addFollow({
+            userId,
+            onSuccess: () => {
+                setIsFollowing(true);
+                setFollowerCount((prev) => prev + 1);
+                setFollowLoading(false);
+            },
+            onError: (err) => {
+                console.error('Follow failed:', err);
+                setFollowLoading(false);
+            }
+        });
+    };
+
+    const handleUnfollow = () => {
+        if (!userId) return;
+        setFollowLoading(true);
+        unFollow({
+            userId,
+            onSuccess: () => {
+                setIsFollowing(false);
+                setFollowerCount((prev) => Math.max(prev - 1, 0));
+                setFollowLoading(false);
+            },
+            onError: (err) => {
+                console.error('Unfollow failed:', err);
+                setFollowLoading(false);
+            }
+        });
+    };
+
+    // ----- RENDER BUTTONS -----
+    const renderActionButtons = () => {
+        const base = 'rounded-xl px-6 py-2 font-semibold text-white transition';
+        const disabled = friendLoading || followLoading;
+
+        return (
+            <div className="flex flex-wrap justify-center gap-4 mt-4 mb-6">
+                {relation === 'accepted' && (
+                    <button disabled={disabled} className={`${base} bg-red-500 hover:bg-red-600`} onClick={handleUnfriend}>
+                        Unfriend
                     </button>
-                ) : (
-                    <button disabled={disabled} className={`${base} bg-blue-600 hover:bg-blue-700`}>
-                        Follow
+                )}
+                {relation === 'pending_sent' && (
+                    <button disabled={disabled} className={`${base} bg-gray-500 hover:bg-gray-600`} onClick={handleCancelRequest}>
+                        Cancel Request
                     </button>
-                )
-            )}
-        </div>
-    );
-};
-
+                )}
+                {relation === 'pending_received' && (
+                    <button disabled={disabled} className={`${base} bg-blue-600 hover:bg-blue-700`} onClick={handleAcceptFriend}>
+                        Accept
+                    </button>
+                )}
+                {relation === 'stranger' && (
+                    <button disabled={disabled} className={`${base} bg-green-600 hover:bg-green-700`} onClick={handleAddFriend}>
+                        Add Friend
+                    </button>
+                )}
+                {relation !== 'me' && (
+                    isFollowing ? (
+                        <button disabled={disabled} className={`${base} bg-gray-500 hover:bg-gray-600`} onClick={handleUnfollow}>
+                            Unfollow
+                        </button>
+                    ) : (
+                        <button disabled={disabled} className={`${base} bg-blue-600 hover:bg-blue-700`} onClick={handleFollow}>
+                            Follow
+                        </button>
+                    )
+                )}
+            </div>
+        );
+    };
 
     if (!userId || loading || !user)
         return (
@@ -157,8 +264,8 @@ const ProfilePage: React.FC = () => {
             <main className="flex w-full">
                 <Container sidebar={<Sidebar activeTab={activeTab} onSelect={setActiveTab} />}>
                     <div className="w-full px-4 sm:px-6 md:px-8 mt-4">
+                        {/* Cover Image */}
                         <div className="relative w-full">
-                            {/* Cover Image */}
                             <img
                                 src="https://file.apetavers.com/api/files/admin/20241226/3d48b567-fd61-415d-a2bc-aa09966a05cd--1000.png"
                                 alt="cover"
@@ -189,7 +296,7 @@ const ProfilePage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Info section */}
+                        {/* Info */}
                         <div className="mt-16 text-center">
                             <div className="text-xl font-bold flex justify-center items-center gap-1">
                                 {user.name}
@@ -227,7 +334,6 @@ const ProfilePage: React.FC = () => {
                         {/* Action Buttons */}
                         <div className="mt-6 flex justify-center">{renderActionButtons()}</div>
                     </div>
-
                 </Container>
             </main>
         </div>

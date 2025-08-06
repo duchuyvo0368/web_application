@@ -9,6 +9,7 @@ import config from '../database/config';
 import { AuthModule } from '../auth/module.auth';
 import { FriendModule } from '../firends/friend.module';
 import { UploadModule } from '../upload/upload.module';
+import { UserRepository } from './user.repository';
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }], 'MONGODB_CONNECTION'),
@@ -19,6 +20,7 @@ import { UploadModule } from '../upload/upload.module';
     controllers: [UserController],
     providers: [
         UserService,
+        UserRepository
     ],
     exports: [MongooseModule, UserService],
 })

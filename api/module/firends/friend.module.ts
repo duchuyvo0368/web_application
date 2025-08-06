@@ -1,11 +1,12 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FriendRelation, FriendSchema } from './entities/friend.model';
+import { FriendRelation, FriendSchema } from './model/friend.model';
 import { FriendsController } from './friends.controller';
 import { FriendService } from './friends.service';
 import config from '../database/config';
 import { AuthModule } from '../auth/module.auth';
 import { UserModule } from '../user/user_module';
+import { FriendRepository } from './model/friend.repository';
 
 @Module({
     imports: [
@@ -22,7 +23,7 @@ import { UserModule } from '../user/user_module';
         forwardRef(() => UserModule),
     ],
     controllers: [FriendsController],
-    providers: [FriendService],
+    providers: [FriendService, FriendRepository],
     exports: [MongooseModule, FriendService],
 })
 export class FriendModule { }
