@@ -62,6 +62,7 @@ export interface PostFromServer {
     userId: string;
     images?: string[];
     videos?: string[];
+    friends_tagged?: string[];
     privacy: 'public' | 'friends';
     post_link_meta?: PostLinkMeta;
     feelCount: { [key: string]: number };
@@ -85,6 +86,7 @@ export interface Post {
     videos?: string[];
     privacy: 'public' | 'friends';
     userId: string;
+    friends_tagged?: string[];
     hashtags?: string[];
     feel?: { [key: string]: string };
     feelCount?: { [key: string]: number };
@@ -123,6 +125,7 @@ export interface CreatePostParams {
         videos?: string[] | null;
         post_link_meta?: PostLinkMeta | null;
         hashtags?: string[];
+        friends_tagged?: string[];
         feelCount?: { [key: string]: number };
         feel?: { [key: string]: string };
         comments?: number;
@@ -141,6 +144,7 @@ export interface PostResponse {
     post_link_meta?: PostLinkMeta;
     userId: string;
     hashtags?: string[];
+    friends_tagged?: string[];
     createdAt: string;
     updatedAt: string;
     feelCount: { [key: string]: number };

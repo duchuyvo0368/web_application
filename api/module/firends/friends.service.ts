@@ -20,7 +20,7 @@ import { logger } from '../../utils/logger';
 import { FORBIDDEN_MESSAGE } from '@nestjs/core/guards';
 import { filter } from 'lodash';
 import { from } from 'rxjs';
-import { FriendRepository } from './model/friend.repository';
+import { FriendRepository } from './friend.repository';
 @Injectable()
 export class FriendService {
     constructor(
@@ -253,7 +253,7 @@ export class FriendService {
     }
 
 
-    //lấy danh sách bạn bè lời mời đã gửi đề trừ khỏi list user
+    //lấy danh sách bạn bè lời mời đã gửi 
     async getRelatedUserIds(userId: string): Promise<string[]> {
         const relations = await this.friendRepository.findRelationsByUserAndTypes(userId, ['accepted', 'pending']);
 
@@ -305,7 +305,7 @@ export class FriendService {
     }
 
 
-    
+
     async handleFriendRequestAction(
         fromUser: string,
         toUser: string,
@@ -405,9 +405,9 @@ export class FriendService {
 
 
 
-   
+
     async isFriend(userA: string, userB: string): Promise<boolean> {
-        return await this.friendRepository.isFriend(userA,userB)
+        return await this.friendRepository.isFriend(userA, userB)
     }
 
 }

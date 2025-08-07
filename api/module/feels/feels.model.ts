@@ -9,14 +9,11 @@ export class Feel {
     @Prop({ type: Types.ObjectId, required: true })
     user_id: Types.ObjectId;
 
-    @Prop({ type: String, enum: ['reaction', 'view', 'share', 'comment'], required: true })
-    feel_type: string;
+    // @Prop({ type: String, enum: ['reaction', 'view', 'share', 'comment'], required: true })
+    // feel_type: string;
 
     @Prop({ type: String, enum: ['like', 'love', 'haha', 'wow', 'sad', 'angry'], default: 'like' })
     feel_name?: string;
-
-    @Prop({ type: String })
-    feel_id?: string;
 
     @Prop({ type: String, default: '' })
     feel_image?: string;

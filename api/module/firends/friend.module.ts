@@ -6,7 +6,7 @@ import { FriendService } from './friends.service';
 import config from '../database/config';
 import { AuthModule } from '../auth/module.auth';
 import { UserModule } from '../user/user_module';
-import { FriendRepository } from './model/friend.repository';
+import { FriendRepository } from './friend.repository';
 
 @Module({
     imports: [

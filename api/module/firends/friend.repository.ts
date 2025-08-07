@@ -1,7 +1,8 @@
+import { async } from 'rxjs';
 // friend.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FriendRelation, FriendRelationDocument } from './friend.model';
+import { FriendRelation, FriendRelationDocument } from './model/friend.model';
 import { Model, Types } from 'mongoose';
 import { logger } from 'utils/logger';
 
@@ -31,7 +32,7 @@ export class FriendRepository {
         return this.createFriendRelation(fromUser, toUser, 'follow');
     }
 
-    // //update status(accepted)
+    //update status(accepted)
     async updateRequestToAccepted(id: Types.ObjectId) {
         return this.friendModel.updateOne(
             { _id: id },
@@ -43,7 +44,7 @@ export class FriendRepository {
             },
         );
     }
-   
+
 
     async findFriendRelation(
         fromUser: string,
@@ -52,10 +53,7 @@ export class FriendRepository {
     ) {
         const { type, bidirectional = false, lean = false } = options;
 
-        const baseCondition = bidirectional
-            ? { $or: [{ fromUser, toUser }, { fromUser: toUser, toUser: fromUser }] }
-            : { fromUser, toUser };
-
+        const baseCondition = bidirectional ? { $or: [{ fromUser, toUser }, { fromUser: toUser, toUser: fromUser }] } : { fromUser, toUser };
         const query = this.friendModel.findOne(type ? { ...baseCondition, type } : baseCondition);
         return lean ? query.lean() : query;
     }
@@ -88,7 +86,7 @@ export class FriendRepository {
     }
 
 
-    
+
     //xoa loi moi ket ban
     async deleteRequestById(id: Types.ObjectId) {
         return this.friendModel.deleteOne({ _id: id });
@@ -108,19 +106,25 @@ export class FriendRepository {
     }
 
 
+    async query(query: any, page = 1, limit = 10, select?: any) {
+        return this.friendModel.find(query)
+            .populate('fromUser', 'name avatar email')
+            .populate('toUser', 'name avatar email')
+            .limit(limit)
+            .skip((page - 1) * limit)
+            .select(select)
+            .lean();
+    }
+
+
     // lay danh sách chưa xác nhận
     async findPendingFriendRequests(
         userId: string,
         limit: number,
         page: number,
     ) {
-        const skip = (page - 1) * limit;
-        return this.friendModel
-            .find({ toUser: userId, type: 'pending' })
-            .populate('fromUser', 'name avatar email')
-            .limit(limit)
-            .skip(skip)
-            .lean();
+        const query = { toUser: userId, type: 'pending' };
+        return this.query(query, page, limit);
     }
     // danh sach loi moi da gui
     async findPendingSentRequests(
@@ -128,54 +132,45 @@ export class FriendRepository {
         limit: number,
         page: number,
     ): Promise<any[]> {
-        const skip = (page - 1) * limit;
-        return this.friendModel
-            .find({ fromUser: userId, type: 'pending' })
-            .populate('toUser', 'name avatar email')
-            .limit(limit)
-            //.skip(skip)
-            .lean();
+        return this.query({ fromUser: userId, type: 'pending' }, page, limit);
     }
 
 
 
     // Lấy danh sách bạn bè đã accepted với phân trang
     async findAcceptedFriends(userId: string, limit: number, page: number): Promise<any[]> {
-        const skip = (page - 1) * limit;
-
-        return this.friendModel
-            .find({
-                type: 'accepted',
-                $or: [{ fromUser: userId }, { toUser: userId }],
-            })
-            .populate('fromUser', 'name avatar email')
-            .populate('toUser', 'name avatar email')
-            .skip(skip)
-            .limit(limit)
-            .lean();
+        return this.query({
+            type: 'accepted',
+            $or: [{ fromUser: userId }, { toUser: userId }],
+        }, page, limit);
     }
 
     //  loi moi da gui
     async findRelationsByUserAndTypes(
         userId: string,
-        types: ('accepted' | 'pending')[],
+        type: ('accepted' | 'pending')[],
     ): Promise<any[]> {
-        return this.friendModel
-            .find({
-                $or: [{ fromUser: userId }, { toUser: userId }],
-                type: { $in: types },
-            })
-            .lean();
+        return this.query({
+            $or: [{ fromUser: userId }, { toUser: userId }],
+            type: { $in: type },
+        });
     }
 
     async findAcceptedRelationsByUserId(userId: string): Promise<any[]> {
-        return this.friendModel
-            .find({
-                type: 'accepted',
-                $or: [{ fromUser: userId }, { toUser: userId }],
-            })
-            .lean();
+        return this.query({
+            type: 'accepted',
+            $or: [{ fromUser: userId }, { toUser: userId }],
+        });
     }
+
+    async findFollowingsUserId(userId: string, limit: number) {
+        return this.query({
+            type: 'follow',
+            fromUser: userId,
+        }, 1, limit, "toUser");
+    }
+
+
 
     async isUserFollowingTarget(userId: string, targetId: string): Promise<boolean> {
         const exists = await this.friendModel.exists({
@@ -218,6 +213,27 @@ export class FriendRepository {
             type: 'follow',
         });
     }
+    async countAcceptedFriendsByUserId(userId: string): Promise<number> {
+        return this.friendModel.countDocuments({
+            type: 'accepted',
+            $or: [
+                { fromUser: userId },
+                { toUser: userId },
+            ],
+        });
+    }
+
+    async countUserId(userId: string): Promise<number> {
+        return this.friendModel.countDocuments({
+            fromUser: userId,
+            type: 'pending',
+        });
+    }
+
+
+
+
+
 
     async isFriend(userA: string, userB: string): Promise<boolean> {
         const relation = await this.friendModel.findOne({
@@ -234,29 +250,6 @@ export class FriendRepository {
 
 
 
-
-
-
-    async countAcceptedFriendsByUserId(userId: string): Promise<number> {
-        return this.friendModel.countDocuments({
-            type: 'accepted',
-            $or: [
-                { fromUser: userId },
-                { toUser: userId },
-            ],
-        });
-    }
-
-    async findFollowingsUserId(userId: string, limit: number) {
-        return this.friendModel
-            .find({
-                fromUser: userId,
-                type: 'follow',
-            })
-            .select('toUser')
-            .limit(limit)
-            .lean();
-    }
 
 
 

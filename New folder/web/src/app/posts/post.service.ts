@@ -62,6 +62,7 @@ export const createPost = async ({
         videos?: string[]; // chỉ nhận URL
         hashtags?: string[];
         post_link_meta?: any;
+        friends_tagged?: string[];
         post_count_feels?: {
             post_count_feels: number;
             post_count_comments: number;
@@ -237,3 +238,20 @@ export const getFriends = async ({
         onError?.(err.response?.data || err.message || err);
     }
 };
+
+// Sửa lại để return
+export const searchFriendUsers = async ({ name }: { name: string }) => {
+    try {
+        const res = await api.get(`/user/search?query=${name}`, {
+            headers: getAuthHeaders(),
+        });
+
+        return res.data?.metadata || []; // trả về mảng user
+    } catch (err: any) {
+        console.error("searchFriendUsers error:", err);
+        throw err;
+    }
+};
+
+
+

@@ -2,10 +2,10 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Container from '@/app/components/Container/Container';
+import React, { JSX, useEffect, useState } from 'react';
 import Header from '@/app/components/Header/Header';
-import Sidebar from '@/app/components/SideBar/SideBar';
+import SkeletonProfile from '@/app/user/components/Skeleton/SkeletonProfile';
+import { useParams } from 'next/navigation';
 import {
     getProfile,
     uploadFile,
@@ -16,35 +16,52 @@ import {
     addFollow,
     unFollow,
 } from '@/app/user/user.service';
-import SkeletonProfile from '@/app/user/components/Skeleton/SkeletonProfile';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import { useParams } from 'next/navigation';
+import { Sidebar } from 'lucide-react';
+import RightSidebar from '@/app/home/components/Home/RightSidebar/RightSidebar';
+
+
+// --- Helper Components for Icons ---
+
+const UserPlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 11a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1v-1z" /></svg>;
+const UserMinusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 11a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1v-1z" /></svg>;
+const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>;
+const MessageIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" /></svg>;
+const BriefcaseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
+const AcademicCapIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-5.998 12.078 12.078 0 01.665-6.479L12 14z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-5.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222 4 2.222V20M1 M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>;
+const HomeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
+const EllipsisHorizontalIcon = ({ className = "h-6 w-6" }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01" /></svg>;
+const VideoCameraIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 001.553.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>;
+const PhotoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>;
+const FaceSmileIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a.75.75 0 00-1.06-1.06l-1.47 1.47-1.47-1.47a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.06 0l2.5-2.5z" clipRule="evenodd" /></svg>;
+
 
 const ProfilePage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState(0);
     const [userId, setUserId] = useState<string | null>(null);
     const [user, setUser] = useState<{ name: string; avatar?: string; email?: string } | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [followLoading, setFollowLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [relation, setRelation] = useState<string | null>(null);
-    const [followingCount, setFollowingCount] = useState(0);
-    const [followerCount, setFollowerCount] = useState(0);
     const [friendCount, setFriendCount] = useState(0);
     const [isFollowing, setIsFollowing] = useState(false);
+    const [followerCount, setFollowerCount] = useState(0);
     const [friendLoading, setFriendLoading] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
+
     const params = useParams();
     const id = params?.id;
 
+    // Determine the user ID from URL or local storage
     useEffect(() => {
         if (id && typeof id === 'string') {
             setUserId(id);
         } else if (typeof window !== 'undefined') {
-            const userData = localStorage.getItem('userInfo');
-            const user = userData ? JSON.parse(userData) : null;
-            if (user?._id) setUserId(user._id);
+            const storedData = localStorage.getItem('userInfo');
+            const storedUser = storedData ? JSON.parse(storedData) : null;
+            if (storedUser?._id) setUserId(storedUser._id);
         }
     }, [id]);
 
+    // Fetch profile data when user ID is available
     useEffect(() => {
         if (!userId) return;
 
@@ -52,11 +69,9 @@ const ProfilePage: React.FC = () => {
         getProfile({
             userId,
             onSuccess: (data: any) => {
-                const { user, relation, followingCount, followersCount, countFriends, isFollowing } =
-                    data.metadata;
+                const { user, relation, followersCount, countFriends, isFollowing } = data.metadata;
                 setUser(user);
                 setRelation(relation);
-                setFollowingCount(followingCount || 0);
                 setFollowerCount(followersCount || 0);
                 setFriendCount(countFriends || 0);
                 setIsFollowing(isFollowing || false);
@@ -69,274 +84,201 @@ const ProfilePage: React.FC = () => {
         });
     }, [userId]);
 
+    // --- Action Handlers ---
+
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setLoading(true);
         uploadFile({
-            type: 'avatar',
-            file,
+            type: 'avatar', file,
             onSuccess: (data) => {
                 const newAvatarUrl = data.metadata.url;
-                setUser((prev) => {
-                    if (!prev) return prev;
-                    const updated = { ...prev, avatar: newAvatarUrl };
-
-                    try {
-                        const stored = localStorage.getItem('userInfo');
-                        if (stored) {
-                            const parsed = JSON.parse(stored);
-                            parsed.avatar = newAvatarUrl;
-                            localStorage.setItem('userInfo', JSON.stringify(parsed));
-                        }
-                    } catch (e) {
-                        console.error('Failed to update avatar in localStorage:', e);
-                    }
-
+                setUser((prev) => prev ? { ...prev, avatar: newAvatarUrl } : null);
+                // Update local storage as well
+                const stored = localStorage.getItem('userInfo');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    parsed.avatar = newAvatarUrl;
+                    localStorage.setItem('userInfo', JSON.stringify(parsed));
                     window.dispatchEvent(new CustomEvent('avatarUpdated', { detail: newAvatarUrl }));
-                    return updated;
-                });
-
-                setLoading(false);
+                }
             },
-            onError: (err) => {
-                console.error('Upload avatar failed:', err);
-                alert('Failed to upload image!');
-                setLoading(false);
-            },
+            onError: (err) => console.error('Upload avatar failed:', err),
         });
     };
 
-    // ----- ACTION BUTTON HANDLERS -----
     const handleAddFriend = () => {
         if (!userId) return;
         setFriendLoading(true);
-        addFriend({
-            userId,
-            onSuccess: () => {
-                setRelation('pending_sent');
-                setFriendLoading(false);
-            },
-            onError: (err) => {
-                console.error('Add friend failed:', err);
-                setFriendLoading(false);
-            }
-        });
+        addFriend({ userId, onSuccess: () => setRelation('pending_sent'), onFinally: () => setFriendLoading(false) });
     };
 
     const handleAcceptFriend = () => {
         if (!userId) return;
         setFriendLoading(true);
-        acceptFriend({
-            userId,
-            onSuccess: () => {
-                setRelation('accepted');
-                setFriendCount((prev) => prev + 1);
-                setFriendLoading(false);
-            },
-            onError: (err) => {
-                console.error('Accept friend failed:', err);
-                setFriendLoading(false);
-            }
-        });
+        acceptFriend({ userId, onSuccess: () => { setRelation('accepted'); setFriendCount(p => p + 1); }, onFinally: () => setFriendLoading(false) });
     };
 
     const handleCancelRequest = () => {
         if (!userId) return;
         setFriendLoading(true);
-        cancelRequest({
-            userId,
-            onSuccess: () => {
-                setRelation('stranger');
-                setFriendLoading(false);
-            },
-            onError: (err) => {
-                console.error('Cancel request failed:', err);
-                setFriendLoading(false);
-            }
-        });
+        cancelRequest({ userId, onSuccess: () => setRelation('stranger'), onFinally: () => setFriendLoading(false) });
     };
 
     const handleUnfriend = () => {
-        if (!userId) return;
+        if (!userId || !window.confirm("Bạn có chắc chắn muốn hủy kết bạn với người này không?")) return;
         setFriendLoading(true);
-        unFriend({
-            userId,
-            onSuccess: () => {
-                setRelation('stranger');
-                setFriendCount((prev) => Math.max(prev - 1, 0));
-                setFriendLoading(false);
-            },
-            onError: (err) => {
-                console.error('Unfriend failed:', err);
-                setFriendLoading(false);
-            }
-        });
+        unFriend({ userId, onSuccess: () => { setRelation('stranger'); setFriendCount(p => Math.max(p - 1, 0)); }, onFinally: () => setFriendLoading(false) });
     };
 
     const handleFollow = () => {
         if (!userId) return;
         setFollowLoading(true);
-        addFollow({
-            userId,
-            onSuccess: () => {
-                setIsFollowing(true);
-                setFollowerCount((prev) => prev + 1);
-                setFollowLoading(false);
-            },
-            onError: (err) => {
-                console.error('Follow failed:', err);
-                setFollowLoading(false);
-            }
-        });
+        addFollow({ userId, onSuccess: () => { setIsFollowing(true); setFollowerCount(p => p + 1); }, onFinally: () => setFollowLoading(false) });
     };
 
     const handleUnfollow = () => {
         if (!userId) return;
         setFollowLoading(true);
-        unFollow({
-            userId,
-            onSuccess: () => {
-                setIsFollowing(false);
-                setFollowerCount((prev) => Math.max(prev - 1, 0));
-                setFollowLoading(false);
-            },
-            onError: (err) => {
-                console.error('Unfollow failed:', err);
-                setFollowLoading(false);
-            }
-        });
+        unFollow({ userId, onSuccess: () => { setIsFollowing(false); setFollowerCount(p => Math.max(p - 1, 0)); }, onFinally: () => setFollowLoading(false) });
     };
 
-    // ----- RENDER BUTTONS -----
+
     const renderActionButtons = () => {
-        const base = 'rounded-xl px-6 py-2 font-semibold text-white transition';
-        const disabled = friendLoading || followLoading;
+        const anyLoading = friendLoading || followLoading;
+
+        if (relation === 'me') {
+            return (
+                <div className="flex items-center gap-2">
+                    <button className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                        <span>+</span> Add to Story
+                    </button>
+                    <button className="flex items-center gap-2 bg-gray-200 text-black font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                        ✏️ Edit Profile
+                    </button>
+                    <button className="bg-gray-200 p-2 rounded-lg hover:bg-gray-300 transition"><EllipsisHorizontalIcon /></button>
+                </div>
+            );
+        }
+
+        // Buttons for other users
+        const friendButtonMap: { [key: string]: JSX.Element } = {
+            stranger: <button onClick={handleAddFriend} disabled={anyLoading} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"><UserPlusIcon /> Add Friend</button>,
+            pending_sent: <button onClick={handleCancelRequest} disabled={anyLoading} className="flex items-center gap-2 bg-gray-300 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 disabled:opacity-50"><UserMinusIcon /> Cancel Request</button>,
+            pending_received: <button onClick={handleAcceptFriend} disabled={anyLoading} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"><CheckIcon /> Respond</button>,
+            accepted: <button onClick={handleUnfriend} disabled={anyLoading} className="flex items-center gap-2 bg-gray-300 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 disabled:opacity-50"><CheckIcon /> Friends</button>,
+        };
 
         return (
-            <div className="flex flex-wrap justify-center gap-4 mt-4 mb-6">
-                {relation === 'accepted' && (
-                    <button disabled={disabled} className={`${base} bg-red-500 hover:bg-red-600`} onClick={handleUnfriend}>
-                        Unfriend
-                    </button>
-                )}
-                {relation === 'pending_sent' && (
-                    <button disabled={disabled} className={`${base} bg-gray-500 hover:bg-gray-600`} onClick={handleCancelRequest}>
-                        Cancel Request
-                    </button>
-                )}
-                {relation === 'pending_received' && (
-                    <button disabled={disabled} className={`${base} bg-blue-600 hover:bg-blue-700`} onClick={handleAcceptFriend}>
-                        Accept
-                    </button>
-                )}
-                {relation === 'stranger' && (
-                    <button disabled={disabled} className={`${base} bg-green-600 hover:bg-green-700`} onClick={handleAddFriend}>
-                        Add Friend
-                    </button>
-                )}
-                {relation !== 'me' && (
-                    isFollowing ? (
-                        <button disabled={disabled} className={`${base} bg-gray-500 hover:bg-gray-600`} onClick={handleUnfollow}>
-                            Unfollow
-                        </button>
-                    ) : (
-                        <button disabled={disabled} className={`${base} bg-blue-600 hover:bg-blue-700`} onClick={handleFollow}>
-                            Follow
-                        </button>
-                    )
-                )}
+            <div className="flex items-center gap-2">
+                {relation && friendButtonMap[relation]}
+                <button className="flex items-center gap-2 bg-gray-200 text-black font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                    <MessageIcon /> Message
+                </button>
+                {isFollowing
+                    ? <button onClick={handleUnfollow} disabled={anyLoading} className="bg-gray-200 p-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 font-semibold">Following</button>
+                    : <button onClick={handleFollow} disabled={anyLoading} className="bg-gray-200 p-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 font-semibold">Follow</button>
+                }
             </div>
         );
     };
 
-    if (!userId || loading || !user)
+
+    if (loading || !user) {
         return (
-            <div className="p-6">
-                <SkeletonProfile />
+            <div className="bg-gray-100 min-h-screen">
+                <Header />
+                <div className="p-6"> <SkeletonProfile /> </div>
             </div>
         );
+    }
 
     return (
-        <div className="overflow-x-hidden min-h-screen bg-gray-50">
-            <Header />
-            <main className="flex w-full">
-                <Container sidebar={<Sidebar activeTab={activeTab} onSelect={setActiveTab} />}>
-                    <div className="w-full px-4 sm:px-6 md:px-8 mt-4">
-                        {/* Cover Image */}
-                        <div className="relative w-full">
+
+
+        <main className="w-full max-w-[1200px] mx-auto pt-2 items-left">
+            <header className="bg-white rounded-lg shadow-sm">
+                <div className="relative">
+                    <img
+                        src="https://file.apetavers.com/api/files/admin/20241226/3d48b567-fd61-415d-a2bc-aa09966a05cd.png"
+                        alt="Cover"
+                        className="w-full h-52 md:h-80 object-cover rounded-t-lg"
+                    />
+                    <div className="absolute -bottom-8 left-4 top-65">
+                        <div className="relative">
                             <img
-                                src="https://file.apetavers.com/api/files/admin/20241226/3d48b567-fd61-415d-a2bc-aa09966a05cd--1000.png"
-                                alt="cover"
-                                className="w-full h-32 md:h-40 object-cover rounded-lg"
+                                src={user.avatar || 'default_avatar.png'}
+                                alt="Avatar"
+                                className="w-32 h-32 rounded-full border-4 border-white shadow-md object-cover"
                             />
-
-                            {/* Avatar */}
-                            <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-12">
-                                <div className="relative">
-                                    <img
-                                        src={user.avatar}
-                                        alt="avatar"
-                                        className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white shadow-md object-cover"
-                                    />
-                                    {relation === 'me' && (
-                                        <label className="absolute bottom-0 right-0 bg-gray-200 rounded-full p-1 cursor-pointer shadow">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={handleAvatarChange}
-                                            />
-                                            <CameraAltIcon fontSize="small" />
-                                        </label>
-                                    )}
-                                </div>
-                                {loading && <div className="text-sm text-gray-500 mt-2">Uploading...</div>}
-                            </div>
+                            {relation === 'me' && (
+                                <label className="absolute bottom-2 right-2 bg-gray-200 rounded-full p-2 cursor-pointer shadow-md hover:bg-gray-300">
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                                    <CameraAltIcon fontSize="small" />
+                                </label>
+                            )}
                         </div>
-
-                        {/* Info */}
-                        <div className="mt-16 text-center">
-                            <div className="text-xl font-bold flex justify-center items-center gap-1">
-                                {user.name}
-                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10" fill="#2196f3" />
-                                    <path
-                                        d="M8 12.5l2.5 2.5 5-5"
-                                        stroke="#fff"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            </div>
-                            <div className="text-gray-600 text-sm">{user.email}</div>
-                            <div className="text-gray-500 text-sm mt-1">This is a placeholder for bio info.</div>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="flex justify-center gap-8 mt-6 text-center">
-                            <div>
-                                <div className="font-bold text-lg">{followerCount}</div>
-                                <div className="text-sm text-gray-500">Followers</div>
-                            </div>
-                            <div>
-                                <div className="font-bold text-lg">{followingCount}</div>
-                                <div className="text-sm text-gray-500">Following</div>
-                            </div>
-                            <div>
-                                <div className="font-bold text-lg">{friendCount}</div>
-                                <div className="text-sm text-gray-500">Friends</div>
-                            </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="mt-6 flex justify-center">{renderActionButtons()}</div>
                     </div>
-                </Container>
-            </main>
-        </div>
+                </div>
+
+                <div className="flex justify-between items-end px-8 pb-4 pt-2">
+                    <div className="ml-[120px]">
+                        <h1 className="text-3xl font-bold">{user.name}</h1>
+                        <p className="text-gray-500 font-semibold mt-1">{friendCount} friends</p>
+                    </div>
+                    {renderActionButtons()}
+                </div>
+
+                <div className="border-t border-gray-300 px-8">
+                    <nav className="flex items-center">
+                        <a href="#" className="py-4 px-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600">Posts</a>
+                        <a href="#" className="py-4 px-4 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-lg">About</a>
+                        <a href="#" className="py-4 px-4 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-lg">Friends</a>
+                    </nav>
+                </div>
+            </header>
+
+            <div className="grid grid-cols-12 gap-4 mt-4">
+                <div className="col-span-5">
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <h2 className="text-xl font-bold mb-4">Intro</h2>
+                        <ul className="space-y-4 text-sm">
+                            <li className="flex items-center gap-3"><BriefcaseIcon /><span>Works at <strong>Apetech</strong></span></li>
+                            <li className="flex items-center gap-3"><AcademicCapIcon /><span>Studied at <strong>Greenwich Vietnam University</strong></span></li>
+                            <li className="flex items-center gap-3"><HomeIcon /><span>Lives in <strong>Da Nang</strong></span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="col-span-7">
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <div className="flex items-center gap-3 pb-3 border-b border-gray-300">
+                            <img src={user.avatar || 'default_avatar.png'} alt="avatar" className="w-10 h-10 rounded-full" />
+                            <div className="flex-1 text-left text-gray-500 bg-gray-100 rounded-full px-4 py-2 cursor-pointer hover:bg-gray-200">
+                                What's on your mind, {user.name.split(' ')[0]}?
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                            <button className="flex items-center justify-center gap-2 py-1 px-2 rounded-lg hover:bg-gray-100 transition">
+                                <VideoCameraIcon className="w-4 h-4" />
+                                <span className="font-medium text-xs text-gray-600">Live Video</span>
+                            </button>
+                            <button className="flex items-center justify-center gap-2 py-1 px-2 rounded-lg hover:bg-gray-100 transition">
+                                <PhotoIcon className="w-4 h-4" />
+                                <span className="font-medium text-xs text-gray-600">Photo/Video</span>
+                            </button>
+                            <button className="flex items-center justify-center gap-2 py-1 px-2 rounded-lg hover:bg-gray-100 transition">
+                                <FaceSmileIcon className="w-4 h-4" />
+                                <span className="font-medium text-xs text-gray-600">Feeling/Activity</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
     );
 };
 

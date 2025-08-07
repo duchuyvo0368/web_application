@@ -81,7 +81,7 @@ export class UserController {
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @ApiQuery({ name: 'query', example: 'huy' })
-    async searchFriendUsers(@Query('query') query: string, @Query('page') page: string = '1', @Query('limit') limit: string = '5', @Req() req: AuthRequest) {
+    async searchUsers(@Query('query') query: string, @Query('page') page: string = '1', @Query('limit') limit: string = '5', @Req() req: AuthRequest) {
         if (!query) {
             throw new BadRequestException('Query is required');
         }
@@ -92,7 +92,7 @@ export class UserController {
         const pageNumber = Math.max(Number(page), 1);
         const limitNumber = Math.max(Number(limit), 1);
 
-        const result = await this.userService.searchFriendUsers(
+        const result = await this.userService.searchUsers(
             userId,
             query,
             limitNumber,

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
@@ -7,10 +8,11 @@
 import { useRef, useState, useEffect } from "react";
 import { Globe } from "lucide-react";
 import toast from "react-hot-toast";
-import { createPost, extractLinkMetadata, uploadFileInChunks } from "../post.service";
+import { createPost, extractLinkMetadata, searchFriendUsers, uploadFileInChunks } from "../post.service";
 import { Loader2, SendHorizonal } from 'lucide-react';
 import { CreatePostModalProps, PostLinkMeta } from "../type";
 import { splitContentAndHashtags } from "@/utils";
+import { UserInfo } from "@/app/home/type";
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({
     open,
@@ -28,6 +30,13 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
     const [isUploading, setIsUploading] = useState(false);
     const [linkLoading, setLinkLoading] = useState(false);
     const [linkMeta, setLinkMeta] = useState<PostLinkMeta | null>(null);
+    const [mentionQuery, setMentionQuery] = useState("");
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [mentionSuggestions, setMentionSuggestions] = useState<any[]>([]);
+    const [selectedFriends, setSelectedFriends] = useState<any[]>([]);
+
+
+
     const fileRefs = {
         image: useRef<HTMLInputElement>(null),
         video: useRef<HTMLInputElement>(null),
@@ -48,8 +57,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         fileRefs[type].current?.click();
     };
 
+
     const handlePost = async () => {
-       
+
         try {
             setIsUploading(true);
             console.time("🖼️ Upload Images");
@@ -82,8 +92,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     userId: userInfo.id,
                     images: imageUrls,
                     videos: videoUrls,
-                    hashtags:hashtags,
+                    hashtags: hashtags,
                     post_link_meta: linkMeta,
+                    friends_tagged: selectedFriends
+                        .map(f => f.id)
+                        .filter(id => typeof id === 'string' && id.length === 24)
+                    ,
                     post_count_feels: {
                         post_count_feels: 0,
                         post_count_comments: 0,
@@ -107,6 +121,48 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             setIsUploading(false);
         }
     };
+
+    const handleChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value;
+        setPostContent(value); // cập nhật nội dung bài post
+
+        const cursorPosition = e.target.selectionStart;
+        const lastAt = value.lastIndexOf('@', cursorPosition - 1);
+
+        if (lastAt !== -1) {
+            const spaceIndex = value.indexOf(' ', lastAt);
+            const mentionKeyword = value.slice(
+                lastAt + 1,
+                spaceIndex === -1 ? undefined : spaceIndex
+            );
+
+            if (mentionKeyword.length > 0) {
+                try {
+                    const users = await searchFriendUsers({ name: mentionKeyword });
+                    setMentionSuggestions(users);
+                    console.log("logger:", users);
+                    setShowSuggestions(true);
+                } catch (err) {
+                    console.error('Search error:', err);
+                    setMentionSuggestions([]);
+                    setShowSuggestions(false);
+                }
+            } else {
+                setMentionSuggestions([]);
+                setShowSuggestions(false);
+            }
+        } else {
+            setMentionSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+
+
+
+
+
+
 
     useEffect(() => {
         const match = postContent.match(/(https?:\/\/[^\s]+)/);
@@ -136,19 +192,32 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         });
     }, [postContent]);
 
-    
-    const extractHashtags = (text: string): string[] => {
-        if (!text) return [];
-        const matches = text.match(/#[\p{L}\w-]+/gu);
-        return matches ? Array.from(new Set(matches)) : [];
-    };
 
     const highlightHashtags = (text: string) => {
         const escaped = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        return escaped.replace(/#[\w\u00C0-\u1EF9]+/g, (tag) => {
-            return `<span class="text-blue-500 font-medium">${tag}</span>`;
+        return escaped
+            .replace(/#[\w\u00C0-\u1EF9]+/g, (tag) => {
+                return `<span class="text-blue-500 font-medium">${tag}</span>`;
+            })
+            .replace(/@[\w\u00C0-\u1EF9]+(?: [\w\u00C0-\u1EF9]+)?/g, (tag) => {
+                return `<span class="text-blue-500 font-medium">${tag}</span>`;
+            });
+
+    };
+    const handleMentionSelect = (user: UserInfo) => {
+        const newContent = postContent.replace(/@\w*$/, `@${user.name} `);
+        setPostContent(newContent);
+        setShowSuggestions(false);
+        setMentionQuery("");
+
+        setSelectedFriends(prev => {
+            if (!prev.find(u => u.id === user.id)) {
+                return [...prev, user];
+            }
+            return prev;
         });
     };
+
 
     return (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
@@ -192,24 +261,44 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         onChange={(e) => setPostTitle(e.target.value)}
                     />
 
+
                     <div className="relative w-full mt-2">
                         <div
                             className="absolute top-0 left-0 w-full h-full whitespace-pre-wrap text-base text-gray-900 pointer-events-none p-2"
                             dangerouslySetInnerHTML={{ __html: highlightHashtags(postContent) }}
                         />
-
                         <textarea
                             placeholder="What's on your mind?"
                             className="w-full resize-none outline-none text-base placeholder-gray-500 bg-transparent relative z-10 p-2"
                             rows={4}
                             value={postContent}
-                            onChange={(e) => setPostContent(e.target.value)}
+                            onChange={(e) => {
+                                setPostContent(e.target.value);
+                                handleChange(e);
+                            }}
                             style={{
                                 color: "transparent",
                                 caretColor: "black",
                             }}
                         />
+                        {showSuggestions && mentionSuggestions.length > 0 && (
+                            <ul className="absolute z-20 mt-1 left-2 top-full bg-white border border-gray-300 rounded shadow-md w-64 max-h-48 overflow-y-auto">
+                                {mentionSuggestions.map(user => (
+                                    <li
+                                        key={user.id}
+                                        onClick={() => handleMentionSelect(user)}
+                                        className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+                                            <span>{user.name}</span>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
+
 
                     {linkLoading && (
                         <p className="text-sm text-gray-500">Loading...</p>
@@ -389,3 +478,5 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 };
 
 export default CreatePostModal;
+
+

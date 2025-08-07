@@ -19,8 +19,6 @@ import { convertToObject } from 'utils/index';
 @Injectable()
 export class PostsService {
     constructor(
-        @InjectModel(Post.name, 'MONGODB_CONNECTION')
-        private postModel: Model<PostRelation>,
         private friendService: FriendService,
         private readonly postRepository: PostRepository,
     ) { }
@@ -29,7 +27,6 @@ export class PostsService {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         const match = content.match(urlRegex);
         if (!match) return null;
-
         const url = match[0];
         return await extractMetadata(url);
     }
@@ -54,7 +51,11 @@ export class PostsService {
             images: data.images || [],
             videos: data.videos || [],
             feel: new Map<string, string>(),
-            friends_tagged: (data.friends_tagged || []).map((id) => new Types.ObjectId(id)),
+            friends_tagged: data.friends_tagged
+                ? data.friends_tagged
+                    .filter((id) => Types.ObjectId.isValid(id))
+                    .map((id) => new Types.ObjectId(id))
+                : [],
             comments: 0,
             views: 0,
         };
@@ -76,7 +77,7 @@ export class PostsService {
 
 
     async getFeedPosts(userId: string, page = 1, limit = 10) {
-        const skip = (page - 1) * limit;
+        //const skip = (page - 1) * limit;
 
         const [friendIds, followIds] = await Promise.all([
             this.friendService.getFriendUserIds(userId),
@@ -93,7 +94,7 @@ export class PostsService {
         }
 
         const { posts: relatedPosts, count: totalRelatedItems } =
-            await this.postRepository.findRelatedPosts(friendIds, followIds, relatedLimit, skip);
+            await this.postRepository.findRelatedPosts(friendIds, followIds, relatedLimit, page);
 
         const data = page === 1 && myPosts.length > 0 ? [...myPosts, ...relatedPosts] : relatedPosts;
         const totalItems = totalRelatedItems + (page === 1 ? myPosts.length : 0);
@@ -220,4 +221,5 @@ export class PostsService {
         return this.postRepository.findPostsByQuery(query, page, limit);
     }
 
+    //dit
 }

@@ -18,20 +18,39 @@ export class PostRepository {
             createdAt: new Date(),
         });
     }
-    async findMyRecentPosts(userId: string, limitDate: Date) {
-        return this.postModel
-            .find({
-                userId,
-                privacy: { $in: ['public', 'friend'] },
-                createdAt: { $gte: limitDate },
-            })
-            .sort({ createdAt: -1 })
-            .populate('userId', 'name avatar')
-            .populate('friends_tagged', 'email name avatar')
-            .lean();
+
+
+    //tim kiem theo id của post
+    async findById(postId: string) {
+        return await this.postModel.findById(postId);
     }
 
-    async findRelatedPosts(friendIds: string[], followIds: string[], limit: number, skip: number) {
+
+    //luu like,love,haha
+    async save(post: PostRelation): Promise<PostRelation> {
+        const createdPost = new this.postModel(post);
+        return createdPost.save();
+    }
+
+    async updatePost(postId: string, data: any) {
+        return this.postModel.findByIdAndUpdate(postId, data, { new: true });
+    }
+    
+    //lay ra post theo query
+    async findPosts(query: any, page = 1, limit = 10): Promise<any[]> {
+        return this.postModel
+            .find(query)
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .populate('userId', 'name avatar')
+            .populate('friends_tagged', 'email name avatar').lean();
+    }
+
+    async findPostsByQuery(query: any, page = 1, limit = 10): Promise<any[]> {
+        return this.findPosts(query, page, limit);
+    }
+    async findRelatedPosts(friendIds: string[], followIds: string[], limit: number, page: number) {
         const relatedUserIds = [...new Set([...friendIds, ...followIds])].filter(
             (id) => id !== undefined,
         );
@@ -44,35 +63,22 @@ export class PostRepository {
             ],
         };
 
-        const posts = await this.postModel
-            .find(query)
-            .sort({ createdAt: -1 })
-            .populate('userId', 'name avatar')
-            .skip(skip)
-            .limit(limit)
-            .lean();
+        const posts = await this.findPosts(query, page, limit);
 
         const count = await this.postModel.countDocuments(query);
 
         return { posts, count };
     }
 
-    async findById(postId: string) {
-        return await this.postModel.findById(postId);
+    async findMyRecentPosts(userId: string, limitDate: Date) {
+        const query = {
+            userId,
+            privacy: { $in: ['public', 'friend'] },
+            createdAt: { $gte: limitDate },
+        }
+        return this.findPosts(query)
+
     }
 
 
-    async save(post: PostRelation): Promise<PostRelation> {
-        const createdPost = new this.postModel(post); 
-        return createdPost.save();
-    }
-    async findPostsByQuery(query: any, page = 1, limit = 10): Promise<PostRelation[]> {
-        return this.postModel
-            .find(query)
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit)
-            .populate('userId', 'name avatar')
-            .populate('friends_tagged', 'email name avatar')
-    }
 }

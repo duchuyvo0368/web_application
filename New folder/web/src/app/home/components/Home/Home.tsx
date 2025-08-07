@@ -48,7 +48,7 @@ const Home: React.FC = () => {
     return (
 
 
-        <div className="flex gap-1 mt-6 ">
+        <div className="flex gap-1 mt-6 h-[calc(100vh-80px)]">
             {/* Main Content */}
             <main className="flex-1 max-w-2xl w-full mx-auto pl-6">
                 {/* Post Creation Bar */}
@@ -107,6 +107,7 @@ const Home: React.FC = () => {
                                 videos={Array.isArray(post.videos) ? post.videos : []}
                                 createdAt={post.createdAt}
                                 feel={post.feel || {}}
+                               // friends_tagged={post.friends_tagged || []}
                                 feelCount={{
                                     like: post.feelCount?.like || 0,
                                     haha: post.feelCount?.haha || 0,
@@ -125,7 +126,17 @@ const Home: React.FC = () => {
             {/* Right Sidebar */}
             {/* <aside className="w-[200px] hidden lg:block">
         <div className="sticky max-h-[calc(100vh-73px)] overflow-y-auto"> */}
-            <RightSidebar />
+            {/* <div className="flex flex-col space-y-0">
+                <RightSidebar />
+                <RightSidebar />
+                <RightSidebar />
+                <RightSidebar />
+                <RightSidebar />
+                <RightSidebar />
+            </div>
+            
+            */}
+
             {/* </div>
       </aside> */}
         </div>

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { Injectable, Inject, NotFoundException, UseGuards, Post, BadRequestException } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './user.model';
@@ -14,6 +15,7 @@ import { filterFields } from '../../utils/index';
 import { UploadService } from 'module/upload/upload.service';
 import { MulterS3File } from 'module/upload/utils/multe.s3.file';
 import { SuccessResponse } from 'utils/success.response';
+import { FriendRelation, FriendRelationDocument } from 'module/firends/model/friend.model';
 
 const meFields = ['_id', 'name', 'email', 'bio', 'avatar', 'phone', 'birthday'];
 const friendFields = ['_id', 'name', 'email', 'bio', 'avatar'];
@@ -25,7 +27,9 @@ export class UserService {
         @InjectModel(User.name, 'MONGODB_CONNECTION')
         private readonly userModel: Model<UserDocument>,
         private readonly friendService: FriendService,
-        private readonly uploadService: UploadService
+        private readonly uploadService: UploadService,
+        @InjectModel(FriendRelation.name, 'MONGODB_CONNECTION')
+        private readonly friendRelationModel: Model<FriendRelationDocument>,
     ) { }
 
     findByEmail = async (
@@ -109,7 +113,7 @@ export class UserService {
         return !!result;
     };
 
-    
+
 
     async getProfile(
         userId: string,
@@ -184,9 +188,10 @@ export class UserService {
     async getAllUsers(userId: string, limit: number, page: number) {
         const skip = (page - 1) * limit;
 
-        const objectIdList: Types.ObjectId[] = (
+        const objectIdList = (
             await this.friendService.getRelatedUserIds(userId)
-        ).map((id) => new Types.ObjectId(id));
+        ).filter(Types.ObjectId.isValid).map((id) => new Types.ObjectId(id));
+
         const aggResult = await this.userModel.aggregate([
             { $match: { _id: { $nin: objectIdList } } },
             {
@@ -249,30 +254,41 @@ export class UserService {
         };
     }
 
-    async searchFriendUsers(userId: string, query: string, limit: number, page: number) {
+    async searchUsers(userId: string, query: string, limit = 10, page = 1) {
         if (!Types.ObjectId.isValid(userId)) {
             throw new BadRequestException('Invalid userId');
         }
 
-        const skip = (page - 1) * limit;
-        const friendIds = await this.friendService.getRelatedUserIds(userId);
-
-        if (friendIds.length === 0) return [];
-
-        const regex = new RegExp(query, 'i');
-
-        const users = await this.userModel
+        const relations = await this.friendRelationModel
             .find({
-                _id: { $in: friendIds },
-                $or: [
-                    { name: regex },
-                ]
+                type: 'accepted',
+                $or: [{ fromUser: userId }, { toUser: userId }],
             })
-            .select('name email avatar')
-            .skip(skip)
+            .populate('fromUser', 'name avatar email')
+            .populate('toUser', 'name avatar email')
             .limit(limit)
             .lean();
 
-        return users;
+        const friends = relations.map(rel => {
+            const from = rel.fromUser as any;
+            const to = rel.toUser as any;
+            if (!from || !to) return null;
+
+            return from._id.toString() === userId ? to : from;
+        }).filter(Boolean);
+
+        const lowerQuery = query.toLowerCase();
+        const filtered = friends.filter(user => {
+            const text = `${user.name} ${user.avatar} ${user.email}`.toLowerCase();
+            return text.includes(lowerQuery);
+        });
+
+        return filtered.slice(0, 10);
     }
+
+
+
+
+
+
 }

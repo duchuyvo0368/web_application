@@ -28,7 +28,7 @@ import { NotificationsModule } from 'module/notification/notification.module';
         //FollowModule,
       
         PostsModule,
-        FeelModule,
+       // FeelModule,
       //  NotificationsModule,
 
     ],

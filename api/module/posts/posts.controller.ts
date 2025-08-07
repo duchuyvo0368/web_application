@@ -54,11 +54,6 @@ export class PostsController {
                     items: { type: 'string' },
                     example: ['nestjs', 'backend'],
                 },
-                friends_tagged: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    example: ['fullname'],
-                },
                 images: {
                     type: 'array',
                     items: { type: 'string' },
