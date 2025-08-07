@@ -47,7 +47,6 @@ export class UploadController {
     @ApiQuery({ name: 'uploadId', type: String, required: true })
     @ApiQuery({ name: 'key', type: String, required: true })
     @ApiQuery({ name: 'partNumber', type: String, required: true, example: '1' })
-    @ApiQuery({ name: 'contentType', type: String, required: false })
     @ApiResponse({
         status: 200,
         description: 'Presigned URL generated',
