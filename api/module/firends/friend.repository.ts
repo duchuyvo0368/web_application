@@ -24,8 +24,15 @@ export class FriendRepository {
 
     //tao loi moi ket ban
     async createRelation(fromUser: string, toUser: string) {
-        return this.createFriendRelation(fromUser, toUser, 'pending');
+        const relation = await this.createFriendRelation(fromUser, toUser, 'pending');
+
+        await relation.populate('toUser', 'id name avatar');
+        await relation.populate('fromUser', 'id name avatar');
+
+        return relation.toObject();
     }
+
+
 
     //tao loi moi theo dõi
     async createFollow(fromUser: string, toUser: string) {

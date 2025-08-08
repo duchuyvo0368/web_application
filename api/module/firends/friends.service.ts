@@ -52,6 +52,9 @@ export class FriendService {
         }
         const created = await this.friendRepository.createRelation(fromUser, toUser);
         logger.info(`Created request: ${JSON.stringify(created)}`);
+        /**
+         * Created request: {"fromUser":"689424d5c9447fcf37f53ad2","toUser":"689424f7c9447fcf37f53ade","type":"pending","acceptedAt":null,"_id":"689550501cf73f16dd904b77","createdAt":"2025-08-08T01:18:08.873Z","updatedAt":"2025-08-08T01:18:08.873Z","__v":0}
+         */
         //user fromUser là người gửi lời mời
         //người gửi toUser
         //người nhận fromUser

@@ -2,26 +2,22 @@
 import {
     Controller,
     Post,
-    UploadedFiles,
+    Get,
+    Body,
+    Query,
+    UploadedFile,
     UseInterceptors,
     BadRequestException,
-    UseGuards,
-    Body,
-    Get,
-    Query,
 } from '@nestjs/common';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import axios from 'axios';
 import { UploadService } from './upload.service';
-import { AuthGuard } from 'module/auth/guards/access-token.guard';
-import { AnyFilesInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 @Controller('upload')
 export class UploadController {
     constructor(private readonly uploadService: UploadService) { }
 
-   
     @Post('create-multipart')
     @ApiOperation({ summary: 'Create a multipart upload session' })
     @ApiBody({
@@ -34,12 +30,13 @@ export class UploadController {
             required: ['fileName', 'contentType'],
         },
     })
-    @ApiResponse({
-        status: 201,
-        description: 'Multipart upload session created',
-    })
-    async createMultipart(@Body() body: { fileName: string; contentType: string }) {
-        return this.uploadService.createMultipartUpload(body.fileName, body.contentType);
+    async createMultipart(
+        @Body() body: { fileName: string; contentType: string },
+    ) {
+        return this.uploadService.createMultipartUpload(
+            body.fileName,
+            body.contentType,
+        );
     }
 
     @Get('presigned-url')
@@ -47,30 +44,54 @@ export class UploadController {
     @ApiQuery({ name: 'uploadId', type: String, required: true })
     @ApiQuery({ name: 'key', type: String, required: true })
     @ApiQuery({ name: 'partNumber', type: String, required: true, example: '1' })
-   // @ApiQuery({ name: 'contentType', type: String, required: false })
-    @ApiResponse({
-        status: 200,
-        description: 'Presigned URL generated',
-        schema: {
-            type: 'object',
-            properties: {
-                url: {
-                    type: 'string',
-                    example: 'https://s3.amazonaws.com/bucket/uploads/my-video.mp4?partNumber=1&...',
-                },
-            },
-        },
-    })
     async getPresignedUrl(
         @Query('uploadId') uploadId: string,
         @Query('key') key: string,
         @Query('partNumber') partNumber: string,
-        //@Query('contentType') contentType: string,
     ) {
         return {
-            url: await this.uploadService.getPresignedUrl(uploadId, key, parseInt(partNumber)),
+            url: await this.uploadService.getPresignedUrl(
+                uploadId,
+                key,
+                parseInt(partNumber),
+            ),
         };
     }
+
+    @Post('upload-part')
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                presignedUrl: { type: 'string' },
+                file: { type: 'string', format: 'binary' },
+            },
+            required: ['presignedUrl', 'file'],
+        },
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadPart(
+        @Body() body: { presignedUrl: string },
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!body.presignedUrl) {
+            throw new BadRequestException('Missing presignedUrl');
+        }
+        if (!file) {
+            throw new BadRequestException('Missing file');
+        }
+
+        const res = await axios.put(body.presignedUrl, file.buffer, {
+            headers: {
+                'Content-Type': file.mimetype,
+            },
+        });
+        console.log("logger:", res.headers.etag);
+
+        return {ETag: res.headers.etag };
+    }
+
 
     @Post('complete-multipart')
     @ApiOperation({ summary: 'Complete the multipart upload' })
@@ -85,7 +106,7 @@ export class UploadController {
                     items: {
                         type: 'object',
                         properties: {
-                            ETag: { type: 'string', example: '"etag-123abc456def"' },
+                            ETag: { type: 'string', example:"\"4ff12b4cab258bb7ebe1343214100797\"" },
                             PartNumber: { type: 'number', example: 1 },
                         },
                         required: ['ETag', 'PartNumber'],
@@ -95,24 +116,17 @@ export class UploadController {
             required: ['key', 'uploadId', 'parts'],
         },
     })
-    @ApiResponse({
-        status: 200,
-        description: 'Multipart upload completed successfully',
-        schema: {
-            type: 'object',
-            properties: {
-                location: {
-                    type: 'string',
-                    example: 'https://s3.amazonaws.com/bucket/uploads/my-video.mp4',
-                },
-            },
-        },
-    })
-    async complete(@Body() body: { key: string; uploadId: string; parts: { ETag: string; PartNumber: number }[] }) {
+    async complete(
+        @Body()
+        body: { key: string; uploadId: string; parts: { ETag: string; PartNumber: number }[] },
+    ) {
+        console.log("logger:", body);
         return {
-            location: await this.uploadService.completeMultipartUpload(body.key, body.uploadId, body.parts),
+            location: await this.uploadService.completeMultipartUpload(
+                body.key,
+                body.uploadId,
+                body.parts,
+            ),
         };
     }
 }
-
-
