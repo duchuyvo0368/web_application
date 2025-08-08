@@ -12,13 +12,16 @@ import { logger } from 'utils/logger';
 export class AuthGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean | Promise < boolean > {
         const request = context.switchToHttp().getRequest<AuthRequest>();
-        const accessToken = request.headers['authorization']?.replace('Bearer ', '');
-        const secret = process.env.JWT_SECRET || 'default';
-        logger.info(`Access token: ${accessToken}`);
-        if(!accessToken) throw new UnauthorizedException('No access token provided');
+        const authHeader = request.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new UnauthorizedException('No access token provided');
+        }
+
+        const token = authHeader.split(' ')[1];
+
 
         try {
-            const decoded: any = jwt.verify(accessToken, secret);
+            const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'default');
             request.user = decoded;
             logger.info(`Decoded access token: ${JSON.stringify(decoded)}`);
             return true;

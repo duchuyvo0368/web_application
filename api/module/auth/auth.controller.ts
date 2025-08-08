@@ -21,6 +21,7 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
+    @ApiBearerAuth()
     @Post('register')
     async createUser(@Body() registerUserDto: RegisterDto, @Res({ passthrough: true }) res: Response,
         @Req() req: Request) {
@@ -35,6 +36,7 @@ export class AuthController {
         }
     }
 
+    @ApiBearerAuth()
     @Post('login')
     async loginUser(
         @Body() loginUserDto: LoginUserDto,
@@ -50,13 +52,19 @@ export class AuthController {
     }
 
 
-    @UseGuards(AuthGuard)
+    
     @Post('logout')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
     async logout(
         @Res({ passthrough: true }) res: Response,
-        @Req() req: Request
+        @Req() req: AuthRequest
     ) {
-        const userId = (req as any).user.userId;
+        logger.info(`User ID from request: ${req.user?.userId}`);
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new UnauthorizedException('User not found in request');
+        }
         logger.info(`User ID from request: ${userId}`);
         logger.info(`Logging out userId: ${userId}`);
         await this.authService.logout(userId);

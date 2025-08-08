@@ -65,14 +65,15 @@ export class UploadController {
             type: 'object',
             properties: {
                 presignedUrl: { type: 'string' },
+                partNumber: { type: 'number', example: 1 },
                 file: { type: 'string', format: 'binary' },
             },
-            required: ['presignedUrl', 'file'],
+            required: ['presignedUrl', 'partNumber', 'file'],
         },
     })
     @UseInterceptors(FileInterceptor('file'))
     async uploadPart(
-        @Body() body: { presignedUrl: string },
+        @Body() body: { presignedUrl: string; partNumber: number },
         @UploadedFile() file: Express.Multer.File,
     ) {
         if (!body.presignedUrl) {
@@ -81,16 +82,24 @@ export class UploadController {
         if (!file) {
             throw new BadRequestException('Missing file');
         }
+        if (!body.partNumber) {
+            throw new BadRequestException('Missing partNumber');
+        }
 
         const res = await axios.put(body.presignedUrl, file.buffer, {
             headers: {
                 'Content-Type': file.mimetype,
             },
         });
-        console.log("logger:", res.headers.etag);
 
-        return {ETag: res.headers.etag };
+        console.log(`Uploaded part ${body.partNumber}, ETag:`, res.headers.etag);
+
+        return {
+            ETag: res.headers.etag,
+            PartNumber: body.partNumber,
+        };
     }
+
 
 
     @Post('complete-multipart')
