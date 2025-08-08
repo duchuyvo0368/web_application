@@ -127,6 +127,8 @@ export const uploadFileInChunks = async (file: File, onProgress?: (percent: numb
     const parts: { ETag: string; PartNumber: number }[] = [];
     let uploadedCount = 0;
 
+
+    console.log("logger:", uploadId, key);
     await Promise.all(chunks.map((chunk, index) =>
         limit(async () => {
             const partNumber = index + 1;
@@ -138,6 +140,7 @@ export const uploadFileInChunks = async (file: File, onProgress?: (percent: numb
                     const presignedRes = await api.get('/upload/presigned-url', {
                         params: { uploadId, key, partNumber, contentType: file.type },
                     });
+                    console.log("logger:", presignedRes);
                     const url = presignedRes.data.url;
 
                     const uploadRes = await fetch(url, {
@@ -149,6 +152,7 @@ export const uploadFileInChunks = async (file: File, onProgress?: (percent: numb
                     const eTag = uploadRes.headers.get('ETag');
                     if (!eTag) throw new Error(`Missing ETag for part ${partNumber}`);
 
+                    console.log("tag:", eTag);
                     parts[partNumber - 1] = {
                         ETag: eTag.replace(/"/g, ''),
                         PartNumber: partNumber,
