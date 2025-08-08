@@ -10,7 +10,6 @@ import React, { useState } from 'react';
 import RightSidebar from '@/app/home/components/RightSidebar/RightSidebar';
 import ProfilePage from '@/app/user/components/Profile/Profile';
 export default function Profile() {
-    const [activeTab, setActiveTab] = useState(0);
     const [actionSideBar, setActiveSideBar] = useState(0);
 
     return (

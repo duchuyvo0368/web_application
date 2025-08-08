@@ -47,3 +47,40 @@ export class CreatePostDto {
     @Type(() => PostLinkMetaDto)
     post_link_meta?: PostLinkMetaDto;
 }
+export class EditPostDto {
+    @IsString()
+    title: string;
+
+    @IsString()
+    content: string;
+
+    @IsOptional()
+    @IsString()
+    privacy?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    hashtags?: string[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    friends_tagged?: string[];
+
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    images?: string[];
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    videos?: string[];
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => PostLinkMetaDto)
+    post_link_meta?: PostLinkMetaDto;
+}
+

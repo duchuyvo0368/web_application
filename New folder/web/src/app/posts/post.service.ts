@@ -7,7 +7,7 @@ import {
     PostFromServer,
     ExtractLinkParams,
     PostLinkMeta,
- 
+
 } from './type';
 import { getUploadConfig } from '@/utils/constants';
 

@@ -76,29 +76,33 @@ export class UploadController {
         @Body() body: { presignedUrl: string; partNumber: number },
         @UploadedFile() file: Express.Multer.File,
     ) {
-        if (!body.presignedUrl) {
-            throw new BadRequestException('Missing presignedUrl');
-        }
-        if (!file) {
-            throw new BadRequestException('Missing file');
-        }
-        if (!body.partNumber) {
-            throw new BadRequestException('Missing partNumber');
-        }
+        if (!body.presignedUrl) throw new BadRequestException('Missing presignedUrl');
+        if (!file) throw new BadRequestException('Missing file');
+        if (!body.partNumber) throw new BadRequestException('Missing partNumber');
 
-        const res = await axios.put(body.presignedUrl, file.buffer, {
-            headers: {
-                'Content-Type': file.mimetype,
-            },
+        const chunk = file.buffer;
+        const url = body.presignedUrl;
+
+        const uploadRes = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.mimetype },
+            body: chunk,
         });
 
-        console.log(`Uploaded part ${body.partNumber}, ETag:`, res.headers.etag);
+        if (!uploadRes.ok) {
+            throw new Error(`Failed to upload part ${body.partNumber}: ${uploadRes.statusText}`);
+        }
+
+        const eTag = uploadRes.headers.get('etag');
+        console.log(`Uploaded part ${body.partNumber}, ETag: ${eTag}`);
 
         return {
-            ETag: res.headers.etag,
+            ETag: eTag,
             PartNumber: body.partNumber,
         };
     }
+
+
 
 
 

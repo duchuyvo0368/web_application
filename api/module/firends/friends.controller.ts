@@ -52,7 +52,6 @@ export class FriendsController {
         @Query('type') type: 'all' | 'sent' | 'pending', @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
         @Req() req: Request,
     ) {
-
         const userId = (req as any).user.userId;
          const { message, result } = await this.friendsService.getFriendListByType(userId, type, limit);
 

@@ -9,7 +9,7 @@ import { FriendService } from 'module/firends/friends.service';
 import { Model, Types } from 'mongoose';
 import { UploadModule } from 'module/upload/upload.module';
 import { UploadService } from 'module/upload/upload.service';
-import { CreatePostDto } from './create-post.dto';
+import { CreatePostDto, EditPostDto } from './create-post.dto';
 import { async } from 'rxjs';
 import { FriendRelation } from '../firends/friend.model';
 import { PostRepository } from './post.reponsitory';
@@ -76,7 +76,7 @@ export class PostsService {
     //friends and public
 
 
-    async getFeedPosts(userId: string, page = 1, limit = 10) {
+    async getFeedPosts(userId: string, page: number, limit: number) {
         //const skip = (page - 1) * limit;
 
         const [friendIds, followIds] = await Promise.all([
@@ -89,7 +89,7 @@ export class PostsService {
 
         if (page === 1) {
             const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-            myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo);
+            myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo,page,limit);
             if (myPosts.length > 0) relatedLimit = limit - myPosts.length;
         }
 
@@ -110,16 +110,29 @@ export class PostsService {
         };
     }
 
+    async getPost(postId: string) {
+        return this.postRepository.findById(postId);
+    }
+
+    async updatePost(postId: string, data: EditPostDto, userId: string) {
+        const post = await this.postRepository.findById(postId);
+        if (!post) throw new BadRequestException('Post not found');
+        if(post.userId.toString() !== userId) throw new BadRequestException('You are not the owner of this post');
+        return this.postRepository.updatePost(postId, data);
+    }
 
 
-
-
-
+    async deletePost(postId: string, userId: string) {
+        const post = await this.postRepository.findById(postId);
+        if (!post) throw new BadRequestException('Post not found');
+        if(post.userId.toString() !== userId) throw new BadRequestException('You are not the owner of this post');
+        return this.postRepository.deletePost(postId);
+    }
 
     // nhiều loại cảm xúc
     async likePost(postId: string, userId: string, feel: 'like' | 'love' | 'haha') {
         const post = await this.postRepository.findById(postId);
-        if (!post) throw new Error('Post not found');
+        if (!post) throw new BadRequestException('Post not found');
 
         const currentFeel = post.feel.get(userId);
 
@@ -145,7 +158,7 @@ export class PostsService {
 
     async unlikePost(postId: string, userId: string) {
         const post = await this.postRepository.findById(postId);
-        if (!post) throw new Error('Post not found');
+        if (!post) throw new BadRequestException('Post not found');
 
         const currentFeel = post.feel.get(userId);
         if (currentFeel) {

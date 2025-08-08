@@ -37,7 +37,7 @@ export class PostRepository {
     }
     
     //lay ra post theo query
-    async findPosts(query: any, page = 1, limit = 10): Promise<any[]> {
+    async findPosts(query: any, page:number, limit:number): Promise<any[]> {
         return this.postModel
             .find(query)
             .sort({ createdAt: -1 })
@@ -47,7 +47,10 @@ export class PostRepository {
             .populate('friends_tagged', 'email name avatar').lean();
     }
 
-    async findPostsByQuery(query: any, page = 1, limit = 10): Promise<any[]> {
+    async deletePost(postId: string) {
+        return this.postModel.findByIdAndDelete(postId);
+    }
+    async findPostsByQuery(query: any, page:number, limit:number): Promise<any[]> {
         return this.findPosts(query, page, limit);
     }
     async findRelatedPosts(friendIds: string[], followIds: string[], limit: number, page: number) {
@@ -70,13 +73,13 @@ export class PostRepository {
         return { posts, count };
     }
 
-    async findMyRecentPosts(userId: string, limitDate: Date) {
+    async findMyRecentPosts(userId: string, limitDate: Date,page:number,limit:number) {
         const query = {
             userId,
             privacy: { $in: ['public', 'friend'] },
             createdAt: { $gte: limitDate },
         }
-        return this.findPosts(query)
+        return this.findPosts(query,page,limit)
 
     }
 

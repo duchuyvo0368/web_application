@@ -28,7 +28,7 @@ import { AuthRequest } from 'module/auth/interfaces/auth-request.interface';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { uploadConfig } from 'module/upload/utils/multer.config';
 import { MulterS3File } from 'module/upload/utils/multe.s3.file';
-import { CreatePostDto } from './create-post.dto';
+import { CreatePostDto, EditPostDto } from './create-post.dto';
 import { logger } from 'utils/logger';
 import { SuccessResponse } from 'utils/success.response';
 // import { CreatePostDto } from './dto/create-post.dto';
@@ -215,35 +215,87 @@ export class PostsController {
     @Get('')
     async getFriendPosts(
         @Req() req: AuthRequest,
-        @Query('page') page = '1',
-        @Query('limit') limit = '10',
+        @Query('page') page: number,
+        @Query('limit') limit: number,
     ) {
         const userId = req.user?.userId;
         if (!userId) {
             throw new UnauthorizedException('User not found in request');
         }
-        const parsedPage = parseInt(page, 10);
-        const parsedLimit = parseInt(limit, 10);
+        const parsedPage = Number(page) || 1;     
+        const parsedLimit = Number(limit) || 10;  
 
         return this.postService.getFeedPosts(userId, parsedPage, parsedLimit);
     }
-    //   @Get()
-    //   findAll() {
-    //     return this.postsService.findAll();
-    //   }
 
-    //   @Get(':id')
-    //   findOne(@Param('id') id: string) {
-    //     return this.postsService.findOne(+id);
-    //   }
+    @ApiOperation({ summary: 'Edit post' })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    @Patch(':postId')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                title: { type: 'string', example: 'Title Post' },
+                content: { type: 'string', example: 'Content Post' },
+                privacy: { type: 'string', example: 'public | friend | private' },
+                hashtags: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['nestjs', 'backend'],
+                },
+                images: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['https://example.com/image1.jpg'],
+                },
+                videos: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['https://example.com/video1.mp4'],
+                },
+                post_link_meta: {
+                    type: 'object',
+                    properties: {
+                        post_link_url: { type: 'string', example: 'https://vnexpress.net/...' },
+                        post_link_title: { type: 'string', example: 'Tiêu đề link' },
+                        post_link_description: { type: 'string', example: 'Mô tả link' },
+                        post_link_image: { type: 'string', example: 'https://...' },
+                    }
+                }
+            },
+            required: ['title', 'content']
+        }
+    })
+    async updatePost(
+        @Param('postId') postId: string,
+        @Body() body: EditPostDto,
+        @Req() req: AuthRequest,
+    ) {
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new UnauthorizedException('User not found in request');
+        }
+        await this.postService.updatePost(postId, body, userId);
+        return new SuccessResponse({ message: 'Edit post successfully' });
+    }
 
-    // //   @Patch(':id')
-    // //   update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    // //     //return this.postsService.update(+id, updatePostDto);
-    // //   }
-
-    //   @Delete(':id')
-    //   remove(@Param('id') id: string) {
-    //     return this.postsService.remove(+id);
-    //   }
+    async deletePost(
+        @Param('postId') postId: string,
+        @Req() req: AuthRequest,
+    ) {
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new UnauthorizedException('User not found in request');
+        }
+        await this.postService.deletePost(postId, userId);
+        return new SuccessResponse({ message: 'Delete post successfully' });
+    }
+    @Get(':postId')
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    async getPostById(@Param('postId') postId: string) {
+        const post = await this.postService.getPost(postId);
+        return new SuccessResponse({ message: 'Get post successfully', metadata: { post } });
+    }
 }
