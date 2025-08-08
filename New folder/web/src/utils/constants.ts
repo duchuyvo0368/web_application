@@ -23,7 +23,7 @@ export const getUploadConfig = (fileSize: number): UploadConfig => {
 
   if (fileSize < 10 * MB) {
     return {
-      chunkSize: 2.5 * MB,
+      chunkSize: 2 * MB,
       parallelLimit: 2,
     };
   }
@@ -42,33 +42,14 @@ export const getUploadConfig = (fileSize: number): UploadConfig => {
     };
   }
 
-  if (fileSize < 200 * MB) {
+    if (fileSize < 2 * GB) {
     return {
       chunkSize: 10 * MB,
       parallelLimit: 8,
     };
   }
 
-  if (fileSize < 500 * MB) {
-    return {
-      chunkSize: 15 * MB,
-      parallelLimit: 10,
-    };
-  }
 
-  if (fileSize < 1 * GB) {
-    return {
-      chunkSize: 20 * MB,
-      parallelLimit: 12,
-    };
-  }
-
-  if (fileSize < 2 * GB) {
-    return {
-      chunkSize: 30 * MB,
-      parallelLimit: 16,
-    };
-  }
 
   throw new Error("File size exceeds 2GB.");
 };

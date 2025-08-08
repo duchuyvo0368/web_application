@@ -2,7 +2,7 @@ import { async } from 'rxjs';
 // friend.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FriendRelation, FriendRelationDocument } from './model/friend.model';
+import { FriendRelation, FriendRelationDocument } from './friend.model';
 import { Model, Types } from 'mongoose';
 import { logger } from 'utils/logger';
 
@@ -34,15 +34,13 @@ export class FriendRepository {
 
     //update status(accepted)
     async updateRequestToAccepted(id: Types.ObjectId) {
-        return this.friendModel.updateOne(
-            { _id: id },
-            {
-                $set: {
-                    type: 'accepted',
-                    acceptedAt: new Date(),
-                },
-            },
-        );
+        return this.friendModel.findByIdAndUpdate(
+            id,
+            { type: 'accepted' },
+            { new: true }
+        )
+            .populate('fromUser', 'id email name avatar') // Populate thêm các trường cần thiết
+            .populate('toUser', 'id email name avatar');
     }
 
 

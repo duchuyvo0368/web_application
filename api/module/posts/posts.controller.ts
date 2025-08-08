@@ -38,6 +38,67 @@ import { SuccessResponse } from 'utils/success.response';
 export class PostsController {
     constructor(private readonly postService: PostsService) { }
 
+
+
+    @Get('user')
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    @ApiOperation({ summary: 'Get posts by user' })
+    @ApiQuery({
+        name: 'userId',
+        required: true,
+        type: String,
+        example: '689424f7c9447fcf37f53ade',
+        description: 'User ID',
+    })
+    @ApiQuery({
+        name: 'page',
+        required: false,
+        type: Number,
+        example: 1,
+        description: 'Current page number (default = 1)',
+    })
+    @ApiQuery({
+        name: 'limit',
+        required: false,
+        type: Number,
+        example: 10,
+        description: 'Number of posts per page (default = 10)',
+    })
+    async getPostsByType(
+        @Req() req: AuthRequest,
+        @Query('userId') userId: string,
+        @Query('page') page = '1',
+        @Query('limit') limit = '10',
+    ) {
+        const requesterId = req.user?.userId;
+
+        logger.info(`Parsed userID: ${userId}, requesterId: ${requesterId}`);
+
+        if (!requesterId) {
+            throw new UnauthorizedException('Requester not found in request');
+        }
+        if (!userId) {
+            throw new BadRequestException('Target user ID is required');
+        }
+
+        const parsedPage = parseInt(page, 10);
+        const parsedLimit = parseInt(limit, 10);
+
+        logger.info(`Fetching posts of user ${userId} requested by ${requesterId}`);
+
+        const result = await this.postService.getPostsByUserWithAccess(
+            userId,
+            requesterId,
+            parsedPage,
+            parsedLimit,
+        );
+
+        return result;
+    }
+
+
+
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
     @Post('create')
@@ -85,32 +146,9 @@ export class PostsController {
     }
 
 
-    
 
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard)
-    @Get(':userId')
-    async getPostsByType(
-        @Req() req: AuthRequest,
-        @Param('userId') userId: string,
-        @Query('page') page = '1',
-        @Query('limit') limit = '10',
-    ) {
-        
-       
-        const requesterId = req.user?.userId;
-        if (!userId || !requesterId) {
-            throw new UnauthorizedException('User not found in request');
-        }
-        const parsedPage = parseInt(page, 10);
-        const parsedLimit = parseInt(limit, 10);
-        logger.info(`data:${userId} requesterId:${requesterId}`)
-        const result = this.postService.getPostsByUserWithAccess(userId, requesterId, parsedPage, parsedLimit);
-        return new SuccessResponse({
-            message: 'Get posts by type',
-            metadata: result,
-        });
-    }
+
+
 
     @ApiBearerAuth()
     @ApiBody({

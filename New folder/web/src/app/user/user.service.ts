@@ -1,6 +1,13 @@
+import { metadata } from './../../../../../web/src/app/layout';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
+import {
+    PaginatedResponse,
+    PostFromServer,
+    
 
+} from '../posts/type';
+import { GetPostsParams } from './type';
 const API_CONFIG = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/v1/api';
 const getAuthHeaders = () => {
     const accessToken = localStorage.getItem('accessToken');
@@ -17,10 +24,11 @@ export const getAllUser = async ({
     limit?: number;
     page?: number
     onSuccess?: (data: any) => void;
-    onError?: (err: any) => void;
+        onError?: (err: any) => void;
+    
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/user?limit=${limit}&page=${page}`, {
+        const res = await axios.get(`${API_CONFIG}/user/all?limit=${limit}&page=${page}`, {
 
 
             headers: getAuthHeaders()
@@ -38,11 +46,13 @@ export const addFriend = async ({
     type = "send",
     onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     type?: "send" ;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
@@ -59,15 +69,20 @@ export const addFriend = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 export const acceptFriend = async ({
     userId,
     onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
@@ -84,16 +99,21 @@ export const acceptFriend = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 
 export const rejectFriend = async ({
     userId,
     onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
@@ -110,15 +130,20 @@ export const rejectFriend = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 export const addFollow = async ({
     userId,
     onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
@@ -135,15 +160,20 @@ export const addFollow = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 export const unFollow = async ({
     userId,
     onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
@@ -160,20 +190,25 @@ export const unFollow = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 
 export const getProfile = async ({
     userId,
     onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     type?: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/user/${userId}`, {
+        const res = await axios.get(`${API_CONFIG}/user/profile/${userId}`, {
             headers: getAuthHeaders()
         });
 
@@ -183,6 +218,9 @@ export const getProfile = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 
 
@@ -191,11 +229,13 @@ export const uploadFile = async ({
     file,
     onSuccess,
     onError,
+    onFinally,
 }: {
     type: string;
     file: File;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const formData = new FormData();
@@ -213,15 +253,20 @@ export const uploadFile = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 
 
 export const cancelRequest = async ({ userId, onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,
@@ -239,16 +284,21 @@ export const cancelRequest = async ({ userId, onSuccess,
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
 
 export const unFriend = async ({
     userId,
     onSuccess,
     onError,
+    onFinally,
 }: {
     userId: string;
     onSuccess?: (data: any) => void;
     onError?: (err: any) => void;
+    onFinally?: () => void;
 }) => {
     try {
         const res = await axios.post(`${API_CONFIG}/friends/update-status`,{
@@ -263,4 +313,35 @@ export const unFriend = async ({
     } catch (err: any) {
         onError?.(err.response?.data || err.message || err);
     }
+    finally {
+        onFinally?.();
+    }
 };
+
+
+
+
+export const getPostByUser = async ({
+    limit = 10,
+    pages,
+    userId,
+    onSuccess,
+    onError,
+    onFinally,
+}: GetPostsParams): Promise<void> => {
+    try {
+        const res = await axios.get<PaginatedResponse<PostFromServer>>(`${API_CONFIG}/posts/user?userId=${userId}`, {
+            params: { limit, page: pages },
+            headers: getAuthHeaders(),
+        });
+        onSuccess?.(res.data);
+    } catch (err: any) {
+        const message = err instanceof Error ? err.message : 'Failed to fetch posts';
+        console.error('Error fetching posts:', message);
+        onError?.(message);
+    }
+    finally {
+        onFinally?.();
+    }
+};
+    

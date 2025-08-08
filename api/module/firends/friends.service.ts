@@ -21,15 +21,17 @@ import { FORBIDDEN_MESSAGE } from '@nestjs/core/guards';
 import { filter } from 'lodash';
 import { from } from 'rxjs';
 import { FriendRepository } from './friend.repository';
+import { NotificationsService } from 'module/notification/notification.service';
 @Injectable()
 export class FriendService {
     constructor(
         private readonly friendRepository: FriendRepository,
+        private readonly notificationService: NotificationsService,
     ) { }
 
 
     ///follow->add friend->unfollow error
-    //2 nguoi cung ket gui mot luc
+    //2 nguoi cung ket gui 1 luc
     // gửi lời mời kết bạn
     async friendRequest(fromUser: string, toUser: string) {
         if (fromUser === toUser) {
@@ -49,7 +51,14 @@ export class FriendService {
             throw new BadRequestException('You are already friends');
         }
         const created = await this.friendRepository.createRelation(fromUser, toUser);
-
+        logger.info(`Created request: ${JSON.stringify(created)}`);
+        //user fromUser là người gửi lời mời
+        //người gửi toUser
+        //người nhận fromUser
+        await this.notificationService.pushNotification(fromUser, toUser, 'friend_request', {
+            senderName: (created!.fromUser as any).name,
+            receiverName: (created!.toUser as any).name,
+        });
         return {
             message: 'Friend request sent',
             data: created,
@@ -72,7 +81,24 @@ export class FriendService {
             throw new ForbiddenException('Not authorized to accept this request');
         }
 
-        await this.friendRepository.updateRequestToAccepted(request.id);
+        const updated = await this.friendRepository.updateRequestToAccepted(request.id);
+        logger.info(`Updated request: ${JSON.stringify(updated)}`);
+        /**
+         * Updated request: {"_id":"689477931e7eea88d8429e24","fromUser":{"_id":"689424f7c9447fcf37f53ade","name":"huyvo","email":"voduchuy@gmail.com","avatar":"https://example.com/default-avatar.png"},"toUser":{"_id":"689424d5c9447fcf37f53ad2","name":"voduchuy","email":"voduchuy016688@gmail.com","avatar":"https://example.com/default-avatar.png"},"type":"accepted","acceptedAt":null,"createdAt":"2025-08-07T09:53:23.977Z","updatedAt":"2025-08-07T09:53:32.964Z","__v":0}
+         */
+        //user toUser là người nhận mới đc đồng ý
+        //người gửi toUser
+        //người nhận fromUser
+        await this.notificationService.pushNotification(
+            updated!.fromUser._id.toString(),
+            updated!.toUser._id.toString(),
+            'friend_accept',
+            {
+                senderName: (updated!.fromUser as any).name,
+                receiverName: (updated!.toUser as any).name,
+            }
+        );
+
 
         return {
             message: 'Friend request accepted',
@@ -255,22 +281,35 @@ export class FriendService {
 
     //lấy danh sách bạn bè lời mời đã gửi 
     async getRelatedUserIds(userId: string): Promise<string[]> {
-        const relations = await this.friendRepository.findRelationsByUserAndTypes(userId, ['accepted', 'pending']);
+        const relations = await this.friendRepository.findRelationsByUserAndTypes(
+            userId,
+            ['accepted', 'pending'],
+        );
 
         const relatedIds = new Set<string>();
 
         for (const rel of relations) {
-            const otherId =
-                rel.fromUser.toString() === userId
-                    ? rel.toUser.toString()
-                    : rel.fromUser.toString();
+            const fromUserId = rel.fromUser?._id?.toString?.();  // Ensure accessing _id
+            const toUserId = rel.toUser?._id?.toString?.();
 
-            relatedIds.add(otherId);
+            if (!fromUserId || !toUserId) continue;
+
+            const otherId = fromUserId === userId ? toUserId : fromUserId;
+
+            if (Types.ObjectId.isValid(otherId)) {
+                relatedIds.add(otherId);
+            }
         }
-        relatedIds.add(userId);
+
+        if (Types.ObjectId.isValid(userId)) {
+            relatedIds.add(userId);
+        }
 
         return Array.from(relatedIds);
     }
+
+
+
 
     //lay ra mot ban bef
     async findAnyRelationBetweenUsers(
@@ -305,7 +344,7 @@ export class FriendService {
     }
 
 
-
+    // xử lý lời mời kết bạn
     async handleFriendRequestAction(
         fromUser: string,
         toUser: string,
@@ -366,6 +405,7 @@ export class FriendService {
         return this.friendRepository.countAcceptedFriendsByUserId(userId);
     }
 
+    // lay danh sach theo type
     async getFriendListByType(
         userId: string,
         type: 'all' | 'sent' | 'pending' | 'follow',
@@ -398,14 +438,13 @@ export class FriendService {
         return { message, result };
     }
 
+    // lay danh sach theo type
     async getFollowingRelations(userId: string, limit: number) {
         return this.friendRepository.findFollowingsUserId(userId, limit);
     }
 
 
-
-
-
+    // check userA and userB is friend
     async isFriend(userA: string, userB: string): Promise<boolean> {
         return await this.friendRepository.isFriend(userA, userB)
     }

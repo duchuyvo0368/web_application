@@ -6,7 +6,7 @@ import { UserInfo } from "../home/type";
 
 
 
-// Dùngd cho component hiển thị bài viết (PostCard)
+
 export interface PostCardProps {
     postId: string;
     userName: string;
@@ -20,6 +20,7 @@ export interface PostCardProps {
     feel: { [userId: string]: 'like' | 'love' | 'haha' };
     feelCount: { [key: string]: number };
     comments: number;
+    privacy: 'public' | 'friend';
     views: number;
     createdAt: string;
     post_link_meta?: PostLinkMeta
@@ -38,21 +39,13 @@ export interface UploadPart {
     PartNumber: number;
 }
 
-// Props truyền vào CreatePostModal
-// export interface CreatePostModalProps {
-//   open: boolean;
-//   userInfo: UserInfo;
-//   onClose: () => void;
-//   onPostCreated: (newPost: PostData) => void;
-// }
+
 
 
 // Post types
 
 
-// Post dùng trong client (local state)
 
-// Post trả về từ server
 export interface PostFromServer {
     _id: string;
     title: string;
@@ -63,7 +56,7 @@ export interface PostFromServer {
     images?: string[];
     videos?: string[];
     friends_tagged?: string[];
-    privacy: 'public' | 'friends';
+    privacy: 'public' | 'friend';
     post_link_meta?: PostLinkMeta;
     feelCount: { [key: string]: number };
     feel: { [userId: string]: 'like' | 'love' | 'haha' };
@@ -74,7 +67,6 @@ export interface PostFromServer {
 
 
 
-// Gửi lên server để tạo bài viết
 
 
 export interface Post {
@@ -84,7 +76,7 @@ export interface Post {
     createdAt: string;
     images?: string[];
     videos?: string[];
-    privacy: 'public' | 'friends';
+    privacy: 'public' | 'friend';
     userId: string;
     friends_tagged?: string[];
     hashtags?: string[];
@@ -119,12 +111,12 @@ export interface CreatePostParams {
     data: {
         title?: string;
         content?: string;
-        privacy?: string;
         userId: string;
         images?: string[] | null;
         videos?: string[] | null;
         post_link_meta?: PostLinkMeta | null;
         hashtags?: string[];
+        privacy?: 'public' | 'friend';
         friends_tagged?: string[];
         feelCount?: { [key: string]: number };
         feel?: { [key: string]: string };
@@ -138,7 +130,6 @@ export interface PostResponse {
     _id: string;
     title: string;
     content: string;
-    privacy: string;
     images?: string[];
     videos?: string[];
     post_link_meta?: PostLinkMeta;
@@ -146,6 +137,7 @@ export interface PostResponse {
     hashtags?: string[];
     friends_tagged?: string[];
     createdAt: string;
+    privacy: 'public' | 'friend';
     updatedAt: string;
     feelCount: { [key: string]: number };
     feel: { [key: string]: string };

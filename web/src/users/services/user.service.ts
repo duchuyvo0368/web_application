@@ -19,7 +19,7 @@ export const getAllUser = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/user?limit=${limit}&page=${page}`, {
+        const res = await axios.get(`${API_CONFIG}/user/all?limit=${limit}&page=${page}`, {
 
 
             headers: getAuthHeaders()
@@ -122,7 +122,7 @@ export const getProfile = async ({
     onError?: (err: any) => void;
 }) => {
     try {
-        const res = await axios.get(`${API_CONFIG}/user/${userId}`, {
+        const res = await axios.get(`${API_CONFIG}/user/profile/${userId}`, {
             headers: getAuthHeaders()
         });
 

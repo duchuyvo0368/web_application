@@ -5,7 +5,7 @@ import { Document, Types } from 'mongoose';
 
 @Schema({ timestamps: true })
 export class Notification extends Document {
-    @Prop({ type: String, enum: ['FRIEND', 'POST', 'COMMENT', 'LIKE'], required: true })
+    @Prop({ type: String, enum: ['friend_request', 'friend_accept', 'comment', 'like'], required: true })
     noti_type: string;
 
     @Prop({ type: Types.ObjectId, required: true, ref: 'User' })

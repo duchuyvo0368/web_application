@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 'use client';
@@ -15,10 +16,14 @@ import {
     unFriend,
     addFollow,
     unFollow,
+    getPostByUser,
 } from '@/app/user/user.service';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { Sidebar } from 'lucide-react';
-import RightSidebar from '@/app/home/components/Home/RightSidebar/RightSidebar';
+import RightSidebar from '@/app/home/components/RightSidebar/RightSidebar';
+import PostCard from '@/app/posts/components/PostCard';
+import { PostFromServer } from '@/app/posts/type';
+
 
 
 // --- Helper Components for Icons ---
@@ -42,10 +47,15 @@ const ProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [relation, setRelation] = useState<string | null>(null);
     const [friendCount, setFriendCount] = useState(0);
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [isFollowing, setIsFollowing] = useState(false);
     const [followerCount, setFollowerCount] = useState(0);
     const [friendLoading, setFriendLoading] = useState(false);
     const [followLoading, setFollowLoading] = useState(false);
+    const [posts, setPosts] = useState<PostFromServer[]>([]);
+    const [pageInfo, setPageInfo] = useState({ page: 1, limit: 10, total: 0 });
+    const [postLoading, setPostLoading] = useState(false);
+
 
     const params = useParams();
     const id = params?.id;
@@ -60,7 +70,12 @@ const ProfilePage: React.FC = () => {
             if (storedUser?._id) setUserId(storedUser._id);
         }
     }, [id]);
-
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const info = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            setUserInfo(info);
+        }
+    }, []);
     // Fetch profile data when user ID is available
     useEffect(() => {
         if (!userId) return;
@@ -82,6 +97,12 @@ const ProfilePage: React.FC = () => {
                 setLoading(false);
             },
         });
+    }, [userId]);
+
+    useEffect(() => {
+        if (userId) {
+            handleGetPost();
+        }
     }, [userId]);
 
     // --- Action Handlers ---
@@ -127,7 +148,7 @@ const ProfilePage: React.FC = () => {
     };
 
     const handleUnfriend = () => {
-        if (!userId || !window.confirm("Bạn có chắc chắn muốn hủy kết bạn với người này không?")) return;
+        if (!userId || !window.confirm("Are you sure you want to unfriend this person?")) return;
         setFriendLoading(true);
         unFriend({ userId, onSuccess: () => { setRelation('stranger'); setFriendCount(p => Math.max(p - 1, 0)); }, onFinally: () => setFriendLoading(false) });
     };
@@ -145,50 +166,130 @@ const ProfilePage: React.FC = () => {
     };
 
 
+
+    const handleGetPost = () => {
+        if (!userId) return;
+        setPostLoading(true);
+        getPostByUser({
+            userId,
+            pages: 1,
+            onSuccess: (data) => {
+                setPosts(data.data);
+                console.log('data_res profile:', data);
+                setPageInfo({ page: data.page, limit: data.limit, total: data.total });
+            },
+            onError: (err) => {
+                console.error('Error Post:', err);
+            },
+            onFinally: () => {
+                setPostLoading(false);
+            },
+        });
+    };
+
+
     const renderActionButtons = () => {
         const anyLoading = friendLoading || followLoading;
 
         if (relation === 'me') {
             return (
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                        <span>+</span> Add to Story
+                    <button className="flex items-center gap-1 bg-blue-500 text-white text-sm font-medium px-3 py-1.5 rounded-md hover:bg-blue-600 transition h-9">
+                        <span className="text-base">+</span> Add to Story
                     </button>
-                    <button className="flex items-center gap-2 bg-gray-200 text-black font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                    <button className="flex items-center gap-1 bg-gray-200 text-black text-sm font-medium px-3 py-1.5 rounded-md hover:bg-gray-300 transition h-9">
                         ✏️ Edit Profile
                     </button>
-                    <button className="bg-gray-200 p-2 rounded-lg hover:bg-gray-300 transition"><EllipsisHorizontalIcon /></button>
+                    <button className="bg-gray-200 p-2 rounded-md hover:bg-gray-300 transition h-9 w-9 flex items-center justify-center">
+                        <EllipsisHorizontalIcon className="w-4 h-4" />
+                    </button>
                 </div>
+
             );
         }
 
         // Buttons for other users
+        const buttonBase =
+            'flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-semibold transition disabled:opacity-50';
+
         const friendButtonMap: { [key: string]: JSX.Element } = {
-            stranger: <button onClick={handleAddFriend} disabled={anyLoading} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"><UserPlusIcon /> Add Friend</button>,
-            pending_sent: <button onClick={handleCancelRequest} disabled={anyLoading} className="flex items-center gap-2 bg-gray-300 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 disabled:opacity-50"><UserMinusIcon /> Cancel Request</button>,
-            pending_received: <button onClick={handleAcceptFriend} disabled={anyLoading} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"><CheckIcon /> Respond</button>,
-            accepted: <button onClick={handleUnfriend} disabled={anyLoading} className="flex items-center gap-2 bg-gray-300 font-semibold px-4 py-2 rounded-lg hover:bg-gray-400 disabled:opacity-50"><CheckIcon /> Friends</button>,
+            stranger: (
+                <button
+                    onClick={handleAddFriend}
+                    disabled={anyLoading}
+                    className={`${buttonBase} bg-blue-500 text-white hover:bg-blue-600`}
+                >
+                    <UserPlusIcon className="w-4 h-4" />
+                    Add Friend
+                </button>
+            ),
+            pending_sent: (
+                <button
+                    onClick={handleCancelRequest}
+                    disabled={anyLoading}
+                    className={`${buttonBase} bg-gray-300 hover:bg-gray-400`}
+                >
+                    <UserMinusIcon className="w-4 h-4" />
+                    Cancel
+                </button>
+            ),
+            pending_received: (
+                <button
+                    onClick={handleAcceptFriend}
+                    disabled={anyLoading}
+                    className={`${buttonBase} bg-blue-500 text-white hover:bg-blue-600`}
+                >
+                    <CheckIcon className="w-4 h-4" />
+                    Respond
+                </button>
+            ),
+            accepted: (
+                <button
+                    onClick={handleUnfriend}
+                    disabled={anyLoading}
+                    className={`${buttonBase} bg-gray-300 hover:bg-gray-400`}
+                >
+                    <CheckIcon className="w-4 h-4" />
+                    Friends
+                </button>
+            ),
         };
 
         return (
             <div className="flex items-center gap-2">
                 {relation && friendButtonMap[relation]}
-                <button className="flex items-center gap-2 bg-gray-200 text-black font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 transition">
-                    <MessageIcon /> Message
+                <button
+                    className={`${buttonBase} bg-gray-200 text-black hover:bg-gray-300`}
+                >
+                    <MessageIcon className="w-4 h-4" />
+                    Message
                 </button>
-                {isFollowing
-                    ? <button onClick={handleUnfollow} disabled={anyLoading} className="bg-gray-200 p-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 font-semibold">Following</button>
-                    : <button onClick={handleFollow} disabled={anyLoading} className="bg-gray-200 p-2 rounded-lg hover:bg-gray-300 disabled:opacity-50 font-semibold">Follow</button>
-                }
+                {isFollowing ? (
+                    <button
+                        onClick={handleUnfollow}
+                        disabled={anyLoading}
+                        className={`${buttonBase} bg-gray-200 hover:bg-gray-300`}
+                    >
+                        Unfollow
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleFollow}
+                        disabled={anyLoading}
+                        className={`${buttonBase} bg-gray-200 hover:bg-gray-300`}
+                    >
+                        Follow
+                    </button>
+                )}
             </div>
         );
+
     };
 
 
     if (loading || !user) {
         return (
             <div className="bg-gray-100 min-h-screen">
-                <Header />
                 <div className="p-6"> <SkeletonProfile /> </div>
             </div>
         );
@@ -203,7 +304,7 @@ const ProfilePage: React.FC = () => {
                     <img
                         src="https://file.apetavers.com/api/files/admin/20241226/3d48b567-fd61-415d-a2bc-aa09966a05cd.png"
                         alt="Cover"
-                        className="w-full h-52 md:h-80 object-cover rounded-t-lg"
+                        className="w-full h-40 md:h-80 object-cover rounded-t-lg"
                     />
                     <div className="absolute -bottom-8 left-4 top-65">
                         <div className="relative">
@@ -256,7 +357,7 @@ const ProfilePage: React.FC = () => {
                         <div className="flex items-center gap-3 pb-3 border-b border-gray-300">
                             <img src={user.avatar || 'default_avatar.png'} alt="avatar" className="w-10 h-10 rounded-full" />
                             <div className="flex-1 text-left text-gray-500 bg-gray-100 rounded-full px-4 py-2 cursor-pointer hover:bg-gray-200">
-                                What's on your mind, {user.name.split(' ')[0]}?
+                                What&apos;s on your mind, {user.name.split(' ')[0]}?
                             </div>
                         </div>
                         <div className="grid grid-cols-3 gap-2 mt-2">
@@ -272,6 +373,35 @@ const ProfilePage: React.FC = () => {
                                 <FaceSmileIcon className="w-4 h-4" />
                                 <span className="font-medium text-xs text-gray-600">Feeling/Activity</span>
                             </button>
+                        </div>
+                        <div className="overflow-y-auto  pb-28 w-full scrollbar-hide">
+                            {posts.map((post, idx) => (
+                                <PostCard
+                                    key={post._id || idx}
+                                    postId={post._id}
+                                    userName={userInfo?.name}
+                                    avatar={userInfo?.avatar}
+                                    title={post.title}
+                                    time={post.createdAt}
+                                    content={post.content}
+                                    privacy={post.privacy}
+                                    hashtags={post.hashtags || []}
+                                    feel={post.feel || ''}
+                                    images={Array.isArray(post.images) ? post.images : []}
+                                    videos={Array.isArray(post.videos) ? post.videos : []}
+                                    views={post.views}
+                                    feelCount={{
+                                        like: post.feelCount?.like || 0,
+                                        haha: post.feelCount?.haha || 0,
+                                        love: post.feelCount?.love || 0,
+                                    }}
+                                    comments={post.comments}
+                                    createdAt={post.createdAt}
+                                    post_link_meta={post.post_link_meta}
+                                />
+                            ))}
+
+
                         </div>
                     </div>
                 </div>

@@ -94,10 +94,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     videos: videoUrls,
                     hashtags: hashtags,
                     post_link_meta: linkMeta,
-                    friends_tagged: selectedFriends
-                        .map(f => f.id)
-                        .filter(id => typeof id === 'string' && id.length === 24)
-                    ,
+                    friends_tagged: selectedFriends.map(f => f.id),
                     post_count_feels: {
                         post_count_feels: 0,
                         post_count_comments: 0,
@@ -199,9 +196,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             .replace(/#[\w\u00C0-\u1EF9]+/g, (tag) => {
                 return `<span class="text-blue-500 font-medium">${tag}</span>`;
             })
-            .replace(/@[\w\u00C0-\u1EF9]+(?: [\w\u00C0-\u1EF9]+)?/g, (tag) => {
+            .replace(/@[\w\u00C0-\u1EF9]+(?: [\w\u00C0-\u1EF9]+)*/g, (tag) => {
                 return `<span class="text-blue-500 font-medium">${tag}</span>`;
             });
+
 
     };
     const handleMentionSelect = (user: UserInfo) => {

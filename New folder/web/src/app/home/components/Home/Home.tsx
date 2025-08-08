@@ -1,9 +1,9 @@
-/* eslint-disable react/jsx-no-undef */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react';
 import { getPostUser } from '../../home.service';
-import RightSidebar from './RightSidebar/RightSidebar';
+import RightSidebar from '../RightSidebar/RightSidebar';
 import PostCard from '../../../posts/components/PostCard';
 import { UserInfo } from '../../type';
 import CreatePostModal from '@/app/posts/components/CreatePostModal';
@@ -107,7 +107,8 @@ const Home: React.FC = () => {
                                 videos={Array.isArray(post.videos) ? post.videos : []}
                                 createdAt={post.createdAt}
                                 feel={post.feel || {}}
-                               // friends_tagged={post.friends_tagged || []}
+                                privacy={post.privacy}
+                                // friends_tagged={post.friends_tagged || []}
                                 feelCount={{
                                     like: post.feelCount?.like || 0,
                                     haha: post.feelCount?.haha || 0,

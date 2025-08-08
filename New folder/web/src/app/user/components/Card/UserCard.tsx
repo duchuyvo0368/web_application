@@ -51,6 +51,9 @@ const UserCard: React.FC<UserCardProps> = ({
             onError: (err) => {
                 console.error('Error handling friend request:', err);
                 setLoading(false);
+            }, 
+            onFinally: () => {
+                setLoading(false);
             },
         });
     };
@@ -75,6 +78,9 @@ const UserCard: React.FC<UserCardProps> = ({
                 console.error('Follow/unfollow failed:', err);
                 setIsFollowing(prevState);
                 setFollowerCount(prevCount);
+                setLoading(false);
+            },
+            onFinally: () => {
                 setLoading(false);
             },
         });

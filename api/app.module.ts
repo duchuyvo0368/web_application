@@ -29,7 +29,7 @@ import { NotificationsModule } from 'module/notification/notification.module';
       
         PostsModule,
        // FeelModule,
-      //  NotificationsModule,
+       NotificationsModule,
 
     ],
 })

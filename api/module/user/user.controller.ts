@@ -41,13 +41,16 @@ export class UserController {
     @ApiQuery({ name: 'page', example: '1' })
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @Get()
+    @Get('all')
     async getAllUsers(
         @Query('limit') limit: string = '12',
         @Query('page') page: string = '1',
-        @Req() req: Request,
+        @Req() req: AuthRequest,
     ) {
-        const userId = (req as any).user.userId;
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new AuthFailureError("User auth")
+        }
         const pageNumber = Math.max(Number(page), 1);
         const limitNumber = Math.max(Number(limit), 1);
 
@@ -115,13 +118,15 @@ export class UserController {
 
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @Get(':userId')
+    @Get('profile/:userId')
     async getUserProfile(
         @Param('userId') id: string,
-        @Req() req: Request,
+        @Req() req: AuthRequest,
     ) {
-        const userId = (req as any).user.userId;
-
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new AuthFailureError("User auth")
+        }
         const result = await this.userService.getProfile(
             userId,
             id,

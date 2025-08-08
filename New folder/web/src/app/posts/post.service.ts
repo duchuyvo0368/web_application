@@ -20,28 +20,35 @@ const api = axios.create({
 interface GetPostsParams {
     limit?: number;
     pages: number;
+    userId: string;
     onSuccess?: (res: PaginatedResponse<PostFromServer>) => void;
     onError?: (msg: string) => void;
+    onFinally?: () => void;
 }
 
-export const getPostUser = async ({
-    limit = 10,
-    pages,
-    onSuccess,
-    onError,
-}: GetPostsParams): Promise<void> => {
-    try {
-        const res = await api.get<PaginatedResponse<PostFromServer>>('/posts', {
-            params: { limit, page: pages },
-            headers: getAuthHeaders(),
-        });
-        onSuccess?.(res.data);
-    } catch (err: any) {
-        const message = err instanceof Error ? err.message : 'Failed to fetch posts';
-        console.error('Error fetching posts:', message);
-        onError?.(message);
-    }
-};
+// export const getPostUser = async ({
+//     limit = 10,
+//     pages,
+//     userId,
+//     onSuccess,
+//     onError,
+//     onFinally,
+// }: GetPostsParams): Promise<void> => {
+//     try {
+//         const res = await api.get<PaginatedResponse<PostFromServer>>(`/posts?userId=${userId}`, {
+//             params: { limit, page: pages },
+//             headers: getAuthHeaders(),
+//         });
+//         onSuccess?.(res.data);
+//     } catch (err: any) {
+//         const message = err instanceof Error ? err.message : 'Failed to fetch posts';
+//         console.error('Error fetching posts:', message);
+//         onError?.(message);
+//     }
+//     finally {
+//         onFinally?.();
+//     }
+// };
 
 
 // tao post

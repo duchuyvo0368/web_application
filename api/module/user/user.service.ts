@@ -15,7 +15,7 @@ import { filterFields } from '../../utils/index';
 import { UploadService } from 'module/upload/upload.service';
 import { MulterS3File } from 'module/upload/utils/multe.s3.file';
 import { SuccessResponse } from 'utils/success.response';
-import { FriendRelation, FriendRelationDocument } from 'module/firends/model/friend.model';
+import { FriendRelation, FriendRelationDocument } from 'module/firends/friend.model';
 
 const meFields = ['_id', 'name', 'email', 'bio', 'avatar', 'phone', 'birthday'];
 const friendFields = ['_id', 'name', 'email', 'bio', 'avatar'];
@@ -188,12 +188,13 @@ export class UserService {
     async getAllUsers(userId: string, limit: number, page: number) {
         const skip = (page - 1) * limit;
 
-        const objectIdList = (
-            await this.friendService.getRelatedUserIds(userId)
-        ).filter(Types.ObjectId.isValid).map((id) => new Types.ObjectId(id));
+        const objectIdList = await this.friendService.getRelatedUserIds(userId)
 
+
+        const excludedObjectIds = objectIdList.map(id => new Types.ObjectId(id));
+        logger.info(`Excluded object IDs: ${JSON.stringify(excludedObjectIds)}`);
         const aggResult = await this.userModel.aggregate([
-            { $match: { _id: { $nin: objectIdList } } },
+            { $match: { _id: { $nin: excludedObjectIds } } },
             {
                 $facet: {
                     data: [

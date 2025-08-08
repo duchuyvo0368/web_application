@@ -11,7 +11,7 @@ import { UploadModule } from 'module/upload/upload.module';
 import { UploadService } from 'module/upload/upload.service';
 import { CreatePostDto } from './create-post.dto';
 import { async } from 'rxjs';
-import { FriendRelation } from '../firends/model/friend.model';
+import { FriendRelation } from '../firends/friend.model';
 import { PostRepository } from './post.reponsitory';
 import { convertToObject } from 'utils/index';
 
@@ -88,8 +88,8 @@ export class PostsService {
         let relatedLimit = limit;
 
         if (page === 1) {
-            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-            myPosts = await this.postRepository.findMyRecentPosts(userId, oneHourAgo);
+            const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+            myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo);
             if (myPosts.length > 0) relatedLimit = limit - myPosts.length;
         }
 
@@ -188,22 +188,22 @@ export class PostsService {
 
 
 
-    private async getAccessLevel(userId: string, requesterId: string): Promise<'owner' | 'friend' | 'public'> {
+    async getAccessLevel(userId: string, requesterId: string): Promise<'owner' | 'friend' | 'public'> {
         if (userId === requesterId) return 'owner';
 
+        logger.info(`userId: ${userId}, requesterId: ${requesterId}`);
         const isFriend = await this.friendService.isFriend(userId, requesterId);
         logger.info(`isFriend: ${isFriend}`);
         return isFriend ? 'friend' : 'public';
     }
 
-    private buildPostQuery(userId: string, accessLevel: 'owner' | 'friend' | 'public') {
+    async buildPostQuery(userId: string, accessLevel: 'owner' | 'friend' | 'public') {
         switch (accessLevel) {
             case 'owner':
                 return { userId };
             case 'friend':
                 return { userId, privacy: { $in: ['public', 'friend'] } };
             case 'public':
-                return { privacy: 'public' };
             default:
                 return { userId, privacy: 'public' };
         }
@@ -214,11 +214,22 @@ export class PostsService {
         page = 1,
         limit = 10,
     ) {
+
         const accessLevel = await this.getAccessLevel(userId, requesterId);
         logger.info(`accessLevel: ${accessLevel}`);
-        const query = this.buildPostQuery(userId, accessLevel);
+        const query = await this.buildPostQuery(userId, accessLevel);
 
-        return this.postRepository.findPostsByQuery(query, page, limit);
+        logger.info(`query: ${query}`);
+        const data = await this.postRepository.findPostsByQuery(query, page, limit);
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                totalItems: data.length,
+                totalPages: Math.ceil(data.length / limit),
+            },
+        };
     }
 
     //dit

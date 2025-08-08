@@ -18,15 +18,13 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import LiveTvIcon from '@mui/icons-material/LiveTv';
 import LayersIcon from '@mui/icons-material/Layers';
 import DescriptionIcon from '@mui/icons-material/Description';
+import { usePathname } from 'next/navigation';
 
-interface SidebarProps {
-  activeTab: number;
-  onSelect: (tabIndex: number) => void;
-}
+
 
 const menuItems = [
   { label: 'Home', icon: <HomeIcon fontSize="small" style={{ color: '#00bfff' }} />, path: '/' },
-  { label: 'Friends', icon: <DesignServicesIcon fontSize="small" style={{ color: '#3f51b5' }} />, path: '/friends' },
+  { label: 'Friend', icon: <DesignServicesIcon fontSize="small" style={{ color: '#3f51b5' }} />, path: '/friends' },
   { label: 'My Store', icon: <StoreMallDirectoryIcon fontSize="small" style={{ color: '#2196f3' }} /> },
   { label: 'Community', icon: <Diversity3Icon fontSize="small" style={{ color: '#1976d2' }} /> },
   { label: 'Digital Yearbook Exhibition', icon: <BrushIcon fontSize="small" style={{ color: '#795548' }} /> },
@@ -43,40 +41,39 @@ const menuItems = [
   { label: 'Event Report May 2024', icon: <DescriptionIcon fontSize="small" style={{ color: '#ffc107' }} /> },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelect }) => {
-  const router = useRouter();
 
-  const handleClick = (index: number) => {
-    onSelect(index);
-    const item = menuItems[index];
-    if (item.path) {
-      router.push(item.path);
-    }
-  };
+const Sidebar: React.FC = () => {
+    const router = useRouter();
+    const pathname = usePathname();
 
-  return (
-    <nav
-      className="w-full p-4 bg-white shadow-md h-full overflow-y-auto scrollbar-hide"
-      style={{
-        scrollbarWidth: 'none', // Firefox
-        msOverflowStyle: 'none', // IE/Edge
-      }}
-    >
-      <ul className="space-y-1">
-        {menuItems.map((item, index) => (
-          <li
-            key={index}
-            onClick={() => handleClick(index)}
-            className={`flex items-center gap-2 p-2 rounded cursor-pointer 
-              ${activeTab === index ? 'bg-gray-100 font-semibold' : 'hover:bg-gray-50'}`}
-          >
-            <span className="w-5">{item.icon}</span>
-            <span className="text-sm">{item.label}</span>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
+    const handleClick = (index: number) => {
+        const item = menuItems[index];
+        if (item.path) {
+            router.push(item.path);
+        }
+    };
+
+    return (
+        <nav className="w-full p-4 bg-white shadow-md h-full overflow-y-auto scrollbar-hide">
+            <ul className="space-y-1">
+                {menuItems.map((item, index) => {
+                    const isActive = item.path && pathname === item.path;
+                    return (
+                        <li
+                            key={index}
+                            onClick={() => handleClick(index)}
+                            className={`flex items-center gap-2 p-2 rounded cursor-pointer 
+                ${isActive ? 'bg-gray-100 font-semibold' : 'hover:bg-gray-50'}`}
+                        >
+                            <span className="w-5">{item.icon}</span>
+                            <span className="text-sm">{item.label}</span>
+                        </li>
+                    );
+                })}
+            </ul>
+        </nav>
+    );
 };
+
 
 export default Sidebar;

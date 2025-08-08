@@ -11,9 +11,11 @@ export interface UserInfo {
 
 export interface GetPostUserParams {
   limit?: number;
-  pages: number;
-  onSuccess?: (data: PaginatedResponse<PostFromServer>) => void;
-  onError?: (msg: string) => void;
+    pages: number;
+    
+    onSuccess?: (data: PaginatedResponse<PostFromServer>) => void;
+    onError?: (msg: string) => void;
+    onFinally?: () => void;
 }
 
 
