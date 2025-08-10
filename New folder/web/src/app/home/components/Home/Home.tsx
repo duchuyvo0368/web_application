@@ -30,7 +30,8 @@ const Home: React.FC = () => {
                 pages: 1,
                 onSuccess: (data) => setPosts(data.data),
                 onError: (err) =>
-                    setError(typeof err === 'string' ? err : 'Error fetching posts'),
+                    setError(err + 'Error fetching posts'),
+
             });
             setLoading(false);
         };
@@ -96,9 +97,9 @@ const Home: React.FC = () => {
                         posts.map((post, idx) => (
                             <PostCard
                                 key={post._id || idx}
-                                userName={userInfo.name}
+                                userName={post.userId.name}
                                 postId={post._id}
-                                avatar={userInfo.avatar}
+                                avatar={post.userId.avatar}
                                 time={post.createdAt || ""}
                                 title={post.title || "No title"}
                                 content={post.content || ""}

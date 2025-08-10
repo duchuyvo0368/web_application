@@ -52,7 +52,7 @@ export interface PostFromServer {
     content: string;
     hashtags?: string[];
     createdAt: string;
-    userId: string;
+    userId: UserInfo;
     images?: string[];
     videos?: string[];
     friends_tagged?: string[];

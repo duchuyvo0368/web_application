@@ -10,13 +10,11 @@ import React, { useState } from 'react';
 import RightSidebar from '@/app/home/components/RightSidebar/RightSidebar';
 import ProfilePage from '@/app/user/components/Profile/Profile';
 export default function Profile() {
-    const [actionSideBar, setActiveSideBar] = useState(0);
 
     return (
         <div style={{ overflowX: 'hidden' }}>
             <Header />
             <main>
-                <Container sidebar={<Sidebar activeTab={actionSideBar} onSelect={setActiveSideBar} />}>
 
                     <div className="flex gap-2 ">
                         {/* Bên trái là profile */}
@@ -35,7 +33,7 @@ export default function Profile() {
                         </div>
                     </div>
 
-                </Container>
+                
 
             </main>
         </div>

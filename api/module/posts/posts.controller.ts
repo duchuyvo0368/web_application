@@ -14,6 +14,7 @@ import {
     UploadedFile,
     UseInterceptors,
     UploadedFiles,
+    HttpCode,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AuthGuard } from 'module/auth/guards/access-token.guard';
@@ -21,6 +22,7 @@ import {
     ApiBearerAuth,
     ApiBody,
     ApiOperation,
+    ApiParam,
     ApiQuery,
 } from '@nestjs/swagger';
 import { isValidUrl } from '../../utils/index';
@@ -175,6 +177,28 @@ export class PostsController {
 
     @UseGuards(AuthGuard)
     @Post(':postId/feel')
+    @ApiBearerAuth()
+    @Post(':postId/feel')
+    @ApiOperation({ summary: 'Gửi cảm xúc cho bài viết', description: 'Thêm hoặc cập nhật cảm xúc của người dùng cho một bài viết.' })
+    @ApiParam({
+        name: 'postId',
+        required: true,
+        description: 'ID của bài viết cần gửi cảm xúc',
+        type: String,
+    })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                feel: {
+                    type: 'string',
+                    enum: ['like', 'love', 'haha'],
+                    example: 'like',
+                    description: 'Loại cảm xúc (nếu không truyền sẽ xóa cảm xúc)',
+                },
+            },
+        },
+    })
     async handleFeel(
         @Param('postId') postId: string,
         @Body() body: { feel?: 'like' | 'love' | 'haha' },
@@ -279,7 +303,12 @@ export class PostsController {
         await this.postService.updatePost(postId, body, userId);
         return new SuccessResponse({ message: 'Edit post successfully' });
     }
-
+    
+    @ApiOperation({ summary: 'Delete post' })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    @Delete(':postId')
+    @HttpCode(204)
     async deletePost(
         @Param('postId') postId: string,
         @Req() req: AuthRequest,
@@ -291,10 +320,15 @@ export class PostsController {
         await this.postService.deletePost(postId, userId);
         return new SuccessResponse({ message: 'Delete post successfully' });
     }
-    @Get(':postId')
+
+    @ApiOperation({ summary: 'Get post by id' })
     @ApiBearerAuth()
     @UseGuards(AuthGuard)
-    async getPostById(@Param('postId') postId: string) {
+    @Get(':postId')
+    async getPostById(@Param('postId') postId: string, @Req() req: AuthRequest) {
+        if (!postId) {
+            throw new BadRequestException('Post ID is required');
+        }
         const post = await this.postService.getPost(postId);
         return new SuccessResponse({ message: 'Get post successfully', metadata: { post } });
     }

@@ -53,25 +53,36 @@ export class PostRepository {
     async findPostsByQuery(query: any, page:number, limit:number): Promise<any[]> {
         return this.findPosts(query, page, limit);
     }
-    async findRelatedPosts(friendIds: string[], followIds: string[], limit: number, page: number) {
-        const relatedUserIds = [...new Set([...friendIds, ...followIds])].filter(
-            (id) => id !== undefined,
-        );
+    async findFriendPosts(friendIds: string[], limit: number, page: number) {
+        const filteredFriendIds = friendIds.filter(id => !!id);
+        if (filteredFriendIds.length === 0) return { posts: [], count: 0 };
 
         const query = {
-            userId: { $in: relatedUserIds },
-            $or: [
-                { userId: { $in: friendIds }, privacy: { $in: ['public', 'friend'] } },
-                { userId: { $in: followIds }, privacy: 'public' },
-            ],
+            userId: { $in: filteredFriendIds },
+            privacy: { $in: ['public', 'friend'] },
         };
 
         const posts = await this.findPosts(query, page, limit);
-
         const count = await this.postModel.countDocuments(query);
 
         return { posts, count };
     }
+
+    async findFollowPosts(followIds: string[], limit: number, page: number) {
+        const filteredFollowIds = followIds.filter(id => !!id);
+        if (filteredFollowIds.length === 0) return { posts: [], count: 0 };
+
+        const query = {
+            userId: { $in: filteredFollowIds },
+            privacy: 'public',
+        };
+
+        const posts = await this.findPosts(query, page, limit);
+        const count = await this.postModel.countDocuments(query);
+
+        return { posts, count };
+    }
+
 
     async findMyRecentPosts(userId: string, limitDate: Date,page:number,limit:number) {
         const query = {

@@ -73,9 +73,8 @@ const UserGrid: React.FC<{ className?: string }> = ({ className = '' }) => {
                 key={user.id}
                 userId={user.id}
                 name={user.name}
-                avatarUrl={user.img}
+                avatar={user.img}
                 mutualFriends="2 mutual friends"
-                initialFollowersCount={user.followersCount}
                 isFollowing={user.isFollowing}
               />
             ))}

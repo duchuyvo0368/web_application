@@ -3,7 +3,7 @@ import { async } from 'rxjs';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FriendRelation, FriendRelationDocument } from './friend.model';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { logger } from 'utils/logger';
 
 @Injectable()
@@ -191,8 +191,7 @@ export class FriendRepository {
             .find({
                 type: 'follow',
                 fromUser: userId,
-            })
-            .lean();
+            });
     }
 
 

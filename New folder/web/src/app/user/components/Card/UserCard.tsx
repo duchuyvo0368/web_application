@@ -6,34 +6,31 @@ import { addFollow, addFriend, unFollow, cancelRequest } from '../../user.servic
 import Link from 'next/link';
 
 interface UserCardProps {
-  key: string;
-  userId: string;
-  name: string;
-  avatarUrl: string;
-  mutualFriends: string;
-  initialFollowersCount?: string;
-  isFollowing: boolean;
+    userId: string;
+    name: string;
+    avatar: string;
+    mutualFriends?: string;
+    initialFollowersCount?: number;
+    isFollowing: boolean;
 }
-
-
-const normalizeFollowerCount = (val: string | undefined): number => Number(val) || 0;
 
 const UserCard: React.FC<UserCardProps> = ({
     userId,
     name,
-    avatarUrl,
+    avatar,
     mutualFriends,
-    initialFollowersCount,
+    initialFollowersCount = 0,
     isFollowing: isFollowingProp = false,
 }) => {
     const [hasSentFriendRequest, setHasSentFriendRequest] = useState(false);
     const [isFollowing, setIsFollowing] = useState(isFollowingProp);
     const [loading, setLoading] = useState(false);
-    const [followerCount, setFollowerCount] = useState(normalizeFollowerCount(initialFollowersCount));
+    const [followerCount, setFollowerCount] = useState(initialFollowersCount);
 
+    // Đồng bộ state khi prop thay đổi
     useEffect(() => {
         setIsFollowing(isFollowingProp);
-        setFollowerCount(normalizeFollowerCount(initialFollowersCount));
+        setFollowerCount(initialFollowersCount);
     }, [isFollowingProp, initialFollowersCount]);
 
     const handleToggleFriendRequest = () => {
@@ -51,7 +48,7 @@ const UserCard: React.FC<UserCardProps> = ({
             onError: (err) => {
                 console.error('Error handling friend request:', err);
                 setLoading(false);
-            }, 
+            },
             onFinally: () => {
                 setLoading(false);
             },
@@ -90,7 +87,7 @@ const UserCard: React.FC<UserCardProps> = ({
         <div className="bg-white shadow-sm rounded-xl p-4 w-full max-w-[300px]">
             <Link href={`/profile/${userId}`} className="flex flex-col items-center text-center no-underline text-black">
                 <img
-                    src={avatarUrl}
+                    src={avatar}
                     alt={name}
                     className="w-20 h-20 rounded-full object-cover mb-3 border border-gray-300"
                 />
@@ -104,8 +101,8 @@ const UserCard: React.FC<UserCardProps> = ({
             <div className="mt-4 flex justify-center gap-3">
                 <button
                     className={`px-4 py-1 text-sm rounded-full transition ${hasSentFriendRequest
-                            ? 'bg-blue-100 text-blue-600 border border-blue-500'
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        ? 'bg-blue-100 text-blue-600 border border-blue-500'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
                         }`}
                     onClick={handleToggleFriendRequest}
                     disabled={loading}
@@ -115,8 +112,8 @@ const UserCard: React.FC<UserCardProps> = ({
 
                 <button
                     className={`px-4 py-1 text-sm rounded-full border transition ${isFollowing
-                            ? 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                            : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+                        ? 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                        : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
                         }`}
                     onClick={handleToggleFollow}
                     disabled={loading}

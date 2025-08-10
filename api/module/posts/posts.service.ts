@@ -77,8 +77,6 @@ export class PostsService {
 
 
     async getFeedPosts(userId: string, page: number, limit: number) {
-        //const skip = (page - 1) * limit;
-
         const [friendIds, followIds] = await Promise.all([
             this.friendService.getFriendUserIds(userId),
             this.friendService.getFollowingUserIds(userId),
@@ -89,16 +87,35 @@ export class PostsService {
 
         if (page === 1) {
             const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-            myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo,page,limit);
+            myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo, page, limit);
             if (myPosts.length > 0) relatedLimit = limit - myPosts.length;
         }
 
-        const { posts: relatedPosts, count: totalRelatedItems } =
-            await this.postRepository.findRelatedPosts(friendIds, followIds, relatedLimit, page);
+        logger.info(`friendIds: ${Array.isArray(friendIds) ? friendIds : []}`);
+        logger.info(`followIds: ${Array.isArray(followIds) ? followIds : []}`);
 
+
+        const [
+            { posts: friendPosts, count: friendCount },
+            { posts: followPosts, count: followCount }
+        ] = await Promise.all([
+            this.postRepository.findFriendPosts(friendIds, relatedLimit, page),
+            this.postRepository.findFollowPosts(followIds, relatedLimit, page),
+        ]);
+
+     
+        const relatedPosts = [...friendPosts, ...followPosts];
+        logger.info(`relatedPosts: ${JSON.stringify(relatedPosts)}`);
+        const totalRelatedItems = friendCount + followCount;
+
+       
         const data = page === 1 && myPosts.length > 0 ? [...myPosts, ...relatedPosts] : relatedPosts;
+
+     
+        logger.info(`data: ${JSON.stringify(data)}`);
         const totalItems = totalRelatedItems + (page === 1 ? myPosts.length : 0);
 
+      
         return {
             data,
             pagination: {
@@ -109,6 +126,7 @@ export class PostsService {
             },
         };
     }
+
 
     async getPost(postId: string) {
         return this.postRepository.findById(postId);

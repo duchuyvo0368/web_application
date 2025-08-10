@@ -156,14 +156,13 @@ export class FriendService {
         if (fromUser === toUser)
             throw new BadRequestException('Cannot follow yourself');
         const existing = await this.friendRepository.findIncomingFollowRequest(fromUser, toUser);
-        if (!existing) {
-            await this.friendRepository.createFollow(fromUser, toUser);
-            return { message: 'Followed successfully' };
+        logger.info(`Found request: ${JSON.stringify(existing)}`);
+        if (existing) {
+            throw new BadRequestException('You are not following this person');
         }
+        await this.friendRepository.createFollow(fromUser, toUser);
+        return { message: 'Followed successfully' };
 
-        throw new BadRequestException(
-            'Cannot follow in current relationship state',
-        );
     }
 
     // Hủy theo dõi
@@ -323,28 +322,35 @@ export class FriendService {
         return friend;
     }
 
-    // bạn bè
-    async getFriendUserIds(userId: string): Promise<string[]> {
-        const relations = await this.friendRepository.findAcceptedRelationsByUserId(userId)
-
-        return relations.map((rel) =>
-            rel.fromUser.toString() === userId
-                ? rel.toUser.toString()
-                : rel.fromUser.toString(),
-        );
-    }
+    
 
     //check follow
     async isFollowing(userId: string, targetId: string): Promise<boolean> {
         const exists = await this.friendRepository.isUserFollowingTarget(userId, targetId);
         return !!exists;
     }
-    //lấy follow theo userId
+    async getFriendUserIds(userId: string): Promise<string[]> {
+        const relations = await this.friendRepository.findAcceptedRelationsByUserId(userId);
+        if (!relations || relations.length === 0) {
+            logger.info('No friend relations found for user:', userId);
+            return [];
+        }
+
+        logger.info(`relations friend: ${JSON.stringify(relations)}`);
+        return relations.map(rel => {
+            const fromUserId = rel.fromUser._id.toString();
+            const toUserId = rel.toUser._id.toString();
+            return fromUserId === userId ? toUserId : fromUserId;
+        });
+    }
+
     async getFollowingUserIds(userId: string): Promise<string[]> {
         const followRelations = await this.friendRepository.findFollowingsByUserId(userId);
+        logger.info(`relations follow: ${JSON.stringify(followRelations)}`);
 
         return followRelations.map(rel => rel.toUser.toString());
     }
+
 
 
     // xử lý lời mời kết bạn

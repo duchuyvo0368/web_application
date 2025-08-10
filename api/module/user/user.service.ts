@@ -217,11 +217,17 @@ export class UserService {
             userId,
             limit * page,
         );
+        // Đảm bảo toUser luôn là string
         const followedIds = new Set(
-            followingRelations.map((rel) => rel.toUser.toString()),
+            followingRelations.map((rel) => {
+                if (typeof rel.toUser === 'string') return rel.toUser;
+                if (rel.toUser?._id) return rel.toUser._id.toString();
+                if (rel.toUser?.toString) return rel.toUser.toString();
+                return '';
+            }).filter(id => id)
         );
 
-        // Tính follower/following cho từng user
+        // Trong map user
         const usersList = await Promise.all(
             users.map(async (userItem: any) => {
                 const friendId = userItem._id?.toString();
@@ -241,7 +247,7 @@ export class UserService {
             }),
         );
 
-        // Lọc bỏ các user null (nếu có)
+       
         const filteredUsers = usersList.filter(Boolean);
 
         return {

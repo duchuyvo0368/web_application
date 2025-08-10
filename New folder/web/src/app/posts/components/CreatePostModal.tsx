@@ -121,7 +121,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     const handleChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
-        setPostContent(value); // cập nhật nội dung bài post
+        setPostContent(value); 
 
         const cursorPosition = e.target.selectionStart;
         const lastAt = value.lastIndexOf('@', cursorPosition - 1);
