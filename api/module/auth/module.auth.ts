@@ -7,9 +7,10 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { User, UserSchema } from '../user/user.model'; // hoặc đường dẫn đúng tới user.model
 import { KeyTokenModule } from '../token/keyToken.module';
-import { UserModule } from 'module/user/user_module';
+import { UserModule } from 'module/user/user.module';
 import { AuthGuard } from './guards/access-token.guard';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
+import { AppGateway } from './utils/auth.gateway';
 
 @Module({
     imports: [
@@ -22,7 +23,7 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
         KeyTokenModule,
     ],
     controllers: [AuthController],
-    providers: [AuthService, AuthGuard, RefreshTokenGuard],
+    providers: [AuthService, AuthGuard, RefreshTokenGuard, AppGateway],
     exports: [
         AuthGuard,
         RefreshTokenGuard,

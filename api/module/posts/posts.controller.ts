@@ -70,8 +70,8 @@ export class PostsController {
     async getPostsByType(
         @Req() req: AuthRequest,
         @Query('userId') userId: string,
-        @Query('page') page = '1',
-        @Query('limit') limit = '10',
+        @Query('page') page: number,
+        @Query('limit') limit: number,
     ) {
         const requesterId = req.user?.userId;
 
@@ -84,8 +84,8 @@ export class PostsController {
             throw new BadRequestException('Target user ID is required');
         }
 
-        const parsedPage = parseInt(page, 10);
-        const parsedLimit = parseInt(limit, 10);
+        const parsedPage = page || 1;
+        const parsedLimit = limit || 10;
 
         logger.info(`Fetching posts of user ${userId} requested by ${requesterId}`);
 
@@ -131,7 +131,7 @@ export class PostsController {
                     type: 'object',
                     properties: {
                         post_link_url: { type: 'string', example: 'https://vnexpress.net/...' },
-                        post_link_title: { type: 'string', example: 'Tiêu đề link' },
+                        post_link_title: { type: 'string', example: 'Title link' },
                         post_link_description: { type: 'string', example: 'Mô tả link' },
                         post_link_image: { type: 'string', example: 'https://...' },
                     }
@@ -179,11 +179,11 @@ export class PostsController {
     @Post(':postId/feel')
     @ApiBearerAuth()
     @Post(':postId/feel')
-    @ApiOperation({ summary: 'Gửi cảm xúc cho bài viết', description: 'Thêm hoặc cập nhật cảm xúc của người dùng cho một bài viết.' })
+    @ApiOperation({ summary: 'Send feel', description: 'Send feel to post' })
     @ApiParam({
         name: 'postId',
         required: true,
-        description: 'ID của bài viết cần gửi cảm xúc',
+        description: 'ID of the post to send feel',
         type: String,
     })
     @ApiBody({
@@ -194,7 +194,7 @@ export class PostsController {
                     type: 'string',
                     enum: ['like', 'love', 'haha'],
                     example: 'like',
-                    description: 'Loại cảm xúc (nếu không truyền sẽ xóa cảm xúc)',
+                    description: 'Type of feel (if not provided, will remove feel)',
                 },
             },
         },
@@ -247,7 +247,7 @@ export class PostsController {
             throw new UnauthorizedException('User not found in request');
         }
         const parsedPage = Number(page) || 1;     
-        const parsedLimit = Number(limit) || 10;  
+        const parsedLimit = Number(limit) || 1;  
 
         return this.postService.getFeedPosts(userId, parsedPage, parsedLimit);
     }
@@ -282,7 +282,7 @@ export class PostsController {
                     type: 'object',
                     properties: {
                         post_link_url: { type: 'string', example: 'https://vnexpress.net/...' },
-                        post_link_title: { type: 'string', example: 'Tiêu đề link' },
+                        post_link_title: { type: 'string', example: 'Title link' },
                         post_link_description: { type: 'string', example: 'Mô tả link' },
                         post_link_image: { type: 'string', example: 'https://...' },
                     }
@@ -329,7 +329,10 @@ export class PostsController {
         if (!postId) {
             throw new BadRequestException('Post ID is required');
         }
-        const post = await this.postService.getPost(postId);
+        if(!req.user?.userId){
+            throw new UnauthorizedException('User not found in request');
+        }
+        const post = await this.postService.getPostById(postId);
         return new SuccessResponse({ message: 'Get post successfully', metadata: { post } });
     }
 }

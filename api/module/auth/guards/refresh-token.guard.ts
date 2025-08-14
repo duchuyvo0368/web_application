@@ -10,19 +10,23 @@ import { logger } from 'utils/logger';
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
-    canActivate(context: ExecutionContext): boolean | Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest<AuthRequest>();
-        const refreshToken = request.cookies['refreshToken'] || request.headers['x-refresh-token'];
+        const refreshToken = request.headers['x-refresh-token'] as string;
 
-        const secret = process.env.JWT_REFRESH_SECRET || 'default';
-        if (!refreshToken) throw new UnauthorizedException('No refresh token provided');
+        if (!refreshToken) {
+            throw new UnauthorizedException('No refresh token provided');
+        }
+
+      //  const secret = ;
+       logger.info('JWT_REFRESH_SECRET:',refreshToken)
 
         try {
-            const decoded: any = jwt.verify(refreshToken, secret);
-            request.user = decoded;
+            const decoded = jwt.verify(refreshToken, 'default_refresh');
+            request.user = decoded as any;
             request.refreshToken = refreshToken;
             return true;
-        } catch (err) {
+        } catch (error) {
             throw new UnauthorizedException('Invalid or expired refresh token');
         }
     }

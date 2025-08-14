@@ -4,21 +4,32 @@ export const getAuthHeaders = () => {
         Authorization: `Bearer ${accessToken}`,
     };
 };
-export const splitContentAndHashtags = (text: string): { content: string; hashtags: string[] } => {
-    if (!text) return { content: "", hashtags: [] };
+export const splitContentAndHashtagsAndFriends = (
+    text: string
+): { content: string; hashtags: string[]; friends: string[] } => {
+    if (!text) return { content: "", hashtags: [], friends: [] };
 
     const words = text.split(/\s+/);
+
     const hashtags = words.filter(word => /^#[\p{L}0-9_-]+$/u.test(word));
+    const friends = words.filter(word => /^@[\p{L}0-9_-]+$/u.test(word));
+
     const content = words
-        .filter(word => !/^#[\p{L}0-9_-]+$/u.test(word))
+        .filter(
+            word =>
+                !/^#[\p{L}0-9_-]+$/u.test(word) &&
+                !/^@[\p{L}0-9_-]+$/u.test(word)
+        )
         .join(" ")
         .trim();
 
     return {
         content,
-        hashtags: Array.from(new Set(hashtags.map(tag => tag.replace(/^#/, ""))))
+        hashtags: Array.from(new Set(hashtags.map(tag => tag.slice(1)))),
+        friends: Array.from(new Set(friends.map(tag => tag.slice(1))))
     };
 };
+
 export const formatDate = (date: string) => {
     const now = new Date();
     const past = new Date(date);

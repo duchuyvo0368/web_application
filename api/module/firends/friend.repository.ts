@@ -8,6 +8,14 @@ import { logger } from 'utils/logger';
 
 @Injectable()
 export class FriendRepository {
+    isFollowing(toUser: string, fromUser: string): any {
+        return this.friendModel.exists({
+            type: 'follow',
+            fromUser: fromUser,
+            toUser: toUser,
+        });
+    }
+    
     constructor(
         @InjectModel(FriendRelation.name, 'MONGODB_CONNECTION')
         private readonly friendModel: Model<FriendRelationDocument>
@@ -51,44 +59,51 @@ export class FriendRepository {
     }
 
 
-    async findFriendRelation(
-        fromUser: string,
-        toUser: string,
-        options: { type?: string; bidirectional?: boolean; lean?: boolean } = {}
-    ) {
-        const { type, bidirectional = false, lean = false } = options;
-
-        const baseCondition = bidirectional ? { $or: [{ fromUser, toUser }, { fromUser: toUser, toUser: fromUser }] } : { fromUser, toUser };
-        const query = this.friendModel.findOne(type ? { ...baseCondition, type } : baseCondition);
-        return lean ? query.lean() : query;
-    }
-
-
-
-    //mối quan hệ pending 2 chiều
     async findPendingFriendRelationBetween(fromUser: string, toUser: string) {
-        return this.findFriendRelation(fromUser, toUser, { type: 'pending', bidirectional: true });
+        return this.friendModel.findOne({
+            type: 'pending',
+            $or: [
+                { fromUser: fromUser, toUser: toUser },
+                { fromUser: toUser, toUser: fromUser }
+            ]
+        });
     }
-
-    // lời mời theo dõi 
     async findIncomingFollowRequest(receiverId: string, senderId: string) {
-        return this.findFriendRelation(receiverId, senderId, { type: 'follow' });
+        return this.friendModel.findOne({
+            fromUser: senderId,
+            toUser: receiverId,
+            type: 'follow',
+        });
     }
-
-    // lời mời kết bạn gửi  (pending 1 chiều)
     async findIncomingPendingRequest(receiverId: string, senderId: string) {
-        return this.findFriendRelation(senderId, receiverId, { type: 'pending' });
+        return this.friendModel.findOne({
+            fromUser: senderId,
+            toUser: receiverId,
+            type: 'pending',
+        });
     }
+    async findOutgoingFriendRequest(senderId: string, receiverId: string) {
+        return this.friendModel.findOne({
+            $or: [
+                { fromUser: senderId, toUser: receiverId },
+                { fromUser: receiverId, toUser: senderId },
 
-    // ời mời kết bạn đã gửi (pending 1 chiều ngược lại)
-    async findOutgoingFriendRequest(receiverId: string, senderId: string) {
-        return this.findFriendRelation(receiverId, senderId, { type: 'pending' });
+            ],
+            type: 'pending',
+        });
     }
-
-    // Tìm mọi loại quan hệ giữa 2 user 
     async findRelationBetweenUsers(userAId: string, userBId: string) {
-        return this.findFriendRelation(userAId, userBId, { bidirectional: true, lean: true });
+        return this.friendModel.findOne({
+            $or: [
+                { fromUser: userAId, toUser: userBId },
+                { fromUser: userBId, toUser: userAId },
+                
+            ],
+            type: { $ne: 'follow' }
+        }).lean();
     }
+    
+
 
 
 

@@ -113,40 +113,12 @@ export class UserService {
         return !!result;
     };
 
-
-
-    async getProfile(
-        userId: string,
-        id: string,
-    ): Promise<{
-        user: Partial<User>;
-        countFriends: number,
-        followersCount: number;
-        followingCount: number;
-        relation: 'me' | 'accepted' | 'pending_sent' | 'pending_received' | 'stranger';
-        isFollowing: boolean;
-    }> {
-        const user = await this.userModel.findById(id).lean();
-        if (!user) throw new NotFoundException('User not found');
-
-        // Xác định quan hệ
-        const relation = userId === id
-            ? 'me'
-            : await (async () => {
-                const friend = await this.friendService.findAnyRelationBetweenUsers(userId, id);
-                if (!friend) return 'stranger';
-                if (friend.type === 'accepted') return 'accepted';
-                if (friend.type === 'pending') {
-                    return friend.fromUser.toString() === userId ? 'pending_sent' : 'pending_received';
-                }
-                return 'stranger';
-            })();
-
-        const isFollowing = await this.friendService.isFollowing(userId, id);
-        const countFriends = await this.friendService.countFriends(id)
-        const [followersCount, followingCount] = await Promise.all([
+    async buildResponse(relation: string, id: string, userId: string,user:any) {
+        const [countFriends, followersCount, followingCount, isFollowing] = await Promise.all([
+            this.friendService.countFriends(id),
             this.friendService.countFollowers(id),
             this.friendService.countFollowing(id),
+            this.friendService.isFollowing(userId, id),
         ]);
 
         const { password, email, ...filteredUser } = user;
@@ -159,8 +131,60 @@ export class UserService {
             followingCount,
             isFollowing,
         };
+    };
+
+
+    //follow-->add friend --->error
+    async getProfile(userId: string, id: string) {
+        const user = await this.userModel.findById({_id:id}).lean();
+        if (!user) throw new NotFoundException('User not found');
+
+        if (userId === id) {
+            return this.buildResponse('me', id, userId,user);
+        }
+
+        const friend = await this.friendService.findAnyRelationBetweenUsers(userId, id);
+
+        if (!friend) {
+            return this.buildResponse('stranger', id, userId,user);
+        }
+
+        if (friend.type === 'accepted') {
+            return this.buildResponse('accepted', id, userId,user);
+        }
+
+        if (friend.type === 'pending') {
+            if (friend.fromUser.toString() === userId) {
+                return this.buildResponse('pending_sent', id, userId,user);
+            }
+            if (friend.toUser.toString() === userId) {
+                return this.buildResponse('pending_received', id, userId,user);
+            }
+        }
+
+        // if (friend.type === 'follow') {
+        //     if (friend.fromUser.toString() === userId) {
+        //         return this.buildResponse('following', id, userId,user);
+        //     }
+        //     if (friend.toUser.toString() === userId) {
+        //         return this.buildResponse('followed', id, userId,user);
+        //     }
+        // }
+
+        return this.buildResponse('stranger', id, userId,user);
     }
 
+
+
+    async editProfile(userId: string, body: UserDto): Promise<UserDocument | null> {
+        const result = await this.userModel.findByIdAndUpdate(
+            userId,
+            body,
+            { new: true }
+        );
+
+        return result;
+    }
 
     async updateAvatar(userId: string, type: string, file: Express.Multer.File) {
         const result = await this.uploadService.handleUpload(file, type);
@@ -247,7 +271,7 @@ export class UserService {
             }),
         );
 
-       
+
         const filteredUsers = usersList.filter(Boolean);
 
         return {

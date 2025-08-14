@@ -5,7 +5,7 @@ import { FriendsController } from './friends.controller';
 import { FriendService } from './friends.service';
 import config from '../database/config';
 import { AuthModule } from '../auth/module.auth';
-import { UserModule } from '../user/user_module';
+import { UserModule } from '../user/user.module';
 import { FriendRepository } from './friend.repository';
 import { NotificationsModule } from 'module/notification/notification.module';
 

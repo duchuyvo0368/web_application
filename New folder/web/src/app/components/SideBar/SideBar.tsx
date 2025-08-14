@@ -42,7 +42,7 @@ const menuItems = [
 ];
 
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<{activeTab: number, onSelect: React.Dispatch<React.SetStateAction<number>>}> = ({activeTab, onSelect}) => {
     const router = useRouter();
     const pathname = usePathname();
 

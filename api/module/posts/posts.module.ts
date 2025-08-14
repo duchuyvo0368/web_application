@@ -7,6 +7,7 @@ import { Post, PostSchema } from './posts.model';
 import { FriendModule } from 'module/firends/friend.module';
 import { UploadModule } from 'module/upload/upload.module';
 import { PostRepository } from './post.reponsitory';
+import { CommentModule } from 'module/comment/comment.module';
 
 @Module({
     imports: [
@@ -18,11 +19,12 @@ import { PostRepository } from './post.reponsitory';
         ),
         AuthModule,
         FriendModule,
+        CommentModule,
         forwardRef(() => UploadModule)
 
     ],
     controllers: [PostsController],
-    providers: [PostsService,PostRepository],
+    providers: [PostsService, PostRepository],
     exports: [MongooseModule, PostsService],
 })
 export class PostsModule { }

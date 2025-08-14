@@ -250,14 +250,14 @@ export const getFriends = async ({
     }
 };
 
-// Sửa lại để return
+
 export const searchFriendUsers = async ({ name }: { name: string }) => {
     try {
         const res = await api.get(`/user/search?query=${name}`, {
             headers: getAuthHeaders(),
         });
 
-        return res.data?.metadata || []; // trả về mảng user
+        return res.data?.metadata || []; 
     } catch (err: any) {
         console.error("searchFriendUsers error:", err);
         throw err;

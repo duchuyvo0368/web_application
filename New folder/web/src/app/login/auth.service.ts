@@ -27,4 +27,50 @@ export const login = async ({
         onError?.(err.response?.data || err);
     }
 };
+export const refreshToken = async ({
+    token,
+    onSuccess,
+    onError,
+}: {
+    token: string;
+    onSuccess?: (res: any) => void;
+    onError?: (err: any) => void;
+}) => {
+    try {
+        const res = await axios.post(
+            `${API_CONFIG}/auth/refresh-token`,
+            {},
+            {
+                headers: {
+                    'x-refresh-token': token,
+                },
+            }
+        );
 
+        console.log('Refresh token response:', res);
+        onSuccess?.(res.data);
+    } catch (err: any) {
+        onError?.(err.response?.data || err);
+    }
+};
+
+
+export const register = async ({
+    data,
+    onSuccess,
+    onError,
+}: {
+    data: LoginData;
+    onSuccess?: (res: any) => void;
+    onError?: (err: any) => void;
+}) => {
+    try {
+        const res = await axios.post(`${API_CONFIG}/auth/register`, data)
+
+        console.log("Register response:", res);
+        onSuccess?.(res.data); // ✅
+
+    } catch (err: any) {
+        onError?.(err.response?.data || err);
+    }
+};

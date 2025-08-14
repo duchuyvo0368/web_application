@@ -1,20 +1,22 @@
+/* eslint-disable react/jsx-no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
-import React, { JSX, useMemo, useRef, useState } from "react";
-import VerifiedIcon from "@mui/icons-material/Verified";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { PostCardProps } from "../type";
-import { updatePostFeel } from "../post.service";
-import clsx from "clsx";
-import { PhotoProvider, PhotoView } from "react-photo-view";
-import "react-photo-view/dist/react-photo-view.css";
-import { formatDate } from "@/utils";
-import { BsGlobeAmericas, BsPeopleFill, BsLockFill } from "react-icons/bs";
+import React, { JSX, useMemo, useRef, useState } from 'react';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { PostCardProps } from '../type';
+import { updatePostFeel } from '../post.service';
+import clsx from 'clsx';
+import { PhotoProvider, PhotoView } from 'react-photo-view';
+import 'react-photo-view/dist/react-photo-view.css';
+import { formatDate } from '@/utils';
+import { BsGlobeAmericas, BsPeopleFill, BsLockFill } from 'react-icons/bs';
+import PostCommentModal from '@/app/comment/components/PostCommentModal';
 const FEELS = [
-    { type: "like", icon: "❤️" },
-    { type: "love", icon: "😍" },
-    { type: "haha", icon: "😂" },
+    { type: 'like', icon: '❤️' },
+    { type: 'love', icon: '😍' },
+    { type: 'haha', icon: '😂' },
 ];
 const PostCard: React.FC<PostCardProps> = ({
     userName,
@@ -34,25 +36,20 @@ const PostCard: React.FC<PostCardProps> = ({
     createdAt,
 }) => {
     const [showFeelOptions, setShowFeelOptions] = useState(false);
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
 
-    const initialFeel: "like" | "love" | "haha" | "" = feel?.[userInfo._id] || "";
-    const [userFeel, setUserFeel] = useState<"like" | "love" | "haha" | "">(
-        initialFeel
-    );
+    const initialFeel: 'like' | 'love' | 'haha' | '' = feel?.[userInfo._id] || '';
+    const [userFeel, setUserFeel] = useState<'like' | 'love' | 'haha' | ''>(initialFeel);
 
-    const [feelCounts, setFeelCounts] = useState<Record<string, number>>(
-        feelCount || {}
-    );
+    const [feelCounts, setFeelCounts] = useState<Record<string, number>>(feelCount || {});
     const totalFeelCount = useMemo(() => {
         return Object.values(feelCounts || {}).reduce((acc, cur) => acc + cur, 0);
     }, [feelCounts]);
 
-    console.log("feel:", initialFeel, "userInfo:", userInfo._id);
+    const [showModal, setShowModal] = useState(false);
 
-    console.log("postId:", postId);
-    const handleFeelClick = async (type: "like" | "love" | "haha") => {
-        const newFeel = userFeel === type ? "" : type;
+    const handleFeelClick = async (type: 'like' | 'love' | 'haha') => {
+        const newFeel = userFeel === type ? '' : type;
         const oldFeel = userFeel;
 
         try {
@@ -74,57 +71,55 @@ const PostCard: React.FC<PostCardProps> = ({
 
             setUserFeel(newFeel);
         } catch (error) {
-            console.error("Failed to update feel:", error);
+            console.error('Failed to update feel:', error);
         }
     };
     const getPrivacyIcon = (privacyType: string) => {
         switch (privacyType) {
-            case "public":
+            case 'public':
                 return <BsGlobeAmericas className="w-2.5 h-2.5" />;
-            case "friend":
+            case 'friend':
                 return <BsPeopleFill className="w-2.5 h-2.5" />;
             default:
                 return null;
         }
     };
 
-    console.log("content hashtags:", hashtags);
+    console.log('content hashtags:', hashtags);
 
     return (
-        <div className="flex justify-center w-full">
-            <div className="w-full max-w-2xl bg-white rounded-xl p-4 shadow-sm mb-6">
+        <div className="flex justify-center w-full ">
+            <div className="w-full max-w-2xl bg-white rounded-xl p-4 shadow-sm mb-1.5">
                 {/* Header */}
                 <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
                     <img
-                        src={avatar || "/images/user-image.png"}
+                        src={avatar || '/images/user-image.png'}
                         alt="avatar"
                         className="w-10 h-10 rounded-full border border-blue-200 shadow object-cover"
                     />
                     <div>
                         <div className="flex items-center gap-1 font-semibold text-sm">
-                            {userName || "Unknown"}
+                            {userName}
                             <VerifiedIcon
                                 className="w-2 h-2 text-blue-500"
-                                style={{ width: "15px", height: "15px" }}
+                                style={{ width: '15px', height: '15px' }}
                             />
                         </div>
                         <div className="text-xs text-gray-500 flex items-center gap-1">
                             {formatDate(createdAt)}
                             {privacy && (
                                 <span className="flex items-center text-[10px] ml-1">
-                                    <span className="ml-[1px]">{getPrivacyIcon(privacy)}</span>
+                                    <span className="ml-[1px]">
+                                        {getPrivacyIcon(privacy)}
+                                    </span>
                                 </span>
                             )}
                         </div>
-
-
                     </div>
                 </div>
 
                 {/* Title */}
-                {title && (
-                    <div className="font-bold text-base my-2 text-center">{title}</div>
-                )}
+                {title && <div className="font-bold text-base my-2 text-center">{title}</div>}
 
                 {/* Content */}
                 <div className="text-sm text-gray-700 whitespace-pre-line mt-2">
@@ -135,7 +130,7 @@ const PostCard: React.FC<PostCardProps> = ({
                             {hashtags.map((tag, idx) => (
                                 <span
                                     key={idx}
-                                    onClick={() => console.log("Clicked hashtag:", tag)}
+                                    onClick={() => console.log('Clicked hashtag:', tag)}
                                     className="text-blue-500 font-medium cursor-pointer hover:underline"
                                 >
                                     #{tag}
@@ -185,9 +180,9 @@ const PostCard: React.FC<PostCardProps> = ({
                         const allMedia = [...images, ...videos];
                         const imageOnly = images;
                         const isVideo = (url: string) =>
-                            url.endsWith(".mp4") ||
-                            url.endsWith(".mov") ||
-                            url.endsWith(".webm");
+                            url.endsWith('.mp4') ||
+                            url.endsWith('.mov') ||
+                            url.endsWith('.webm');
 
                         const maxShow = 3;
                         const extraCount = allMedia.length - maxShow;
@@ -203,24 +198,28 @@ const PostCard: React.FC<PostCardProps> = ({
                                     <div
                                         className={clsx(
                                             isSingleMedia
-                                                ? "w-full"
+                                                ? 'w-full'
                                                 : isOneImageOneVideo
-                                                    ? "grid grid-cols-1 gap-2"
-                                                    : "grid grid-cols-2 gap-2"
+                                                    ? 'grid grid-cols-1 gap-2'
+                                                    : 'grid grid-cols-2 gap-2',
                                         )}
                                     >
                                         {allMedia.slice(0, maxShow).map((url, idx) => {
                                             const isVid = isVideo(url);
                                             const isFirst = idx === 0;
-                                            const isLast = idx === maxShow - 1 && extraCount > 0;
+                                            const isLast =
+                                                idx === maxShow - 1 && extraCount > 0;
 
                                             return (
                                                 <div
                                                     key={idx}
                                                     className={clsx(
-                                                        "relative overflow-hidden rounded-lg",
-                                                        (isSingleMedia || isFirst) && "col-span-2",
-                                                        isOneImageOneVideo ? "h-[260px]" : "h-[300px]"
+                                                        'relative overflow-hidden rounded-lg',
+                                                        (isSingleMedia || isFirst) &&
+                                                        'col-span-2',
+                                                        isOneImageOneVideo
+                                                            ? 'h-[260px]'
+                                                            : 'h-[300px]',
                                                     )}
                                                 >
                                                     {isVid ? (
@@ -270,13 +269,13 @@ const PostCard: React.FC<PostCardProps> = ({
                     >
                         <button
                             onClick={() =>
-                                handleFeelClick(userFeel === "like" ? "haha" : "love")
+                                handleFeelClick(userFeel === 'like' ? 'haha' : 'love')
                             }
                             className="flex items-center gap-1 text-sm text-gray-700 hover:opacity-80 select-none"
                             type="button"
                         >
                             {/* Icon tùy theo userFeel */}
-                            {userFeel === "like" && (
+                            {userFeel === 'like' && (
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     className="w-4 h-4 fill-current text-red-500 transition-colors duration-200"
@@ -291,7 +290,7 @@ const PostCard: React.FC<PostCardProps> = ({
                                     />
                                 </svg>
                             )}
-                            {userFeel === "love" && (
+                            {userFeel === 'love' && (
                                 <span
                                     className="text-red-600 text-lg select-none"
                                     aria-label="love"
@@ -299,7 +298,7 @@ const PostCard: React.FC<PostCardProps> = ({
                                     😍
                                 </span>
                             )}
-                            {userFeel === "haha" && (
+                            {userFeel === 'haha' && (
                                 <span
                                     className="text-yellow-500 text-lg select-none"
                                     aria-label="haha"
@@ -325,12 +324,15 @@ const PostCard: React.FC<PostCardProps> = ({
 
                             {/* Text hiển thị tương ứng */}
                             <span className="select-none">
-                                {userFeel === "like" &&
-                                    `${totalFeelCount} All${totalFeelCount !== 1 ? "s" : ""}`}
-                                {userFeel === "love" &&
-                                    `${totalFeelCount} All${totalFeelCount !== 1 ? "s" : ""}`}
-                                {userFeel === "haha" &&
-                                    `${totalFeelCount} All${totalFeelCount !== 1 ? "s" : ""}`}
+                                {userFeel === 'like' &&
+                                    `${totalFeelCount} All${totalFeelCount !== 1 ? 's' : ''
+                                    }`}
+                                {userFeel === 'love' &&
+                                    `${totalFeelCount} All${totalFeelCount !== 1 ? 's' : ''
+                                    }`}
+                                {userFeel === 'haha' &&
+                                    `${totalFeelCount} All${totalFeelCount !== 1 ? 's' : ''
+                                    }`}
                                 {!userFeel && `${totalFeelCount} All`}
                             </span>
                         </button>
@@ -342,16 +344,20 @@ const PostCard: React.FC<PostCardProps> = ({
                                     <button
                                         key={type}
                                         onClick={() =>
-                                            handleFeelClick(type as "like" | "love" | "haha")
+                                            handleFeelClick(
+                                                type as 'like' | 'love' | 'haha',
+                                            )
                                         }
                                         className={clsx(
-                                            "text-xl rounded-full p-2 transition-transform duration-150",
+                                            'text-xl rounded-full p-2 transition-transform duration-150',
                                             userFeel === type
-                                                ? "scale-125 bg-red-100 text-red-600 shadow-lg"
-                                                : "opacity-70 hover:opacity-100 hover:scale-110"
+                                                ? 'scale-125 bg-red-100 text-red-600 shadow-lg'
+                                                : 'opacity-70 hover:opacity-100 hover:scale-110',
                                         )}
                                         aria-label={type}
-                                        title={type.charAt(0).toUpperCase() + type.slice(1)}
+                                        title={
+                                            type.charAt(0).toUpperCase() + type.slice(1)
+                                        }
                                         type="button"
                                     >
                                         {icon}
@@ -361,19 +367,55 @@ const PostCard: React.FC<PostCardProps> = ({
                         )}
                     </div>
 
-                    <span className="flex items-center gap-1">
+                    <span
+                        className="flex items-center gap-1 cursor-pointer hover:text-blue-500"
+                        onClick={() => setShowModal(true)}
+                    >
                         <ChatBubbleOutlineIcon
                             className="text-blue-400 w-4 h-4"
                             fontSize="small"
                         />
-                        {comments ?? 0} comments
+                        2 comments
                     </span>
 
+                    {/* Modal overlay */}
+                    {showModal && (
+                        <div className="fixed inset-0 z-[9999] pointer-events-auto ">
+                            <PostCommentModal
+                                open={showModal}
+                                onClose={() => setShowModal(false)}
+                                postData={
+                                    {
+                                        id: postId,
+                                        userInfo: {
+                                            name: userName,
+                                            avatar: avatar
+                                        },
+                                        content: content || '',
+                                        images:images,
+                                        videos: videos,
+                                        feel: feel || {},
+                                        hashtags: hashtags ?? [],
+                                        comments: [],
+                                        privacy: privacy,
+                                        feelCount: feelCount || {},
+                                        views: views || 0,
+                                        createdAt: createdAt,
+                                        post_link_meta: post_link_meta || null,
+                                    }
+                                }
+                            />
+                            <button
+                                className="absolute top-2 right-2"
+                                onClick={() => setShowModal(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
+
                     <span className="flex items-center gap-1">
-                        <VisibilityIcon
-                            className="text-gray-400 w-4 h-4"
-                            fontSize="small"
-                        />
+                        <VisibilityIcon className="text-gray-400 w-4 h-4" fontSize="small" />
                         {views ?? 0} views
                     </span>
                 </div>

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, BadRequestException, Res, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Headers, BadRequestException, Res, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
 import { CREATED, SuccessResponse } from '../../utils/success.response';
@@ -79,32 +79,30 @@ export class AuthController {
         example: 'your-refresh-token-here',
     })
 
+    
     @Post('refresh-token')
     @UseGuards(RefreshTokenGuard)
     async handlerRefreshToken(
-        @Res({ passthrough: true }) res: Response,
+        @Headers('x-refresh-token') refreshToken: string,
         @Req() req: AuthRequest,
     ) {
-        const user = req.user;
-        const refreshToken = req.refreshToken;
-        if (!refreshToken) {
-            throw new BadRequestException('Refresh token is required');
+        if (refreshToken !== req.refreshToken) {
+            throw new BadRequestException('Refresh token does not match');
         }
-        logger.info(`Received refresh token for userId: ${user}, email: ${user}`);
-        if (!user) {
-            throw new UnauthorizedException('User not found in request');
-        }
-        const result = await this.authService.handlerRefreshToken(
-            refreshToken,
-            user.userId,
-            user.email
-        );
-        return new SuccessResponse({
+
+        const userId = req.user?.userId as string;
+        const email = req.user?.email as string;
+
+        const result = await this.authService.handlerRefreshToken(refreshToken, userId, email);
+
+        return {
+            statusCode: 200,
             message: 'Refresh token successfully',
-            metadata: result,
-        });
+            data: result,
+        };
     }
 
-
 }
+
+
 

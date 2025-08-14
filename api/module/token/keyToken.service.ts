@@ -33,7 +33,7 @@ export class KeyTokenService {
         return this.keyTokenDocument.deleteOne({ user: convertToObject(userId) });
     }
     async findOneRefreshToken(refreshToken: string) {
-        return this.keyTokenDocument.findOne({ refreshToken }).lean();
+        return this.keyTokenDocument.findOne({ refreshToken:refreshToken });
     }
 
     async updateToken(userId: string, refreshToken: string) {

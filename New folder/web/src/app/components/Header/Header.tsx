@@ -16,6 +16,7 @@ import {
     Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { getAuthHeaders } from '@/utils/index'; // nếu bạn có
+import NotificationDropdown from '@/app/notification/Notification';
 
 interface User {
     _id: string;
@@ -27,6 +28,15 @@ interface User {
 const Header: React.FC = () => {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
+    const [notifications, setNotifications] = useState<Notification[]>([
+        { id: '1', text: 'User A liked your post', read: false, time: '2h ago' },
+        { id: '2', text: 'User B commented', read: false, time: '3h ago' },
+        { id: '3', text: 'User C followed you', read: true, time: '1d ago' },
+        { id: '4', text: 'User B commented', read: false, time: '3h ago' },
+        { id: '5', text: 'User C followed you', read: true, time: '1d ago' },
+        { id: '6', text: 'User B commented', read: false, time: '3h ago' },
+        { id: '7', text: 'User C followed you', read: true, time: '1d ago' },
+    ]);
 
     useEffect(() => {
         const userJson = localStorage.getItem('userInfo');
@@ -77,7 +87,7 @@ const Header: React.FC = () => {
                     </div>
                 </div>
                 {/* Icons bar (trước avatar) */}
-                
+
 
                 {/* Right */}
                 <div className="flex items-center gap-1">
@@ -91,9 +101,17 @@ const Header: React.FC = () => {
                             <span className="absolute text-[10px] font-semibold text-blue-500 top-[23px] left-[8px]"></span>
                         </button>
 
-                        <button className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-                            <svg width="20" height="20" fill="currentColor" className="text-gray-700" viewBox="0 0 24 24"><path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zm6-6v-5a6 6 0 0 0-5-5.91V4a1 1 0 1 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1z" /></svg>
-                        </button>
+
+                        {/* Notifications */}
+                        <NotificationDropdown
+                            notifications={notifications}
+                            onMarkRead={(id) =>
+                                setNotifications(prev =>
+                                    prev.map(n => (n.id === id ? { ...n, read: true } : n))
+                                )
+                            }
+                        />
+                       
 
                     </div>
                     {user ? (

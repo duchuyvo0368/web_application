@@ -35,8 +35,6 @@ import { MulterS3File } from 'module/upload/utils/multe.s3.file';
 export class UserController {
     constructor(private readonly userService: UserService) { }
 
-
-
     @ApiQuery({ name: 'limit', example: '12' })
     @ApiQuery({ name: 'page', example: '1' })
     @UseGuards(AuthGuard)
@@ -136,6 +134,18 @@ export class UserController {
             message: 'User profile fetched successfully',
             metadata: result,
         });
+    }
+    async editProfile(@Req() req: AuthRequest, @Body() body: UserDto) {
+        const userId = req.user?.userId;
+        if (!userId) {
+            throw new AuthFailureError("User auth")
+        }
+        const result = await this.userService.editProfile(
+            userId,
+            body,
+        );
+
+        return result;
     }
 }
 

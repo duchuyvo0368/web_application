@@ -1,8 +1,8 @@
 import React from 'react';
-import FriendsGrid from './Grid/FriendGrid';
-import UserGrid from '../../user/components/Grid/UserGrid';
-import RequestSentGrid from './Grid/RequestSentGrid';
-import FriendsRequestGrid from './Grid/FriendRequestGrid';
+import FriendsGrid from './grid/FriendGrid';
+import UserGrid from '../../user/components/grid/UserGrid';
+import RequestSentGrid from './grid/RequestSentGrid';
+import FriendsRequestGrid from './grid/FriendRequestGrid';
 
 interface FriendGridProps {
   type: 'friends' | 'suggestions' | 'request' | 'following' | 'sent';

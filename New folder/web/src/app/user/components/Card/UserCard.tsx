@@ -4,34 +4,28 @@
 import React, { useState, useEffect } from 'react';
 import { addFollow, addFriend, unFollow, cancelRequest } from '../../user.service';
 import Link from 'next/link';
+import { UserCardProps } from '../../type';
 
-interface UserCardProps {
-    userId: string;
-    name: string;
-    avatar: string;
-    mutualFriends?: string;
-    initialFollowersCount?: number;
-    isFollowing: boolean;
-}
+
 
 const UserCard: React.FC<UserCardProps> = ({
     userId,
     name,
     avatar,
     mutualFriends,
-    initialFollowersCount = 0,
+    followersCount,
     isFollowing: isFollowingProp = false,
 }) => {
     const [hasSentFriendRequest, setHasSentFriendRequest] = useState(false);
     const [isFollowing, setIsFollowing] = useState(isFollowingProp);
     const [loading, setLoading] = useState(false);
-    const [followerCount, setFollowerCount] = useState(initialFollowersCount);
+    const [followerCount, setFollowerCount] = useState(followersCount);
 
-    // Đồng bộ state khi prop thay đổi
+   
     useEffect(() => {
         setIsFollowing(isFollowingProp);
-        setFollowerCount(initialFollowersCount);
-    }, [isFollowingProp, initialFollowersCount]);
+        setFollowerCount(followersCount);
+    }, [isFollowingProp, followersCount]);
 
     const handleToggleFriendRequest = () => {
         if (loading) return;
@@ -60,7 +54,7 @@ const UserCard: React.FC<UserCardProps> = ({
         setLoading(true);
 
         const prevState = isFollowing;
-        const prevCount = followerCount;
+        const prevCount = followerCount || 0;
         const newState = !prevState;
         const newCount = newState ? prevCount + 1 : Math.max(0, prevCount - 1);
 

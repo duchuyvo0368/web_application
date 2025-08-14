@@ -45,7 +45,7 @@ async function bootstrap() {
     app.use(cookieParser());
     const config = new DocumentBuilder()
         .setTitle('Social Network API')
-        .setDescription('API mô tả các chức năng mạng xã hội')
+        .setDescription('API description for social network')
         .setVersion('1.0')
         .addBearerAuth()
         .build();

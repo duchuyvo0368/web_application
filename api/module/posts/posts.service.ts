@@ -1,28 +1,28 @@
 import { PostsModule } from 'module/posts/posts.module';
 import { Post, PostRelation } from './posts.model';
 import { extractMetadata } from './../../utils/extractMetadata';
-import { InjectModel } from '@nestjs/mongoose';
 import { ApiTags } from '@nestjs/swagger';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { logger } from 'utils/logger';
 import { FriendService } from 'module/firends/friends.service';
-import { Model, Types } from 'mongoose';
-import { UploadModule } from 'module/upload/upload.module';
-import { UploadService } from 'module/upload/upload.service';
+import { Types } from 'mongoose';
 import { CreatePostDto, EditPostDto } from './create-post.dto';
-import { async } from 'rxjs';
 import { FriendRelation } from '../firends/friend.model';
 import { PostRepository } from './post.reponsitory';
 import { convertToObject } from 'utils/index';
+import { CommentService } from 'module/comment/comment.service';
 
 @ApiTags('Post')
 @Injectable()
 export class PostsService {
     constructor(
-        private friendService: FriendService,
+        private readonly friendService: FriendService,
         private readonly postRepository: PostRepository,
+        private readonly commentService: CommentService,
     ) { }
 
+
+    //extract link metadata
     async extractLinkMetadata(content: string) {
         const urlRegex = /(https?:\/\/[^\s]+)/g;
         const match = content.match(urlRegex);
@@ -32,6 +32,8 @@ export class PostsService {
     }
 
 
+    //create post
+    //loi tag ban bef
     async createPost(data: CreatePostDto, userId: string): Promise<Post> {
         const newPostData: Partial<Post> = {
             userId: new Types.ObjectId(userId),
@@ -74,92 +76,190 @@ export class PostsService {
 
 
     //friends and public
+    /**
+     * 
+     *A ban be của B lấy ra public và frend
+     *A follow B chỉ lấy ra public
+    * A vừa bạn bè với B mà vừa là follow B lấy ra public và friend
+     */
+    // async getFeedPosts(userId: string, page: number, limit: number) {
+    //     const [friendIds, followIds] = await Promise.all([
+    //         this.friendService.getFriendUserIds(userId),    // danh sách bạn bè
+    //         this.friendService.getFollowingUserIds(userId), // danh sách đang follow
+    //     ]);
+
+    //     let myPosts: any[] = [];
+    //     let relatedLimit = limit;
+
+    //     if (page === 1) {
+    //         const sixHoursAgo = new Date(Date.now() - 240 * 60 * 60 * 1000);
+    //         myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo, page, limit);
+    //         if (myPosts.length > 0) relatedLimit = limit - myPosts.length;
+    //     }
+
+    //     logger.info(`friendIds: ${JSON.stringify(friendIds)}`);
+    //     logger.info(`followIds: ${JSON.stringify(followIds)}`);
+
+    //     // Bạn bè → public + friend
+    //     const friendAndFollowIds = friendIds;
+
+    //     // Follow không phải bạn bè → public
+    //     //follow mà không phải bạn bè
+    //     const onlyFollowIds = followIds.filter(id => !friendIds.includes(id));
+
+    //     const [
+    //         { posts: friendPosts, count: friendCount },
+    //         { posts: followPosts, count: followCount }
+    //     ] = await Promise.all([
+    //         this.postRepository.findFriendPosts(friendAndFollowIds, relatedLimit, page), // public + friend
+    //         this.postRepository.findFollowPosts(onlyFollowIds, relatedLimit, page),      // public
+    //     ]);
+
+    //     const relatedPosts = [...friendPosts, ...followPosts];
+    //     const totalRelatedItems = friendCount + followCount;
+
+    //     const data = (page === 1 && myPosts.length > 0)
+    //         ? [...myPosts, ...relatedPosts]
+    //         : relatedPosts;
+
+    //     const totalItems = totalRelatedItems + (page === 1 ? myPosts.length : 0);
+
+    //     return {
+    //         data,
+    //         pagination: {
+    //             page,
+    //             limit,
+    //             totalItems,
+    //             totalPages: Math.ceil(totalItems / limit),
+    //         },
+    //     };
+    // }
+
+    // async getFeedPosts(userId: string, page: number, limit: number) {
+    //     const [friendIds, followIds] = await Promise.all([
+    //         this.friendService.getFriendUserIds(userId),    // danh sách bạn bè
+    //         this.friendService.getFollowingUserIds(userId), // danh sách đang follow
+    //     ]);
+
+    //     let myPosts: any[] = [];
+    //     let relatedLimit = limit;
+
+    //     if (page === 1) {
+    //         const sixHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    //         myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo, page, limit);
+    //         relatedLimit = Math.max(0, limit - myPosts.length);
+    //     }
+
+    //     const friendAndFollowIds = friendIds;
+
+    //     const onlyFollowIds = followIds.filter(id => !friendIds.includes(id));
 
 
+    //     const [
+    //         { posts: friendPosts, count: friendCount },
+    //         { posts: followPosts, count: followCount }
+    //     ] = await Promise.all([
+    //         this.postRepository.findFriendPosts(friendAndFollowIds, relatedLimit, page), // public + friend
+    //         this.postRepository.findFollowPosts(onlyFollowIds, relatedLimit, page),      // public
+    //     ]);
+
+    //     const relatedPosts = [...friendPosts, ...followPosts];
+
+    //     let data = (page === 1 && myPosts.length > 0)
+    //         ? [...myPosts, ...relatedPosts]
+    //         : relatedPosts;
+
+    //     data = data.slice(0, limit);
+
+    //     const totalRelatedItems = friendCount + followCount;
+    //     const totalItems = totalRelatedItems + (page === 1 ? myPosts.length : 0);
+
+    //     return {
+    //         data,
+    //         pagination: {
+    //             page,
+    //             limit,
+    //             totalItems,
+    //             totalPages: Math.ceil(totalItems / limit),
+    //         },
+    //     };
+    // }
+
+    //get post theo follow vaf friend
     async getFeedPosts(userId: string, page: number, limit: number) {
         const [friendIds, followIds] = await Promise.all([
             this.friendService.getFriendUserIds(userId),
             this.friendService.getFollowingUserIds(userId),
         ]);
 
-        let myPosts: any[] = [];
-        let relatedLimit = limit;
+        const sixHoursAgo = new Date(Date.now() - 248 * 60 * 60 * 1000);
 
-        if (page === 1) {
-            const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-            myPosts = await this.postRepository.findMyRecentPosts(userId, sixHoursAgo, page, limit);
-            if (myPosts.length > 0) relatedLimit = limit - myPosts.length;
-        }
+        const { posts, totalItems, totalPages } = await this.postRepository.findFeedAggregate(
+            userId,
+            friendIds,
+            followIds,
+            sixHoursAgo,
+            page,
+            limit
+        );
 
-        logger.info(`friendIds: ${Array.isArray(friendIds) ? friendIds : []}`);
-        logger.info(`followIds: ${Array.isArray(followIds) ? followIds : []}`);
-
-
-        const [
-            { posts: friendPosts, count: friendCount },
-            { posts: followPosts, count: followCount }
-        ] = await Promise.all([
-            this.postRepository.findFriendPosts(friendIds, relatedLimit, page),
-            this.postRepository.findFollowPosts(followIds, relatedLimit, page),
-        ]);
-
-     
-        const relatedPosts = [...friendPosts, ...followPosts];
-        logger.info(`relatedPosts: ${JSON.stringify(relatedPosts)}`);
-        const totalRelatedItems = friendCount + followCount;
-
-       
-        const data = page === 1 && myPosts.length > 0 ? [...myPosts, ...relatedPosts] : relatedPosts;
-
-     
-        logger.info(`data: ${JSON.stringify(data)}`);
-        const totalItems = totalRelatedItems + (page === 1 ? myPosts.length : 0);
-
-      
         return {
-            data,
+            data: posts,
             pagination: {
                 page,
                 limit,
                 totalItems,
-                totalPages: Math.ceil(totalItems / limit),
-            },
+                totalPages
+            }
         };
     }
 
 
-    async getPost(postId: string) {
-        return this.postRepository.findById(postId);
+
+
+
+
+
+
+    //check post by id
+    //return post and comments
+    async getPostById(postId: string) {
+        const post = await this.postRepository.findById(postId);
+        if (!post) throw new BadRequestException('Post not found');
+        const comments = await this.commentService.getCommentsByPostId({ postId });
+        return { post, comments, count_comment: comments.length };
     }
 
     async updatePost(postId: string, data: EditPostDto, userId: string) {
         const post = await this.postRepository.findById(postId);
         if (!post) throw new BadRequestException('Post not found');
-        if(post.userId.toString() !== userId) throw new BadRequestException('You are not the owner of this post');
+        if (post.userId.toString() !== userId) throw new BadRequestException('You are not the owner of this post');
         return this.postRepository.updatePost(postId, data);
     }
 
 
+    //check post by id
+    //return post and comments
     async deletePost(postId: string, userId: string) {
         const post = await this.postRepository.findById(postId);
         if (!post) throw new BadRequestException('Post not found');
-        if(post.userId.toString() !== userId) throw new BadRequestException('You are not the owner of this post');
+        if (post.userId.toString() !== userId) throw new BadRequestException('You are not the owner of this post');
         return this.postRepository.deletePost(postId);
     }
 
-    // nhiều loại cảm xúc
+    //check post by id
+    //return post and comments
     async likePost(postId: string, userId: string, feel: 'like' | 'love' | 'haha') {
         const post = await this.postRepository.findById(postId);
         if (!post) throw new BadRequestException('Post not found');
 
         const currentFeel = post.feel.get(userId);
-
         if (currentFeel === feel) {
-
             return post;
         }
 
 
+        // Nếu đã có cảm xúc khác, giảm số lượng của cảm xúc cũ
         if (currentFeel) {
             const oldCount = post.feelCount.get(currentFeel) || 0;
             post.feelCount.set(currentFeel, Math.max(oldCount - 1, 0));
@@ -174,6 +274,8 @@ export class PostsService {
         return post;
     }
 
+    //check post by id
+    //return post and comments
     async unlikePost(postId: string, userId: string) {
         const post = await this.postRepository.findById(postId);
         if (!post) throw new BadRequestException('Post not found');
@@ -193,7 +295,7 @@ export class PostsService {
 
         const post = await this.postRepository.findById(postId);
         if (!post) throw new Error('Post not found');
-
+        //lay cam xuc
         const currentFeel = post.feel.get(userId);
 
         if (!feel || currentFeel === feel) {
@@ -230,7 +332,7 @@ export class PostsService {
 
     async buildPostQuery(userId: string, accessLevel: 'owner' | 'friend' | 'public') {
         switch (accessLevel) {
-            case 'owner':
+            case 'owner'://nguoi so huu
                 return { userId };
             case 'friend':
                 return { userId, privacy: { $in: ['public', 'friend'] } };
@@ -239,11 +341,12 @@ export class PostsService {
                 return { userId, privacy: 'public' };
         }
     }
+
     async getPostsByUserWithAccess(
         userId: string,
         requesterId: string,
-        page = 1,
-        limit = 10,
+        page: number,
+        limit: number,
     ) {
 
         const accessLevel = await this.getAccessLevel(userId, requesterId);
@@ -263,5 +366,5 @@ export class PostsService {
         };
     }
 
-    //dit
+
 }

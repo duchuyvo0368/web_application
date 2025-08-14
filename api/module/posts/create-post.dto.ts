@@ -1,5 +1,5 @@
-import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsArray, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 // dto/post-link-meta.dto.ts
 export class PostLinkMetaDto {
@@ -27,12 +27,9 @@ export class CreatePostDto {
     @IsString({ each: true })
     hashtags?: string[];
     
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
+    @IsMongoId({ each: true })
     friends_tagged?: string[];
-
-
+    
     @IsOptional()
     @IsArray()
     @IsString({ each: true })

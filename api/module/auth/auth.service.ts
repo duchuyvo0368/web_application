@@ -4,7 +4,7 @@ import { Model } from "mongoose";
 import { AuthFailureError, BadRequestError, FORBIDDEN } from "../../utils/error.response";
 import { logger } from "../../utils/logger";
 import * as bcrypt from 'bcrypt';
-import { createTokenPair } from "./auth.utils";
+import { createTokenPair } from "./utils/auth.utils";
 import { getInfoData } from "../../utils/index";
 import { Injectable } from "@nestjs/common";
 import { RegisterDto } from "./dto/register.dto";

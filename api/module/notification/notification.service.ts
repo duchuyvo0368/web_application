@@ -8,7 +8,7 @@ import { NotificationRepository } from './notification.reponsitory';
 @Injectable()
 export class NotificationsService {
     constructor(
-        private notificationRepository: NotificationRepository,
+        private readonly notificationRepository: NotificationRepository,
     ) { }
 
     //senderId:người gửi
@@ -45,5 +45,13 @@ export class NotificationsService {
     //lấy thông báo theo người dùng
     async getByUser(userId: string) {
         return await this.notificationRepository.getByUser(userId);
+    }
+
+    async listNotiByUser(params: {
+        userId: string | number;
+        type?: string;
+        isRead?: number;
+    }) {
+        return this.notificationRepository.findNotificationsByUser(params);
     }
 }

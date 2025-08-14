@@ -1,5 +1,5 @@
 import { pick } from 'lodash';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger'; // chỉnh lại đường dẫn logger cho đúng
 import {
@@ -73,8 +73,8 @@ export const updateNestedObjectPaser = (obj: Record<string, any>): Record<string
 };
 
 // Chuyển string ID => mongoose ObjectId
-export const convertToObject = (id: string): mongoose.Types.ObjectId => {
-    return new mongoose.Types.ObjectId(id);
+export const convertToObject = (id: string): Types.ObjectId => {
+    return new Types.ObjectId(id);
 };
 
 

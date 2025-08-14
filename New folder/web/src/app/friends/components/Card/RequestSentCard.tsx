@@ -35,7 +35,7 @@ const RequestSentCard: React.FC<RequestSentCardProps> = ({
             setCancel(true);
             onCancel?.();
         } catch (err) {
-            console.error('Lỗi khi hủy lời mời:', err);
+            console.error('Error:', err);
         }
     };
 
@@ -47,7 +47,7 @@ const RequestSentCard: React.FC<RequestSentCardProps> = ({
     if (cancel) {
         return (
             <div className="p-4 rounded-lg border border-gray-200 shadow-sm text-center text-red-600 bg-red-50">
-                ❌ You cancelled {name}'s request.
+                ❌ You cancelled {name}&apos;s request.
             </div>
         );
     }

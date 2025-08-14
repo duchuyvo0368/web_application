@@ -40,7 +40,7 @@ export class FriendService {
             );
         }
 
-        const existing = await this.friendRepository.findPendingFriendRelationBetween(fromUser, toUser);
+        const existing = await this.friendRepository.findOutgoingFriendRequest(fromUser, toUser);
 
 
         if (existing?.type === 'pending') {
@@ -48,6 +48,9 @@ export class FriendService {
         }
 
         if (existing?.type === 'accepted') {
+            throw new BadRequestException('You are already friends');
+        }
+        if (existing?.type === 'follow') {
             throw new BadRequestException('You are already friends');
         }
         const created = await this.friendRepository.createRelation(fromUser, toUser);
@@ -152,29 +155,37 @@ export class FriendService {
     }
 
     // Theo dõi (follow)
+    // Thêm theo dõi (follow)
     async follow(fromUser: string, toUser: string) {
-        if (fromUser === toUser)
+        if (fromUser === toUser) {
             throw new BadRequestException('Cannot follow yourself');
-        const existing = await this.friendRepository.findIncomingFollowRequest(fromUser, toUser);
-        logger.info(`Found request: ${JSON.stringify(existing)}`);
-        if (existing) {
-            throw new BadRequestException('You are not following this person');
         }
+
+        // Kiểm tra xem đã follow chưa, gọi đúng thứ tự tham số
+        const existing = await this.friendRepository.findIncomingFollowRequest(toUser, fromUser);
+        logger.info(`Found follow request: ${JSON.stringify(existing)}`);
+
+        if (existing) {
+            throw new BadRequestException('You are already following this person');
+        }
+
         await this.friendRepository.createFollow(fromUser, toUser);
         return { message: 'Followed successfully' };
-
     }
 
-    // Hủy theo dõi
+    // Hủy theo dõi (unfollow)
     async unfollow(fromUser: string, toUser: string) {
-        logger.info(`data unfollow: ${fromUser} +${toUser}`);
-        const relation = await this.friendRepository.findIncomingFollowRequest(fromUser, toUser);
+        logger.info(`Data unfollow: ${fromUser} -> ${toUser}`);
+
+        const relation = await this.friendRepository.findIncomingFollowRequest(toUser, fromUser);
         if (!relation) {
             throw new BadRequestException('You are not following this person');
         }
+
         await this.friendRepository.deleteRequestById(relation.id);
         return { message: 'Unfollowed successfully' };
     }
+
 
     // Lấy danh sách lời mời đến chưa xác nhận
     async getPendingFriendRequests(userId: string, limit: number, page: number) {
@@ -207,6 +218,10 @@ export class FriendService {
 
     // Hủy kết bạn
     async unFriend(fromUserId: string, toUserId: string) {
+        if (fromUserId === toUserId)
+            throw new BadRequestException('Cannot unfriend yourself');
+        if (!fromUserId || !toUserId)
+            throw new BadRequestException('Invalid user IDs');
         const unFriend = await this.friendRepository.unFriendUsers(fromUserId, toUserId);
         if (!unFriend) {
             throw new NotFoundError('Friend relation not found or already removed');
@@ -321,8 +336,9 @@ export class FriendService {
         const friend = await this.friendRepository.findRelationBetweenUsers(userId, id)
         return friend;
     }
-
     
+
+
 
     //check follow
     async isFollowing(userId: string, targetId: string): Promise<boolean> {
@@ -376,12 +392,15 @@ export class FriendService {
                 return { message: 'Friend request cancelled successfully' };
             case 'accept':
                 await this.acceptRequest(fromUser, toUser);
+                //await this.follow(toUser, fromUser);
+                /// await this.follow(fromUser, toUser);
                 return { message: 'Friend request accepted successfully' };
             case 'reject':
                 await this.rejectRequest(fromUser, toUser);
                 return { message: 'Friend request rejected successfully' };
             case 'unfriend':
                 await this.unFriend(fromUser, toUser);
+               
                 return { message: 'Unfriended successfully' };
             case 'follow':
                 await this.follow(fromUser, toUser);

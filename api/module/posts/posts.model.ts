@@ -46,13 +46,13 @@ export class Post {
 
     @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], default: [] })
     friends_tagged?: mongoose.Types.ObjectId[];
-    //userId -> feelType("like")
+    //userId -> feel("like","love","haha")
     @Prop({
         type: Map<string, string>,
         default: {},
     })
     feel: Map<string, string>;
-
+    //userId -> feelCount("like", "love", "haha")
     @Prop({
         type: Map<string, number>,
         default: {},

@@ -16,14 +16,14 @@ const api = axios.create({
 
 
 export const getPostUser = async ({
-  limit = 10,
-  pages,
+  limit,
+  page,
   onSuccess,
   onError,
 }: GetPostUserParams): Promise<void> => {
   try {
     const res = await api.get<PaginatedResponse<PostFromServer>>('/posts', {
-      params: { limit, page: pages },
+      params: { limit, page: page },
       headers: getAuthHeaders(),
     });
 

@@ -146,7 +146,10 @@ export interface PostResponse {
 
 export interface PaginatedResponse<T> {
     data: T[];
-    total: number;
-    page: number;
-    limit: number;
+    pagination: {
+        totalItems: number;
+        totalPages: number;
+        page: number;
+        limit: number;
+    };
 }

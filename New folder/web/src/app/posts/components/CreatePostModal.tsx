@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import { createPost, extractLinkMetadata, searchFriendUsers, uploadFileInChunks } from "../post.service";
 import { Loader2, SendHorizonal } from 'lucide-react';
 import { CreatePostModalProps, PostLinkMeta } from "../type";
-import { splitContentAndHashtags } from "@/utils";
+import { splitContentAndHashtagsAndFriends } from "@/utils";
 import { UserInfo } from "@/app/home/type";
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({
@@ -82,7 +82,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             console.timeEnd("🖼️ Upload Images");
 
             console.time("createPost");
-            const { content: cleanContent, hashtags } = splitContentAndHashtags(postContent);
+            const { content: cleanContent, hashtags } = splitContentAndHashtagsAndFriends(postContent);
             console.log("logger:", cleanContent, hashtags);
             await createPost({
                 data: {
@@ -94,7 +94,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     videos: videoUrls,
                     hashtags: hashtags,
                     post_link_meta: linkMeta,
-                    friends_tagged: selectedFriends.map(f => f.id),
+                    friends_tagged: selectedFriends.map((user) => String(user._id)),
+
+
                     post_count_feels: {
                         post_count_feels: 0,
                         post_count_comments: 0,
@@ -142,25 +144,20 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 } catch (err) {
                     console.error('Search error:', err);
                     setMentionSuggestions([]);
-                    setShowSuggestions(false);
+                    setShowSuggestions(true);
                 }
             } else {
                 setMentionSuggestions([]);
-                setShowSuggestions(false);
+                setShowSuggestions(true);
             }
         } else {
             setMentionSuggestions([]);
-            setShowSuggestions(false);
+            setShowSuggestions(true);
         }
     };
 
 
-
-
-
-
-
-
+    
     useEffect(() => {
         const match = postContent.match(/(https?:\/\/[^\s]+)/);
         const url = match?.[0];
@@ -188,8 +185,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             },
         });
     }, [postContent]);
-
-
     const highlightHashtags = (text: string) => {
         const escaped = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return escaped
@@ -203,10 +198,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     };
     const handleMentionSelect = (user: UserInfo) => {
-        const newContent = postContent.replace(/@\w*$/, `@${user.name} `);
+        const newContent = postContent.replace(/@[\p{L}0-9_-]*$/u, `@${user.name} `);
         setPostContent(newContent);
         setShowSuggestions(false);
-        setMentionQuery("");
+        setMentionQuery(""); 
 
         setSelectedFriends(prev => {
             if (!prev.find(u => u.id === user.id)) {
@@ -215,6 +210,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             return prev;
         });
     };
+
+
+
+
+
+
 
 
     return (
@@ -327,8 +328,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                     )}
 
 
-
-
                     {/* Preview Images */}
                     {selectedImageFiles.length > 0 && (
                         <div className="mt-4">
@@ -389,9 +388,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                         </div>
                     )}
 
-
-
-
                     {/* Action Buttons */}
                     <div className="grid grid-cols-4 gap-5 justify-items-center mt-6">
                         {[
@@ -437,12 +433,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                             {isUploading ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin text-white" />
-                                    <span className="text-white">Đang đăng...</span>
+                                    <span className="text-white">Loading...</span>
                                 </>
                             ) : (
                                 <>
                                     <SendHorizonal className="w-5 h-5 text-white" />
-                                    <span>Đăng bài</span>
+                                    <span>Create Post</span>
                                 </>
                             )}
                         </button>

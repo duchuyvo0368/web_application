@@ -45,7 +45,8 @@ const FriendCard: React.FC<FriendCardProps> = ({
         onSuccess: () => {
           console.log('Đã hủy kết bạn');
           setIsFriend(false);
-          onUnfriend?.();
+            onUnfriend?.();
+          
         },
         onError: (err) => console.error('Lỗi khi hủy kết bạn:', err),
       });
